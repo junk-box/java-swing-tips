@@ -71,10 +71,10 @@ public final class MainPanel {
 
 class DragPanel extends JPanel {
     public JLabel draggingLabel;
-    public DragPanel() {
+    protected DragPanel() {
         super();
     }
-    public DragPanel(LayoutManager lm) {
+    protected DragPanel(LayoutManager lm) {
         super(lm);
     }
 }
@@ -98,14 +98,14 @@ class LabelTransferHandler extends TransferHandler {
         }
     };
     private final JWindow window = new JWindow();
-    public LabelTransferHandler() {
+    protected LabelTransferHandler() {
         super("Text");
         //System.out.println("LabelTransferHandler");
         localObjectFlavor = new ActivationDataFlavor(DragPanel.class, DataFlavor.javaJVMLocalObjectMimeType, "JLabel");
         window.add(label);
         //window.setAlwaysOnTop(true); // AccessControlException: access denied ("java.awt.AWTPermission" "setWindowAlwaysOnTop")
-        //com.sun.awt.AWTUtilities.setWindowOpaque(window, false); // JDK 1.6.0
-        window.setBackground(new Color(0, true)); // JDK 1.7.0
+        //AWTUtilities.setWindowOpaque(window, false); // JDK 1.6.0
+        window.setBackground(new Color(0x0, true)); // JDK 1.7.0
         DragSource.getDefaultDragSource().addDragSourceMotionListener(new DragSourceMotionListener() {
             @Override public void dragMouseMoved(DragSourceDragEvent dsde) {
                 Point pt = dsde.getLocation();
@@ -120,16 +120,14 @@ class LabelTransferHandler extends TransferHandler {
         JLabel l = p.draggingLabel;
         DataHandler dh = new DataHandler(c, localObjectFlavor.getMimeType());
         String text = l.getText();
-        if (text == null) {
+        if (Objects.nonNull(text)) {
+            return new LabelTransferable(dh, localObjectFlavor, text);
+        } else {
             return dh;
         }
-        return new LabelTransferable(dh, localObjectFlavor, text);
     }
-    @Override public boolean canImport(TransferSupport support) {
-        if (!support.isDrop()) {
-            return false;
-        }
-        return true;
+    @Override public boolean canImport(TransferHandler.TransferSupport support) {
+        return support.isDrop() && support.isDataFlavorSupported(localObjectFlavor);
     }
     @Override public int getSourceActions(JComponent c) {
         System.out.println("getSourceActions");
@@ -144,9 +142,9 @@ class LabelTransferHandler extends TransferHandler {
             window.setLocation(pt);
             window.setVisible(true);
         }
-        return MOVE;
+        return TransferHandler.MOVE;
     }
-    @Override public boolean importData(TransferSupport support) {
+    @Override public boolean importData(TransferHandler.TransferSupport support) {
         System.out.println("importData");
         if (!canImport(support)) {
             return false;
@@ -175,9 +173,6 @@ class LabelTransferHandler extends TransferHandler {
         }
         src.draggingLabel = null;
         window.setVisible(false);
-        //TEST:
-        //window.setLocation(new Point(-100, -100));
-        //window.setLocation(new Point(0, 0));
     }
 }
 
@@ -186,7 +181,7 @@ class LabelTransferable implements Transferable {
     private final DataFlavor localObjectFlavor;
     private final StringSelection ss;
 
-    public LabelTransferable(DataHandler dh, DataFlavor localObjectFlavor, String text) {
+    protected LabelTransferable(DataHandler dh, DataFlavor localObjectFlavor, String text) {
         this.dh = dh;
         this.localObjectFlavor = localObjectFlavor;
         this.ss = new StringSelection(text + "\n");

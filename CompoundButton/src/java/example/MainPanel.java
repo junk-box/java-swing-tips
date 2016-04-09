@@ -4,6 +4,7 @@ package example;
 //@homepage@
 import java.awt.*;
 import java.awt.geom.*;
+import java.util.Objects;
 import javax.swing.*;
 
 public final class MainPanel extends JPanel {
@@ -45,9 +46,9 @@ public final class MainPanel extends JPanel {
 
 class CompoundButtonPanel extends JComponent {
     private final Dimension d;
-    public CompoundButtonPanel(final Dimension d) {
+    protected CompoundButtonPanel(Dimension dim) {
         super();
-        this.d = d;
+        this.d = dim;
         setLayout(new OverlayLayout(this));
         add(new CompoundButton(d, ButtonLocation.CENTER));
         add(new CompoundButton(d, ButtonLocation.NOTH));
@@ -70,7 +71,7 @@ enum ButtonLocation {
     SOUTH(225f),
     WEST(-45f);
     private final float degree;
-    private ButtonLocation(float degree) {
+    ButtonLocation(float degree) {
         this.degree = degree;
     }
     public float getStartDegree() {
@@ -86,7 +87,7 @@ class CompoundButton extends JButton {
     protected transient Shape base;
     private final ButtonLocation bl;
     private final Dimension dim;
-    public CompoundButton(Dimension d, ButtonLocation bl) {
+    protected CompoundButton(Dimension d, ButtonLocation bl) {
         super();
         this.dim = d;
         this.bl = bl;
@@ -95,14 +96,14 @@ class CompoundButton extends JButton {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 if (getModel().isArmed()) {
-                    g2.setColor(ac);
+                    g2.setPaint(ac);
                     g2.fill(shape);
                 } else if (isRolloverEnabled() && getModel().isRollover()) {
                     paintFocusAndRollover(g2, rc);
                 } else if (hasFocus()) {
                     paintFocusAndRollover(g2, fc);
                 } else {
-                    g2.setColor(getBackground());
+                    g2.setPaint(getBackground());
                     g2.fill(shape);
                 }
                 g2.dispose();
@@ -125,15 +126,15 @@ class CompoundButton extends JButton {
     private void initShape() {
         if (!getBounds().equals(base)) {
             base = getBounds();
-            float ww = getWidth() * .5f;
-            float xx = ww * .5f;
-            Shape inner = new Ellipse2D.Float(xx, xx, ww, ww);
+            double ww = getWidth() * .5;
+            double xx = ww * .5;
+            Shape inner = new Ellipse2D.Double(xx, xx, ww, ww);
             if (ButtonLocation.CENTER == bl) {
                 shape = inner;
             } else {
                 //TEST: parent.isOptimizedDrawingEnabled: false
-                //shape = new Arc2D.Float(1, 1, getWidth() - 2, getHeight() - 2, bl.getStartDegree(), 90f, Arc2D.PIE);
-                Shape outer = new Arc2D.Float(1, 1, getWidth() - 2, getHeight() - 2, bl.getStartDegree(), 90f, Arc2D.PIE);
+                //shape = new Arc2D.Double(1, 1, getWidth() - 2, getHeight() - 2, bl.getStartDegree(), 90, Arc2D.PIE);
+                Shape outer = new Arc2D.Double(1, 1d, getWidth() - 2, getHeight() - 2, bl.getStartDegree(), 90, Arc2D.PIE);
                 Area area = new Area(outer);
                 area.subtract(new Area(inner));
                 shape = area;
@@ -143,7 +144,7 @@ class CompoundButton extends JButton {
     private void paintFocusAndRollover(Graphics2D g2, Color color) {
         g2.setPaint(new GradientPaint(0, 0, color, getWidth() - 1, getHeight() - 1, color.brighter(), true));
         g2.fill(shape);
-        g2.setColor(getBackground());
+        g2.setPaint(getBackground());
     }
     @Override protected void paintComponent(Graphics g) {
         initShape();
@@ -151,16 +152,12 @@ class CompoundButton extends JButton {
     }
     @Override protected void paintBorder(Graphics g) {
         Graphics2D g2 = (Graphics2D) g.create();
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                            RenderingHints.VALUE_ANTIALIAS_ON);
-        g2.setColor(getForeground());
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setPaint(getForeground());
         g2.draw(shape);
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                            RenderingHints.VALUE_ANTIALIAS_OFF);
         g2.dispose();
     }
     @Override public boolean contains(int x, int y) {
-        //initShape();
-        return shape == null ? false : shape.contains(x, y);
+        return Objects.nonNull(shape) && shape.contains(x, y);
     }
 }

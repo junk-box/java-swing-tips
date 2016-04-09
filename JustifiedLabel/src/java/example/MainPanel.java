@@ -5,14 +5,15 @@ package example;
 import java.awt.*;
 import java.awt.font.*;
 import java.awt.geom.*;
+import java.util.*;
 import javax.swing.*;
 import javax.swing.border.*;
 
 public final class MainPanel extends JPanel {
     private final JLabel l0 = new JLabel("打率");
-    private final JLabel l1 = new JLabel("打率", JLabel.RIGHT);
+    private final JLabel l1 = new JLabel("打率", SwingConstants.RIGHT);
     private final JLabel l2 = new JustifiedLabel("打率");
-    private final JLabel l3 = new JLabel("出塁率", JLabel.CENTER);
+    private final JLabel l3 = new JLabel("出塁率", SwingConstants.CENTER);
     private final JLabel l4 = new JustifiedLabel("出塁率");
     private final JLabel l5 = new JustifiedLabel("チーム出塁率");
     public MainPanel() {
@@ -22,27 +23,26 @@ public final class MainPanel extends JPanel {
         Border inside  = BorderFactory.createEmptyBorder(10, 5 + 2, 10, 10 + 2);
         Border outside = BorderFactory.createTitledBorder("JLabel text-align:justify");
         p.setBorder(BorderFactory.createCompoundBorder(outside, inside));
-        GridBagConstraints c = new GridBagConstraints();
-        c.gridheight = 1;
 
-        c.gridx   = 0;
-        c.insets  = new Insets(5, 5, 5, 0);
-        c.fill    = GridBagConstraints.HORIZONTAL;
-        c.gridy   = 0; p.add(l0, c);
-        c.gridy   = 1; p.add(l1, c);
-        c.gridy   = 2; p.add(l2, c);
-        c.gridy   = 3; p.add(l3, c);
-        c.gridy   = 4; p.add(l4, c);
-        c.gridy   = 5; p.add(l5, c);
+        GridBagConstraints c = new GridBagConstraints();
+        c.insets = new Insets(5, 5, 5, 0);
+        c.fill   = GridBagConstraints.HORIZONTAL;
+        c.gridx  = 0;
+        p.add(l0, c);
+        p.add(l1, c);
+        p.add(l2, c);
+        p.add(l3, c);
+        p.add(l4, c);
+        p.add(l5, c);
 
         c.gridx   = 1;
         c.weightx = 1d;
-        c.gridy   = 0; p.add(new JTextField(), c);
-        c.gridy   = 1; p.add(new JTextField(), c);
-        c.gridy   = 2; p.add(new JTextField(), c);
-        c.gridy   = 3; p.add(new JTextField(), c);
-        c.gridy   = 4; p.add(new JTextField(), c);
-        c.gridy   = 5; p.add(new JTextField(), c);
+        p.add(new JTextField(), c);
+        p.add(new JTextField(), c);
+        p.add(new JTextField(), c);
+        p.add(new JTextField(), c);
+        p.add(new JTextField(), c);
+        p.add(new JTextField(), c);
 
         add(p);
         add(new JustifiedLabel("あいうえおかきくけこ"), BorderLayout.SOUTH);
@@ -74,60 +74,55 @@ public final class MainPanel extends JPanel {
 }
 
 class JustifiedLabel extends JLabel {
-    private GlyphVector gvtext;
+    private transient Optional<GlyphVector> gvtext;
     private int prevWidth = -1;
-    public JustifiedLabel() {
+    protected JustifiedLabel() {
         this(null);
     }
-    public JustifiedLabel(String str) {
+    protected JustifiedLabel(String str) {
         super(str);
-//         Dimension d = getPreferredSize();
-//         int baseline = getBaseline(d.width, d.height);
-//         setAlignmentY(baseline/(float) d.height);
     }
-//     @Override public Dimension getMinimumSize() {
-//         return getPreferredSize();
-//     }
-//     @Override public Dimension getPreferredSize() {
-//         Dimension d = super.getPreferredSize();
-//         d.width = getWidth();
-//         return d;
-//     }
-//     @Override public int getWidth() {
-//         return 120;
-//     }
+    @Override public void setText(String text) {
+        super.setText(text);
+        prevWidth = -1;
+    }
     @Override protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g.create();
-        Insets i = getInsets();
-        int w = getWidth() - i.left - i.right;
+        Font font = getFont();
+        Dimension d = getSize();
+        Insets ins = getInsets();
+        int w = d.width - ins.left - ins.right;
         if (w != prevWidth) {
-            gvtext = getJustifiedGlyphVector(getText(), getFont(), g2.getFontRenderContext());
+            gvtext = getJustifiedGlyphVector(w, getText(), font, g2.getFontRenderContext());
             prevWidth = w;
         }
-        if (gvtext == null) {
-            super.paintComponent(g);
-        } else {
-            g2.drawGlyphVector(gvtext, i.left, i.top + getFont().getSize());
-        }
+        gvtext.ifPresent(gv -> {
+            g2.setPaint(getBackground());
+            g2.fillRect(0, 0, d.width, d.height);
+            g2.setPaint(getForeground());
+            g2.drawGlyphVector(gv, ins.left, ins.top + font.getSize());
+        });
         g2.dispose();
     }
-    private GlyphVector getJustifiedGlyphVector(String str, Font font, FontRenderContext frc) {
+    private static Optional<GlyphVector> getJustifiedGlyphVector(int width, String str, Font font, FontRenderContext frc) {
         GlyphVector gv = font.createGlyphVector(frc, str);
         Rectangle2D r = gv.getVisualBounds();
-        float jwidth = (float) getWidth();
+        float jwidth = (float) width;
         float vwidth = (float) r.getWidth();
-        if (jwidth < vwidth) {
-            return gv;
+        if (jwidth > vwidth) {
+            int num = gv.getNumGlyphs();
+            float xx = (jwidth - vwidth) / (float) (num - 1);
+            float xpos = num == 1 ? (jwidth - vwidth) * .5f : 0f;
+            Point2D gmPos = new Point2D.Float();
+            for (int i = 0; i < num; i++) {
+                GlyphMetrics gm = gv.getGlyphMetrics(i);
+                gmPos.setLocation(xpos, 0);
+                gv.setGlyphPosition(i, gmPos);
+                xpos += gm.getAdvance() + xx;
+            }
+            return Optional.of(gv);
         }
-        float xx = (jwidth - vwidth) / (float) (gv.getNumGlyphs() - 1);
-        float xpos = 0f;
-        Point2D gmPos = new Point2D.Double(0d, 0d);
-        for (int i = 0; i < gv.getNumGlyphs(); i++) {
-            GlyphMetrics gm = gv.getGlyphMetrics(i);
-            gmPos.setLocation(xpos, 0);
-            gv.setGlyphPosition(i, gmPos);
-            xpos = xpos + gm.getAdvance() + xx;
-        }
-        return gv;
+        return Optional.empty();
     }
 }

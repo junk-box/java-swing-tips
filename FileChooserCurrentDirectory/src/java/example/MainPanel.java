@@ -5,6 +5,7 @@ package example;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
+import java.util.Objects;
 import javax.swing.*;
 
 public final class MainPanel extends JPanel {
@@ -17,7 +18,7 @@ public final class MainPanel extends JPanel {
     private final JFileChooser fc1 = new JFileChooser();
     private final JFileChooser fc2 = new JFileChooser() {
         @Override public void setCurrentDirectory(File dir) {
-            if (dir != null && !dir.exists()) {
+            if (Objects.nonNull(dir) && !dir.exists()) {
                 this.setCurrentDirectory(dir.getParentFile());
             }
             super.setCurrentDirectory(dir);
@@ -25,15 +26,13 @@ public final class MainPanel extends JPanel {
     };
     @Override public void updateUI() {
         super.updateUI();
-        if (fc0 != null) {
-            SwingUtilities.updateComponentTreeUI(fc0);
-        }
-        if (fc1 != null) {
-            SwingUtilities.updateComponentTreeUI(fc1);
-        }
-        if (fc2 != null) {
-            SwingUtilities.updateComponentTreeUI(fc2);
-        }
+        EventQueue.invokeLater(new Runnable() {
+            @Override public void run() {
+                SwingUtilities.updateComponentTreeUI(fc0);
+                SwingUtilities.updateComponentTreeUI(fc1);
+                SwingUtilities.updateComponentTreeUI(fc2);
+            }
+        });
     }
     public MainPanel() {
         super(new BorderLayout());
@@ -48,16 +47,14 @@ public final class MainPanel extends JPanel {
         }
 
         GridBagConstraints c = new GridBagConstraints();
-        c.gridx = 0;
-        c.gridy = 0;
-        c.gridwidth  = 2;
-        c.gridheight = 1;
         c.fill = GridBagConstraints.HORIZONTAL;
         c.insets = new Insets(5, 0, 0, 0);
+
+        c.gridwidth = 2;
         p.add(field, c);
 
-        c.gridy++;
         c.gridwidth = 1;
+        c.gridy = 1;
         p.add(new JButton(new AbstractAction("setCurrentDirectory") {
             @Override public void actionPerformed(ActionEvent e) {
                 File f = new File(field.getText().trim());
@@ -69,11 +66,9 @@ public final class MainPanel extends JPanel {
                 }
             }
         }), c);
-        c.gridx++;
         p.add(check1, c);
 
-        c.gridy++;
-        c.gridx = 0;
+        c.gridy = 2;
         p.add(new JButton(new AbstractAction("setSelectedFile") {
             @Override public void actionPerformed(ActionEvent e) {
                 File f = new File(field.getText().trim());
@@ -91,7 +86,6 @@ public final class MainPanel extends JPanel {
                 }
             }
         }), c);
-        c.gridx++;
         p.add(check2, c);
 
         add(p, BorderLayout.NORTH);

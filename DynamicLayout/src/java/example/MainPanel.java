@@ -7,7 +7,7 @@ import java.awt.event.*;
 import javax.swing.*;
 
 public final class MainPanel extends JPanel {
-    private final JLabel label = new JLabel("", JLabel.CENTER);
+    private final JLabel label = new JLabel("", SwingConstants.CENTER);
     public MainPanel() {
         super(new BorderLayout());
         label.addComponentListener(new ComponentAdapter() {
@@ -17,18 +17,16 @@ public final class MainPanel extends JPanel {
         });
         Toolkit.getDefaultToolkit().setDynamicLayout(true);
         final JCheckBox cbox = new JCheckBox("DynamicLayout", true);
-        cbox.addItemListener(new ItemListener() {
-            @Override public void itemStateChanged(ItemEvent e) {
-                if (e.getStateChange() == ItemEvent.SELECTED) {
-                    Toolkit.getDefaultToolkit().setDynamicLayout(true);
-                } else if (e.getStateChange() == ItemEvent.DESELECTED) {
-                    Toolkit.getDefaultToolkit().setDynamicLayout(false);
-                }
+        cbox.addItemListener(e -> {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                Toolkit.getDefaultToolkit().setDynamicLayout(true);
+            } else if (e.getStateChange() == ItemEvent.DESELECTED) {
+                Toolkit.getDefaultToolkit().setDynamicLayout(false);
             }
         });
         add(label);
         add(cbox, BorderLayout.NORTH);
-//         setPreferredSize(new Dimension(320, 200));
+//         setPreferredSize(new Dimension(320, 240));
 //         setMinimumSize(new Dimension(300, 150));
     }
     @Override public Dimension getPreferredSize() {

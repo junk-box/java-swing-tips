@@ -12,7 +12,7 @@ public final class MainPanel extends JPanel {
     //<blockquote cite="FixedColumnExample.java">
     //@auther Nobuo Tamemasa
     private static final String ES = "";
-    private final Object[][] data = new Object[][] {
+    private final Object[][] data = {
         {1, 11, "A",  ES,  ES,  ES,  ES,  ES},
         {2, 22,  ES, "B",  ES,  ES,  ES,  ES},
         {3, 33,  ES,  ES, "C",  ES,  ES,  ES},
@@ -23,8 +23,8 @@ public final class MainPanel extends JPanel {
     private final Object[] columnNames = {"fixed 1", "fixed 2", "a", "b", "c", "d", "e", "f"};
     //</blockquote>
     private final DefaultTableModel model = new DefaultTableModel(data, columnNames) {
-        @Override public Class<?> getColumnClass(int modelIndex) {
-            return modelIndex < 2 ? Integer.class : Object.class;
+        @Override public Class<?> getColumnClass(int column) {
+            return column < 2 ? Integer.class : Object.class;
         }
     };
     private final transient RowSorter<? extends TableModel> sorter = new TableRowSorter<>(model);
@@ -62,7 +62,7 @@ public final class MainPanel extends JPanel {
 
         fixedTable.setPreferredScrollableViewportSize(fixedTable.getPreferredSize());
         scroll.setRowHeaderView(fixedTable);
-        scroll.setCorner(JScrollPane.UPPER_LEFT_CORNER, fixedTable.getTableHeader());
+        scroll.setCorner(ScrollPaneConstants.UPPER_LEFT_CORNER, fixedTable.getTableHeader());
         scroll.getViewport().setBackground(Color.WHITE);
         scroll.getRowHeader().setBackground(Color.WHITE);
 
@@ -99,7 +99,9 @@ public final class MainPanel extends JPanel {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             //for (UIManager.LookAndFeelInfo laf: UIManager.getInstalledLookAndFeels()) {
-            //    if ("Nimbus".equals(laf.getName())) { UIManager.setLookAndFeel(laf.getClassName()); }
+            //    if ("Nimbus".equals(laf.getName())) {
+            //        UIManager.setLookAndFeel(laf.getClassName());
+            //    }
             //}
         } catch (ClassNotFoundException | InstantiationException
                | IllegalAccessException | UnsupportedLookAndFeelException ex) {

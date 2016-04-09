@@ -3,6 +3,7 @@ package example;
 // vim:set fileencoding=utf-8:
 //@homepage@
 import java.awt.*;
+import java.util.Objects;
 import javax.swing.*;
 import javax.swing.plaf.*;
 import javax.swing.plaf.basic.*;
@@ -56,7 +57,7 @@ public class OperaTabViewButtonUI extends BasicTabViewButtonUI {
         iconRect.setBounds(0, 0, 0, 0); //.x = iconRect.y = iconRect.width = iconRect.height = 0;
         textRect.setBounds(0, 0, 0, 0); //.x = textRect.y = textRect.width = textRect.height = 0;
 
-        //g2.setColor(Color.CYAN); //c.getBackground());
+        //g2.setPaint(Color.CYAN); //c.getBackground());
         //g2.fillRect(0, 0, size.width - 1, size.height);
         //g2.fill(viewRect);
         tabPainter(g2, viewRect);
@@ -67,16 +68,16 @@ public class OperaTabViewButtonUI extends BasicTabViewButtonUI {
             b.getVerticalAlignment(), b.getHorizontalAlignment(),
             b.getVerticalTextPosition(), b.getHorizontalTextPosition(),
             viewRect, iconRect, textRect,
-            b.getText() == null ? 0 : b.getIconTextGap());
+            Objects.nonNull(b.getText()) ? b.getIconTextGap() : 0);
 
         View v = (View) c.getClientProperty(BasicHTML.propertyKey);
-        if (v == null) {
+        if (Objects.nonNull(v)) {
+            v.paint(g, textRect);
+        } else {
             textRect.x += 4;
             paintText(g, b, textRect, text);
-        } else {
-            v.paint(g, textRect);
         }
-        if (icon != null) {
+        if (Objects.nonNull(icon)) {
             icon.paintIcon(c, g, iconRect.x + 4, iconRect.y + 2);
         }
 

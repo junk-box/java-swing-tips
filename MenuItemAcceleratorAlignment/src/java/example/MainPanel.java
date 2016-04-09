@@ -116,21 +116,17 @@ public final class MainPanel {
             return item;
         }
 
-        GridBagConstraints c = new GridBagConstraints();
         item.setLayout(new GridBagLayout());
-        c.gridheight = 1;
-        c.gridwidth  = 1;
-        c.gridy = 0;
-        c.gridx = 0;
+        GridBagConstraints c = new GridBagConstraints();
+        c.anchor = GridBagConstraints.LINE_END;
         c.insets = new Insets(0, 0, 0, 4);
 
         c.weightx = 1d;
         c.fill = GridBagConstraints.HORIZONTAL;
         item.add(Box.createHorizontalGlue(), c);
-        c.gridx = 1;
-        c.fill = GridBagConstraints.NONE;
+
         c.weightx = 0d;
-        c.anchor = GridBagConstraints.EAST;
+        c.fill = GridBagConstraints.NONE;
         item.add(label, c);
 
         item.setMnemonic(mi.getMnemonic());
@@ -140,7 +136,7 @@ public final class MainPanel {
 
     public static void main(String... args) {
         //Locale.setDefault(Locale.ENGLISH);
-        //java.util.ResourceBundle awtBundle = java.util.ResourceBundle.getBundle(
+        //ResourceBundle awtBundle = ResourceBundle.getBundle(
         //    "sun.awt.resources.awt", sun.util.CoreResourceBundleControl.getRBControlInstance());
         //Locale.setDefault(new Locale("xx"));
         //JMenuItem.setDefaultLocale(Locale.ENGLISH);
@@ -291,7 +287,7 @@ class RAAWindowsMenuItemUI extends WindowsMenuItemUI {
         JMenuItem mi = (JMenuItem) c;
         g.setFont(mi.getFont());
 
-        Rectangle viewRect = new Rectangle(0, 0, mi.getWidth(), mi.getHeight());
+        Rectangle viewRect = new Rectangle(mi.getWidth(), mi.getHeight());
         MenuItemUIHelper.applyInsets(viewRect, mi.getInsets());
 
         sun.swing.MenuItemLayoutHelper lh = new sun.swing.MenuItemLayoutHelper(
@@ -334,7 +330,7 @@ class RAABasicMenuItemUI extends BasicMenuItemUI {
         JMenuItem mi = (JMenuItem) c;
         g.setFont(mi.getFont());
 
-        Rectangle viewRect = new Rectangle(0, 0, mi.getWidth(), mi.getHeight());
+        Rectangle viewRect = new Rectangle(mi.getWidth(), mi.getHeight());
         MenuItemUIHelper.applyInsets(viewRect, mi.getInsets());
 
         sun.swing.MenuItemLayoutHelper lh = new sun.swing.MenuItemLayoutHelper(

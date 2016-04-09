@@ -27,7 +27,7 @@ public final class MainPanel extends JPanel {
                 c.setBackground(getSelectionBackground());
             } else {
                 c.setForeground(getForeground());
-                c.setBackground((row % 2 == 0) ? EVEN_COLOR : getBackground());
+                c.setBackground(row % 2 == 0 ? EVEN_COLOR : getBackground());
             }
             return c;
         }
@@ -53,7 +53,7 @@ public final class MainPanel extends JPanel {
             }
         });
         add(check, BorderLayout.NORTH);
-        setPreferredSize(new Dimension(320, 200));
+        setPreferredSize(new Dimension(320, 240));
     }
 
     public static void main(String... args) {

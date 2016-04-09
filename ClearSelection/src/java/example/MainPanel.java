@@ -33,9 +33,7 @@ public final class MainPanel extends JPanel {
                 setSelectionForeground(null);
                 setSelectionBackground(null);
                 super.updateUI();
-                if (listener == null) {
-                    listener = new ClearSelectionListener();
-                }
+                listener = new ClearSelectionListener();
                 addMouseListener(listener);
                 addMouseMotionListener(listener);
             }
@@ -95,8 +93,7 @@ class ClearSelectionListener extends MouseAdapter {
     }
     @Override public void mousePressed(MouseEvent e) {
         JList list = (JList) e.getComponent();
-        startOutside = contains(list, e.getPoint());
-        startOutside ^= true;
+        startOutside = !contains(list, e.getPoint());
         if (startOutside) {
             clearSelectionAndFocus(list);
         }

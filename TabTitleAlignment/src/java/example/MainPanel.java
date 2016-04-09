@@ -4,7 +4,7 @@ package example;
 //@homepage@
 import java.awt.*;
 import java.awt.event.*;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicButtonUI;
@@ -18,9 +18,9 @@ public final class MainPanel extends JPanel {
         super(new BorderLayout());
         JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.LEFT);
         if (tabbedPane.getUI() instanceof WindowsTabbedPaneUI) {
-            tabbedPane.setUI(new MyWindowsTabbedPaneUI());
+            tabbedPane.setUI(new LeftAlignmentWindowsTabbedPaneUI());
         } else {
-            tabbedPane.setUI(new MyTabbedPaneUI());
+            tabbedPane.setUI(new LeftAlignmentTabbedPaneUI());
         }
         final List<? extends JTabbedPane> list = Arrays.asList(
             makeTestTabbedPane(new JTabbedPane(JTabbedPane.LEFT)),
@@ -76,35 +76,36 @@ public final class MainPanel extends JPanel {
 }
 
 class ClippedTitleTabbedPane extends JTabbedPane {
-    public ClippedTitleTabbedPane() {
+    protected ClippedTitleTabbedPane() {
         super();
     }
-    public ClippedTitleTabbedPane(int tabPlacement) {
+    protected ClippedTitleTabbedPane(int tabPlacement) {
         super(tabPlacement);
     }
     private Insets getTabInsets() {
         Insets insets = UIManager.getInsets("TabbedPane.tabInsets");
-        if (insets == null) {
+        if (Objects.nonNull(insets)) {
+            return insets;
+        } else {
             SynthStyle style = SynthLookAndFeel.getStyle(this, Region.TABBED_PANE_TAB);
             SynthContext context = new SynthContext(this, Region.TABBED_PANE_TAB, style, SynthConstants.ENABLED);
             return style.getInsets(context, null);
-        } else {
-            return insets;
         }
     }
     private Insets getTabAreaInsets() {
         Insets insets = UIManager.getInsets("TabbedPane.tabAreaInsets");
-        if (insets == null) {
+        if (Objects.nonNull(insets)) {
+            return insets;
+        } else {
             SynthStyle style = SynthLookAndFeel.getStyle(this, Region.TABBED_PANE_TAB_AREA);
             SynthContext context = new SynthContext(this, Region.TABBED_PANE_TAB_AREA, style, SynthConstants.ENABLED);
             return style.getInsets(context, null);
-        } else {
-            return insets;
         }
     }
     @Override public void doLayout() {
         int tabCount = getTabCount();
         if (tabCount == 0) {
+            super.doLayout();
             return;
         }
         Insets tabInsets     = getTabInsets();
@@ -134,16 +135,12 @@ class ClippedTitleTabbedPane extends JTabbedPane {
         super.doLayout();
     }
     @Override public void insertTab(String title, Icon icon, Component component, String tip, int index) {
-        super.insertTab(title, icon, component, tip == null ? title : tip, index);
-        //JLabel label = new JLabel(title, JLabel.LEFT);
-        //Dimension dim = label.getPreferredSize();
-        //Insets tabInsets = getTabInsets();
-        //label.setPreferredSize(new Dimension(0, dim.height + tabInsets.top + tabInsets.bottom));
+        super.insertTab(title, icon, component, Objects.toString(tip, title), index);
         setTabComponentAt(index, new ButtonTabComponent(this));
     }
 }
 
-class MyWindowsTabbedPaneUI extends WindowsTabbedPaneUI {
+class LeftAlignmentWindowsTabbedPaneUI extends WindowsTabbedPaneUI {
     @Override protected void layoutLabel(int tabPlacement,
                                          FontMetrics metrics, int tabIndex,
                                          String title, Icon icon,
@@ -153,15 +150,15 @@ class MyWindowsTabbedPaneUI extends WindowsTabbedPaneUI {
         iconRect.setLocation(0, 0);
         View v = getTextViewForTab(tabIndex);
         String html = "html";
-        if (v != null) {
+        if (Objects.nonNull(v)) {
             tabPane.putClientProperty(html, v);
         }
         SwingUtilities.layoutCompoundLabel((JComponent) tabPane,
                                            metrics, title, icon,
-                                           SwingUtilities.CENTER,
-                                           SwingUtilities.LEFT, //CENTER, <----
-                                           SwingUtilities.CENTER,
-                                           SwingUtilities.TRAILING,
+                                           SwingConstants.CENTER,
+                                           SwingConstants.LEFT, //CENTER, <----
+                                           SwingConstants.CENTER,
+                                           SwingConstants.TRAILING,
                                            tabRect,
                                            iconRect,
                                            textRect,
@@ -179,7 +176,7 @@ class MyWindowsTabbedPaneUI extends WindowsTabbedPaneUI {
     }
 }
 
-class MyTabbedPaneUI extends MetalTabbedPaneUI {
+class LeftAlignmentTabbedPaneUI extends MetalTabbedPaneUI {
     @Override protected void layoutLabel(int tabPlacement,
                                          FontMetrics metrics, int tabIndex,
                                          String title, Icon icon,
@@ -188,15 +185,15 @@ class MyTabbedPaneUI extends MetalTabbedPaneUI {
         textRect.setLocation(0, 0);
         iconRect.setLocation(0, 0);
         View v = getTextViewForTab(tabIndex);
-        if (v != null) {
+        if (Objects.nonNull(v)) {
             tabPane.putClientProperty("html", v);
         }
         SwingUtilities.layoutCompoundLabel((JComponent) tabPane,
                                            metrics, title, icon,
-                                           SwingUtilities.CENTER,
-                                           SwingUtilities.LEFT, //CENTER, <----
-                                           SwingUtilities.CENTER,
-                                           SwingUtilities.TRAILING,
+                                           SwingConstants.CENTER,
+                                           SwingConstants.LEFT, //CENTER, <----
+                                           SwingConstants.CENTER,
+                                           SwingConstants.TRAILING,
                                            tabRect,
                                            iconRect,
                                            textRect,
@@ -215,13 +212,13 @@ class MyTabbedPaneUI extends MetalTabbedPaneUI {
 }
 
 //How to Use Tabbed Panes (The Java Tutorials > Creating a GUI With JFC/Swing > Using Swing Components)
-//http://download.oracle.com/javase/tutorial/uiswing/components/tabbedpane.html
+//http://docs.oracle.com/javase/tutorial/uiswing/components/tabbedpane.html
 class ButtonTabComponent extends JPanel {
     private final JTabbedPane pane;
 
-    public ButtonTabComponent(final JTabbedPane pane) {
-        super(new BorderLayout(0, 0)); //FlowLayout(FlowLayout.LEFT, 0, 0));
-        if (pane == null) {
+    protected ButtonTabComponent(final JTabbedPane pane) {
+        super(new BorderLayout()); //FlowLayout(FlowLayout.LEFT, 0, 0));
+        if (Objects.isNull(pane)) {
             throw new IllegalArgumentException("TabbedPane cannot be null");
         }
         this.pane = pane;
@@ -272,7 +269,7 @@ class TabButton extends JButton {
     private static final int SIZE  = 17;
     private static final int DELTA = 6;
 
-    public TabButton() {
+    protected TabButton() {
         super();
         setUI(new BasicButtonUI());
         setToolTipText("close this tab");
@@ -292,12 +289,12 @@ class TabButton extends JButton {
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setStroke(new BasicStroke(2));
-        g2.setColor(Color.BLACK);
+        g2.setPaint(Color.BLACK);
         if (getModel().isRollover()) {
-            g2.setColor(Color.ORANGE);
+            g2.setPaint(Color.ORANGE);
         }
         if (getModel().isPressed()) {
-            g2.setColor(Color.BLUE);
+            g2.setPaint(Color.BLUE);
         }
         g2.drawLine(DELTA, DELTA, getWidth() - DELTA - 1, getHeight() - DELTA - 1);
         g2.drawLine(getWidth() - DELTA - 1, DELTA, DELTA, getHeight() - DELTA - 1);

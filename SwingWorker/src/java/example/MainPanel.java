@@ -6,18 +6,18 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Ellipse2D;
 import java.beans.*;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import javax.swing.*;
+import javax.swing.Timer;
 
 public final class MainPanel extends JPanel {
     private final JTextArea area     = new JTextArea();
     private final JPanel statusPanel = new JPanel(new BorderLayout());
     private final JButton runButton  = new JButton(new RunAction());
     private final JButton canButton  = new JButton(new CancelAction());
+    private final JProgressBar bar   = new JProgressBar(0, 100);
     private final AnimatedLabel anil = new AnimatedLabel();
     private SwingWorker<String, String> worker;
 
@@ -34,78 +34,81 @@ public final class MainPanel extends JPanel {
         add(new JScrollPane(area));
         add(box, BorderLayout.NORTH);
         add(statusPanel, BorderLayout.SOUTH);
+        statusPanel.add(bar);
+        statusPanel.setVisible(false);
         setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         setPreferredSize(new Dimension(320, 240));
     }
 
+    class UIUpdateTask extends Task {
+        @Override protected void process(List<String> chunks) {
+            //System.out.println("process() is EDT?: " + EventQueue.isDispatchThread());
+            if (isCancelled()) {
+                return;
+            }
+            if (!isDisplayable()) {
+                System.out.println("process: DISPOSE_ON_CLOSE");
+                cancel(true);
+                return;
+            }
+            for (String message: chunks) {
+                if (!isCancelled()) {
+                    appendText(message);
+                }
+            }
+        }
+        @Override public void done() {
+            System.out.println("done() is EDT?: " + EventQueue.isDispatchThread());
+            if (!isDisplayable()) {
+                System.out.println("done: DISPOSE_ON_CLOSE");
+                cancel(true);
+                return;
+            }
+            anil.stopAnimation();
+            runButton.setEnabled(true);
+            canButton.setEnabled(false);
+            statusPanel.setVisible(false);
+            try {
+                if (isCancelled()) {
+                    appendText("\nCancelled\n");
+                } else {
+                    appendText("\n" + get() + "\n");
+                }
+            } catch (InterruptedException | ExecutionException ex) {
+                ex.printStackTrace();
+                appendText("\nException\n");
+            }
+        }
+    }
+
     class RunAction extends AbstractAction {
-        public RunAction() {
+        protected RunAction() {
             super("run");
         }
-        @Override public void actionPerformed(ActionEvent evt) {
+        @Override public void actionPerformed(ActionEvent e) {
             System.out.println("actionPerformed() is EDT?: " + EventQueue.isDispatchThread());
-            final JProgressBar bar = new JProgressBar(0, 100);
             runButton.setEnabled(false);
             canButton.setEnabled(true);
             anil.startAnimation();
-            statusPanel.removeAll();
-            statusPanel.add(bar);
-            statusPanel.revalidate();
+            statusPanel.setVisible(true);
             bar.setIndeterminate(true);
-
-            worker = new Task() {
-                @Override protected void process(List<String> chunks) {
-                    //System.out.println("process() is EDT?: " + EventQueue.isDispatchThread());
-                    if (!isDisplayable()) {
-                        System.out.println("process: DISPOSE_ON_CLOSE");
-                        cancel(true);
-                        return;
-                    }
-                    for (String message: chunks) {
-                        if (!isCancelled()) {
-                            appendText(message);
-                        }
-                    }
-                }
-                @Override public void done() {
-                    System.out.println("done() is EDT?: " + EventQueue.isDispatchThread());
-                    if (!isDisplayable()) {
-                        System.out.println("done: DISPOSE_ON_CLOSE");
-                        cancel(true);
-                        return;
-                    }
-                    anil.stopAnimation();
-                    runButton.setEnabled(true);
-                    canButton.setEnabled(false);
-                    statusPanel.remove(bar);
-                    statusPanel.revalidate();
-                    try {
-                        if (isCancelled()) {
-                            appendText("\nCancelled\n");
-                        } else {
-                            appendText("\n" + get() + "\n");
-                        }
-                    } catch (InterruptedException | ExecutionException ex) {
-                        ex.printStackTrace();
-                        appendText("\nException\n");
-                    }
-                }
-            };
+            worker = new UIUpdateTask();
             worker.addPropertyChangeListener(new ProgressListener(bar));
             worker.execute();
         }
     }
+
     class CancelAction extends AbstractAction {
-        public CancelAction() {
+        protected CancelAction() {
             super("cancel");
         }
-        @Override public void actionPerformed(ActionEvent evt) {
-            if (worker != null && !worker.isDone()) {
+        @Override public void actionPerformed(ActionEvent e) {
+            if (Objects.nonNull(worker) && !worker.isDone()) {
                 worker.cancel(true);
             }
-            //worker = null;
         }
     }
+
     private void appendText(String str) {
         area.append(str);
         area.setCaretPosition(area.getDocument().getLength());
@@ -138,11 +141,11 @@ public final class MainPanel extends JPanel {
 class Task extends SwingWorker<String, String> {
     @Override public String doInBackground() {
         System.out.println("doInBackground() is EDT?: " + EventQueue.isDispatchThread());
-//         try {
-//             Thread.sleep(1000);
-//         } catch (InterruptedException ie) {
-//             return "Interrupted";
-//         }
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException ie) {
+            return "Interrupted";
+        }
         int current = 0;
         int lengthOfTask = 120; //list.size();
         publish("Length Of Task: " + lengthOfTask);
@@ -165,19 +168,19 @@ class Task extends SwingWorker<String, String> {
 
 class ProgressListener implements PropertyChangeListener {
     private final JProgressBar progressBar;
-    ProgressListener(JProgressBar progressBar) {
+    protected ProgressListener(JProgressBar progressBar) {
         this.progressBar = progressBar;
         this.progressBar.setValue(0);
     }
-    @Override public void propertyChange(PropertyChangeEvent evt) {
-        if (!progressBar.isDisplayable() && evt.getSource() instanceof SwingWorker) {
+    @Override public void propertyChange(PropertyChangeEvent e) {
+        if (!progressBar.isDisplayable() && e.getSource() instanceof SwingWorker) {
             System.out.println("progress: DISPOSE_ON_CLOSE");
-            ((SwingWorker) evt.getSource()).cancel(true);
+            ((SwingWorker) e.getSource()).cancel(true);
         }
-        String strPropertyName = evt.getPropertyName();
+        String strPropertyName = e.getPropertyName();
         if ("progress".equals(strPropertyName)) {
             progressBar.setIndeterminate(false);
-            int progress = (Integer) evt.getNewValue();
+            int progress = (Integer) e.getNewValue();
             progressBar.setValue(progress);
         }
     }
@@ -185,8 +188,8 @@ class ProgressListener implements PropertyChangeListener {
 
 class AnimatedLabel extends JLabel implements ActionListener, HierarchyListener {
     private final Timer animator;
-    private final AnimeIcon icon = new AnimeIcon();
-    public AnimatedLabel() {
+    private final transient AnimeIcon icon = new AnimeIcon();
+    protected AnimatedLabel() {
         super();
         animator = new Timer(100, this);
         setIcon(icon);
@@ -211,8 +214,7 @@ class AnimatedLabel extends JLabel implements ActionListener, HierarchyListener 
     }
 }
 
-class AnimeIcon implements Icon, Serializable {
-    private static final long serialVersionUID = 1L;
+class AnimeIcon implements Icon {
     private static final Color ELLIPSE_COLOR = new Color(.5f, .5f, .5f);
     private static final double R  = 2d;
     private static final double SX = 1d;
@@ -239,20 +241,19 @@ class AnimeIcon implements Icon, Serializable {
         this.isRunning = isRunning;
     }
     @Override public void paintIcon(Component c, Graphics g, int x, int y) {
-        Graphics2D g2d = (Graphics2D) g.create();
-        g2d.setPaint(c == null ? Color.WHITE : c.getBackground());
-        g2d.fillRect(x, y, getIconWidth(), getIconHeight());
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2d.setColor(ELLIPSE_COLOR);
-        g2d.translate(x, y);
+        Graphics2D g2 = (Graphics2D) g.create();
+        g2.translate(x, y);
+        g2.setPaint(Objects.nonNull(c) ? c.getBackground() : Color.WHITE);
+        g2.fillRect(0, 0, getIconWidth(), getIconHeight());
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setPaint(ELLIPSE_COLOR);
         int size = list.size();
         for (int i = 0; i < size; i++) {
             float alpha = isRunning ? (i + 1) / (float) size : .5f;
-            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-            g2d.fill(list.get(i));
+            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+            g2.fill(list.get(i));
         }
-        //g2d.translate(-x, -y);
-        g2d.dispose();
+        g2.dispose();
     }
     @Override public int getIconWidth() {
         return WIDTH;

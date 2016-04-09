@@ -94,20 +94,20 @@ class TestModel extends DefaultTableModel {
     @Override public boolean isCellEditable(int row, int col) {
         return COLUMN_ARRAY[col].isEditable;
     }
-    @Override public Class<?> getColumnClass(int modelIndex) {
-        return COLUMN_ARRAY[modelIndex].columnClass;
+    @Override public Class<?> getColumnClass(int column) {
+        return COLUMN_ARRAY[column].columnClass;
     }
     @Override public int getColumnCount() {
         return COLUMN_ARRAY.length;
     }
-    @Override public String getColumnName(int modelIndex) {
-        return COLUMN_ARRAY[modelIndex].columnName;
+    @Override public String getColumnName(int column) {
+        return COLUMN_ARRAY[column].columnName;
     }
     private static class ColumnContext {
         public final String  columnName;
         public final Class   columnClass;
         public final boolean isEditable;
-        public ColumnContext(String columnName, Class columnClass, boolean isEditable) {
+        protected ColumnContext(String columnName, Class columnClass, boolean isEditable) {
             this.columnName = columnName;
             this.columnClass = columnClass;
             this.isEditable = isEditable;
@@ -116,8 +116,9 @@ class TestModel extends DefaultTableModel {
 }
 
 class Test {
-    private String name, comment;
-    public Test(String name, String comment) {
+    private String name;
+    private String comment;
+    protected Test(String name, String comment) {
         this.name = name;
         this.comment = comment;
     }

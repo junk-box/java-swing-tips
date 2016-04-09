@@ -28,7 +28,7 @@ public final class MainPanel extends JPanel {
                 c.setBackground(getSelectionBackground());
             } else {
                 c.setForeground(getForeground());
-                c.setBackground((row % 2 == 0) ? EVEN_COLOR : getBackground());
+                c.setBackground(row % 2 == 0 ? EVEN_COLOR : getBackground());
             }
             return c;
         }
@@ -107,12 +107,7 @@ public final class MainPanel extends JPanel {
 }
 class ComboCellRenderer extends JComboBox<String> implements TableCellRenderer {
     private static final Color EVEN_COLOR = new Color(240, 240, 250);
-    private JTextField editor;
     private JButton button;
-    public ComboCellRenderer() {
-        super();
-        setEditable(true);
-    }
     @Override public void updateUI() {
         super.updateUI();
         setBorder(BorderFactory.createEmptyBorder());
@@ -125,23 +120,25 @@ class ComboCellRenderer extends JComboBox<String> implements TableCellRenderer {
                 return button;
             }
         });
-        editor = (JTextField) getEditor().getEditorComponent();
-        editor.setBorder(BorderFactory.createEmptyBorder());
-        editor.setOpaque(true);
-        editor.setEditable(false);
     }
     @Override public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+        JTextField editor = (JTextField) getEditor().getEditorComponent();
+        editor.setBorder(BorderFactory.createEmptyBorder());
+        editor.setOpaque(true);
+        //editor.setEditable(false);
         removeAllItems();
-        if (isSelected) {
-            editor.setForeground(table.getSelectionForeground());
-            editor.setBackground(table.getSelectionBackground());
-            button.setBackground(table.getSelectionBackground());
-        } else {
-            editor.setForeground(table.getForeground());
-            //setBackground(table.getBackground());
-            Color bg = (row % 2 == 0) ? EVEN_COLOR : table.getBackground();
-            editor.setBackground(bg);
-            button.setBackground(bg);
+        if (button != null) {
+            if (isSelected) {
+                editor.setForeground(table.getSelectionForeground());
+                editor.setBackground(table.getSelectionBackground());
+                button.setBackground(table.getSelectionBackground());
+            } else {
+                editor.setForeground(table.getForeground());
+                //setBackground(table.getBackground());
+                Color bg = row % 2 == 0 ? EVEN_COLOR : table.getBackground();
+                editor.setBackground(bg);
+                button.setBackground(bg);
+            }
         }
         addItem(Objects.toString(value, ""));
         return this;
@@ -149,12 +146,14 @@ class ComboCellRenderer extends JComboBox<String> implements TableCellRenderer {
     //Overridden for performance reasons. ---->
     @Override public boolean isOpaque() {
         Color back = getBackground();
-        Component p = getParent();
-        if (p != null) {
-            p = p.getParent();
-        } // p should now be the JTable.
-        boolean colorMatch = back != null && p != null && back.equals(p.getBackground()) && p.isOpaque();
-        return !colorMatch && super.isOpaque();
+        Object o = SwingUtilities.getAncestorOfClass(JTable.class, this);
+        if (o instanceof JTable) {
+            JTable table = (JTable) o;
+            boolean colorMatch = Objects.nonNull(back) && back.equals(table.getBackground()) && table.isOpaque();
+            return !colorMatch && super.isOpaque();
+        } else {
+            return super.isOpaque();
+        }
     }
     @Override protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
 //         System.out.println(propertyName);

@@ -38,19 +38,29 @@ public final class MainPanel extends JPanel {
     }
 }
 
-class FontRotateAnimation extends JComponent implements ActionListener {
-    private final Timer animator;
+class FontRotateAnimation extends JComponent {
     private int rotate;
     private final Shape shape;
     private Shape s;
-    public FontRotateAnimation(String str) {
+    private final Timer animator = new Timer(10, new ActionListener() {
+        @Override public void actionPerformed(ActionEvent e) {
+            repaint(s.getBounds());
+            Rectangle2D b = shape.getBounds();
+            AffineTransform at = AffineTransform.getRotateInstance(Math.toRadians(rotate), b.getCenterX(), b.getCenterY());
+            AffineTransform toCenterAT = AffineTransform.getTranslateInstance(getWidth() / 2d - b.getCenterX(), getHeight() / 2d - b.getCenterY());
+
+            Shape s1 = at.createTransformedShape(shape);
+            s = toCenterAT.createTransformedShape(s1);
+            repaint(s.getBounds());
+            //rotate = rotate >= 360 ? 0 : rotate + 2;
+            rotate = (rotate + 2) % 360;
+        }
+    });
+    protected FontRotateAnimation(String str) {
         super();
-        animator = new Timer(10, this);
-        addHierarchyListener(new HierarchyListener() {
-            @Override public void hierarchyChanged(HierarchyEvent e) {
-                if ((e.getChangeFlags() & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0 && animator != null && !e.getComponent().isDisplayable()) {
-                    animator.stop();
-                }
+        addHierarchyListener(e -> {
+            if ((e.getChangeFlags() & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0 && !e.getComponent().isDisplayable()) {
+                animator.stop();
             }
         });
         Font font = new Font(Font.SERIF, Font.PLAIN, 200);
@@ -59,32 +69,12 @@ class FontRotateAnimation extends JComponent implements ActionListener {
         s = shape;
         animator.start();
     }
-    @Override public void paintComponent(Graphics g) {
+    @Override protected void paintComponent(Graphics g) {
         Graphics2D g2 = (Graphics2D) g.create();
         //g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setPaint(Color.BLACK);
         g2.fill(s);
         g2.dispose();
-    }
-    @Override public void actionPerformed(ActionEvent e) {
-        repaint(s.getBounds());
-        Rectangle2D b = shape.getBounds();
-        Point2D.Double p = new Point2D.Double(b.getX() + b.getWidth() / 2d, b.getY() + b.getHeight() / 2d);
-        AffineTransform at = AffineTransform.getRotateInstance(Math.toRadians(rotate), p.getX(), p.getY());
-        AffineTransform toCenterAT = AffineTransform.getTranslateInstance(getWidth() / 2d - p.getX(), getHeight() / 2d - p.getY());
-
-//         AffineTransform at = AffineTransform.getRotateInstance(
-//             Math.toRadians(rotate),
-//             b.getX() + b.getWidth()  / 2,
-//             b.getY() + b.getHeight() / 2);
-//         AffineTransform toCenterAT = AffineTransform.getTranslateInstance(
-//             getWidth()  / 2 - b.getWidth()  / 2 - b.getX(),
-//             getHeight() / 2 - b.getHeight() / 2 - b.getY());
-
-        Shape s1 = at.createTransformedShape(shape);
-        s = toCenterAT.createTransformedShape(s1);
-        repaint(s.getBounds());
-        rotate = rotate >= 360 ? 0 : rotate + 2;
     }
 }

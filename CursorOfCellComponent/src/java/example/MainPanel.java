@@ -4,7 +4,7 @@ package example;
 //@homepage@
 import java.awt.*;
 import java.awt.event.*;
-import java.util.Arrays;
+import java.util.*;
 import javax.swing.*;
 
 public final class MainPanel extends JPanel {
@@ -60,7 +60,7 @@ class LinkCellList<E> extends JList<E> {
     @Override protected void processMouseMotionEvent(MouseEvent e) {
         Point pt = e.getPoint();
         int i = locationToIndex(pt);
-        E s = ((ListModel<E>) getModel()).getElementAt(i);
+        E s = getModel().getElementAt(i);
         Component c = getCellRenderer().getListCellRendererComponent(this, s, i, false, false);
         Rectangle r = getCellBounds(i, i);
         c.setBounds(r);
@@ -70,10 +70,10 @@ class LinkCellList<E> extends JList<E> {
         prevIndex = i;
         pt.translate(-r.x, -r.y);
         Component cmp = SwingUtilities.getDeepestComponentAt(c, pt.x, pt.y);
-        if (cmp == null) {
-            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-        } else {
+        if (Objects.nonNull(cmp)) {
             setCursor(cmp.getCursor());
+        } else {
+            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         }
     }
 }
@@ -93,7 +93,7 @@ class LinkCellRenderer<E> implements ListCellRenderer<E> {
         p.setOpaque(true);
         check.setOpaque(false);
     }
-    @Override public Component getListCellRendererComponent(JList<? extends E> list, E value, final int index, boolean isSelected, boolean cellHasFocus) {
+    @Override public Component getListCellRendererComponent(JList<? extends E> list, E value, int index, boolean isSelected, boolean cellHasFocus) {
         if (isSelected) {
             p.setBackground(list.getSelectionBackground());
             p.setForeground(list.getSelectionForeground());
@@ -101,7 +101,7 @@ class LinkCellRenderer<E> implements ListCellRenderer<E> {
             p.setBackground(list.getBackground());
             p.setForeground(list.getForeground());
         }
-        label.setText("<html><a href=''>" + value);
+        label.setText("<html><a href='#'>" + value);
         return p;
     }
 }

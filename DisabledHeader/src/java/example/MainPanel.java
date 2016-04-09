@@ -18,7 +18,7 @@ public final class MainPanel extends JPanel {
                 c.setBackground(getSelectionBackground());
             } else {
                 c.setForeground(getForeground());
-                c.setBackground((row % 2 == 0) ? EVEN_COLOR : getBackground());
+                c.setBackground(row % 2 == 0 ? EVEN_COLOR : getBackground());
             }
             return c;
         }
@@ -50,15 +50,13 @@ public final class MainPanel extends JPanel {
         model.addTest(new Test("Name a", "ff"));
         model.addTest(new Test("Name 0", "Test aa"));
 
-        cbox.addItemListener(new ItemListener() {
-            @Override public void itemStateChanged(ItemEvent e) {
-                hrenderer.setEnabledAt(2, !((JCheckBox) e.getItemSelectable()).isSelected());
-                //if (e.getStateChange() == ItemEvent.SELECTED) {
-                //    hrenderer.setEnabledAt(2, false);
-                //} else if (e.getStateChange() == ItemEvent.DESELECTED) {
-                //    hrenderer.setEnabledAt(2, true);
-                //}
-            }
+        cbox.addItemListener(e -> {
+            hrenderer.setEnabledAt(2, !((JCheckBox) e.getItemSelectable()).isSelected());
+            //if (e.getStateChange() == ItemEvent.SELECTED) {
+            //    hrenderer.setEnabledAt(2, false);
+            //} else if (e.getStateChange() == ItemEvent.DESELECTED) {
+            //    hrenderer.setEnabledAt(2, true);
+            //}
         });
 
         add(new JScrollPane(table));
@@ -104,20 +102,20 @@ class TestModel extends SortableTableModel {
     @Override public boolean isCellEditable(int row, int col) {
         return COLUMN_ARRAY[col].isEditable;
     }
-    @Override public Class<?> getColumnClass(int modelIndex) {
-        return COLUMN_ARRAY[modelIndex].columnClass;
+    @Override public Class<?> getColumnClass(int column) {
+        return COLUMN_ARRAY[column].columnClass;
     }
     @Override public int getColumnCount() {
         return COLUMN_ARRAY.length;
     }
-    @Override public String getColumnName(int modelIndex) {
-        return COLUMN_ARRAY[modelIndex].columnName;
+    @Override public String getColumnName(int column) {
+        return COLUMN_ARRAY[column].columnName;
     }
     private static class ColumnContext {
         public final String  columnName;
         public final Class   columnClass;
         public final boolean isEditable;
-        public ColumnContext(String columnName, Class columnClass, boolean isEditable) {
+        protected ColumnContext(String columnName, Class columnClass, boolean isEditable) {
             this.columnName = columnName;
             this.columnClass = columnClass;
             this.isEditable = isEditable;
@@ -126,8 +124,9 @@ class TestModel extends SortableTableModel {
 }
 
 class Test {
-    private String name, comment;
-    public Test(String name, String comment) {
+    private String name;
+    private String comment;
+    protected Test(String name, String comment) {
         this.name = name;
         this.comment = comment;
     }

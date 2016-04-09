@@ -22,10 +22,10 @@ public final class MainPanel extends JPanel {
 // Menu.disabledForeground
 // MenuItem.disabledForeground
 // Button.disabledText
-    private final JCheckBox cbx1   = new JCheckBox("default", true);
-    private final JCheckBox cbx2   = new JCheckBox("<html>html tag</html>", true);
-    private final JLabel label     = new JLabel("label disabledForeground");
-    private final JButton button   = new JButton("button disabledText");
+    private final JCheckBox cbx1 = new JCheckBox("default", true);
+    private final JCheckBox cbx2 = new JCheckBox("<html>html tag</html>", true);
+    private final JLabel label   = new JLabel("label disabledForeground");
+    private final JButton button = new JButton("button disabledText");
     private final JComboBox<String> combo1 = new JComboBox<>(new String[] {"disabledForeground", "bb"});
     private final JComboBox<String> combo2 = new JComboBox<>(new String[] {"<html>html</html>", "renderer"});
     private final JComboBox<String> combo3 = new JComboBox<>(new String[] {"setEditable(true)", "setDisabledTextColor"});
@@ -49,10 +49,11 @@ public final class MainPanel extends JPanel {
         combo2.setRenderer(new DefaultListCellRenderer() {
             @Override public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
                 Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                if (index == -1 && !combo2.isEnabled()) {
+                if (index < 0 && !combo2.isEnabled()) {
                     JLabel l = (JLabel) c;
                     l.setText("<html><font color='red'>" + l.getText());
-                    //c.setForeground(Color.RED);
+                    l.setOpaque(false);
+                    //l.setForeground(Color.RED);
                 }
                 return c;
             }

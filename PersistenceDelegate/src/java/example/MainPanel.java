@@ -6,6 +6,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.beans.*;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 //import java.util.Vector;
 import javax.swing.*;
 import javax.swing.table.*;
@@ -22,7 +23,6 @@ public class MainPanel extends JPanel {
 
     public MainPanel() {
         super(new BorderLayout());
-
 
         JSplitPane sp = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
         sp.setResizeWeight(.5);
@@ -45,7 +45,7 @@ public class MainPanel extends JPanel {
                         //xe.flush();
                         //xe.close();
                     }
-                    try (Reader r = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"))) {
+                    try (Reader r = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
                         textArea.read(r, "temp");
                     }
                 } catch (IOException ex) {
@@ -55,11 +55,9 @@ public class MainPanel extends JPanel {
         }));
         p.add(new JButton(new AbstractAction("XMLDecoder") {
             @Override public void actionPerformed(ActionEvent e) {
-                try (XMLDecoder xd = new XMLDecoder(new BufferedInputStream(new ByteArrayInputStream(textArea.getText().getBytes("UTF-8"))))) {
+                try (XMLDecoder xd = new XMLDecoder(new BufferedInputStream(new ByteArrayInputStream(textArea.getText().getBytes(StandardCharsets.UTF_8))))) {
                     model = (DefaultTableModel) xd.readObject();
                     table.setModel(model);
-                } catch (IOException ex) {
-                    ex.printStackTrace();
                 }
             }
         }));
@@ -110,7 +108,7 @@ class DefaultTableModelPersistenceDelegate extends DefaultPersistenceDelegate {
 //         }
         for (int row = 0; row < m.getRowCount(); row++) {
             for (int col = 0; col < m.getColumnCount(); col++) {
-                Object[] o = new Object[] {m.getValueAt(row, col), row, col};
+                Object[] o = {m.getValueAt(row, col), row, col};
                 encoder.writeStatement(new Statement(oldInstance, "setValueAt", o));
             }
         }

@@ -5,6 +5,7 @@ package example;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.EventObject;
+import java.util.Objects;
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.tree.*;
@@ -31,10 +32,10 @@ public final class MainPanel extends JPanel {
 //             }
 //             @Override protected boolean canEditImmediately(EventObject e) {
 //                 //((MouseEvent) e).getClickCount() > 2
-//                 return (e instanceof MouseEvent) ? false : super.canEditImmediately(e);
+//                 return !(e instanceof MouseEvent) && super.canEditImmediately(e);
 //             }
             @Override public boolean isCellEditable(EventObject e) {
-                return e instanceof MouseEvent ? false : super.isCellEditable(e);
+                return !(e instanceof MouseEvent) && super.isCellEditable(e);
             }
         });
         tree.setEditable(true);
@@ -71,7 +72,7 @@ class TreePopupMenu extends JPopupMenu {
     private final JTextField textField = new JTextField();
     private final Action editAction = new AbstractAction("Edit") {
         @Override public void actionPerformed(ActionEvent e) {
-            if (path != null) {
+            if (Objects.nonNull(path)) {
                 JTree tree = (JTree) getInvoker();
                 tree.startEditingAtPath(path);
             }
@@ -79,7 +80,7 @@ class TreePopupMenu extends JPopupMenu {
     };
     private final Action editDialogAction = new AbstractAction("Edit Dialog") {
         @Override public void actionPerformed(ActionEvent e) {
-            if (path == null) {
+            if (Objects.isNull(path)) {
                 return;
             }
             Object node = path.getLastPathComponent();
@@ -97,7 +98,7 @@ class TreePopupMenu extends JPopupMenu {
             }
         }
     };
-    public TreePopupMenu() {
+    protected TreePopupMenu() {
         super();
         textField.addAncestorListener(new AncestorListener() {
             @Override public void ancestorAdded(AncestorEvent e) {
@@ -120,8 +121,8 @@ class TreePopupMenu extends JPopupMenu {
             //}
             TreePath[] tsp = tree.getSelectionPaths();
             path = tree.getPathForLocation(x, y); //Test: path = tree.getClosestPathForLocation(x, y);
-            boolean isEditable = tsp != null && tsp.length == 1 && tsp[0].equals(path);
-            //Test: if (path != null && java.util.Arrays.asList(tsp).contains(path)) {
+            boolean isEditable = tsp.length == 1 && tsp[0].equals(path);
+            //Test: if (Objects.nonNull(path) && Arrays.asList(tsp).contains(path)) {
             editAction.setEnabled(isEditable);
             editDialogAction.setEnabled(isEditable);
             super.show(c, x, y);

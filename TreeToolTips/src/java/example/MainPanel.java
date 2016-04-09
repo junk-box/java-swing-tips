@@ -15,7 +15,7 @@ public final class MainPanel extends JPanel {
             @Override public String getToolTipText(MouseEvent e) {
                 Object o = null;
                 TreePath path = getPathForLocation(e.getX(), e.getY());
-                if (path != null) {
+                if (Objects.nonNull(path)) {
                     o = path.getLastPathComponent();
                 }
                 return Objects.toString(o, "getToolTipText");
@@ -46,9 +46,9 @@ public final class MainPanel extends JPanel {
 //                 super.updateUI();
 //                 init();
 //             }
-            @Override public Component getTreeCellRendererComponent(JTree tree, Object value, boolean isSelected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-                JComponent c = (JComponent) super.getTreeCellRendererComponent(tree, value, isSelected, expanded, leaf, row, hasFocus);
-                c.setToolTipText(value == null ? null : "TreeCellRenderer: " + value.toString());
+            @Override public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+                JComponent c = (JComponent) super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
+                c.setToolTipText(Objects.nonNull(value) ? "TreeCellRenderer: " + value.toString() : null);
                 return c;
             }
         });

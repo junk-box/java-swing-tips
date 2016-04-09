@@ -105,7 +105,7 @@ class HighlightTableCellRenderer extends JTextField implements TableCellRenderer
     private String prev;
 
     public boolean setPattern(String str) {
-        if (str == null || str.equals(pattern)) {
+        if (Objects.equals(str, pattern)) {
             return false;
         } else {
             prev = pattern;
@@ -113,8 +113,8 @@ class HighlightTableCellRenderer extends JTextField implements TableCellRenderer
             return true;
         }
     }
-    public HighlightTableCellRenderer() {
-        super();
+    @Override public void updateUI() {
+        super.updateUI();
         setOpaque(true);
         setBorder(BorderFactory.createEmptyBorder());
         setForeground(Color.BLACK);
@@ -127,7 +127,7 @@ class HighlightTableCellRenderer extends JTextField implements TableCellRenderer
         highlighter.removeAllHighlights();
         setText(txt);
         setBackground(isSelected ? BACKGROUND_SELECTION_COLOR : Color.WHITE);
-        if (pattern != null && !pattern.isEmpty() && !pattern.equals(prev)) {
+        if (Objects.nonNull(pattern) && !pattern.isEmpty() && !Objects.equals(pattern, prev)) {
             Matcher matcher = Pattern.compile(pattern).matcher(txt);
             int pos = 0;
             while (matcher.find(pos)) {
@@ -135,8 +135,8 @@ class HighlightTableCellRenderer extends JTextField implements TableCellRenderer
                 int end   = matcher.end();
                 try {
                     highlighter.addHighlight(start, end, highlightPainter);
-                } catch (BadLocationException | PatternSyntaxException e) {
-                    e.printStackTrace();
+                } catch (BadLocationException | PatternSyntaxException ex) {
+                    ex.printStackTrace();
                 }
                 pos = end;
             }

@@ -20,7 +20,7 @@ public final class MainPanel extends JPanel {
         @Override public Class<?> getColumnClass(int column) {
             // ArrayIndexOutOfBoundsException: 0 >= 0
             // Bug ID: JDK-6967479 JTable sorter fires even if the model is empty
-            // http://bugs.sun.com/view_bug.do?bug_id=6967479
+            // http://bugs.java.com/view_bug.do?bug_id=6967479
             //return getValueAt(0, column).getClass();
             switch (column) {
               case 0:
@@ -48,13 +48,13 @@ public final class MainPanel extends JPanel {
         scroll.setComponentPopupMenu(new TablePopupMenu());
         table.setInheritsPopupMenu(true);
         add(scroll);
-        add(new JButton(new TestCreateAction("add", null)), BorderLayout.SOUTH);
+        add(new JButton(new TestCreateAction("add")), BorderLayout.SOUTH);
         setPreferredSize(new Dimension(320, 240));
     }
 
     class TestCreateAction extends AbstractAction {
-        public TestCreateAction(String label, Icon icon) {
-            super(label, icon);
+        protected TestCreateAction(String label) {
+            super(label);
         }
         @Override public void actionPerformed(ActionEvent e) {
             model.addRow(new Object[] {"New name", model.getRowCount(), false});
@@ -73,8 +73,8 @@ public final class MainPanel extends JPanel {
     }
 
     class DeleteAction extends AbstractAction {
-        public DeleteAction(String label, Icon icon) {
-            super(label, icon);
+        protected DeleteAction(String label) {
+            super(label);
         }
         @Override public void actionPerformed(ActionEvent e) {
             final int[] selection = table.getSelectedRows();
@@ -100,9 +100,11 @@ public final class MainPanel extends JPanel {
         }
     }
 
-//     public void xxx_deleteActionPerformed(ActionEvent evt) {
+//     public void xxx_deleteActionPerformed(ActionEvent e) {
 //         final int[] selection = table.getSelectedRows();
-//         if (selection == null || selection.length <= 0) { return; }
+//         if (selection.length == 0) {
+//             return;
+//         }
 //         (new SwingWorker<Void, Integer>() {
 //             @Override public Void doInBackground() {
 //                 int current = END_HEIGHT;
@@ -132,16 +134,15 @@ public final class MainPanel extends JPanel {
 //     }
 
     private class TablePopupMenu extends JPopupMenu {
-        private final Action deleteAction = new DeleteAction("delete", null);
-        public TablePopupMenu() {
+        private final Action deleteAction = new DeleteAction("delete");
+        protected TablePopupMenu() {
             super();
-            add(new TestCreateAction("add", null));
+            add(new TestCreateAction("add"));
             addSeparator();
             add(deleteAction);
         }
         @Override public void show(Component c, int x, int y) {
-            int[] l = table.getSelectedRows();
-            deleteAction.setEnabled(l.length > 0);
+            deleteAction.setEnabled(table.getSelectedRowCount() > 0);
             super.show(c, x, y);
         }
     }

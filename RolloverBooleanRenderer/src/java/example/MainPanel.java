@@ -4,6 +4,7 @@ package example;
 //@homepage@
 import java.awt.*;
 import java.awt.event.*;
+import java.util.*;
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.plaf.*;
@@ -21,29 +22,27 @@ public final class MainPanel extends JPanel {
         }
     };
     private final JTable table = new JTable(model) {
+        private transient HighlightListener highlighter;
+        @Override public void updateUI() {
+            addMouseListener(highlighter);
+            addMouseMotionListener(highlighter);
+            setDefaultRenderer(Object.class,  null);
+            setDefaultRenderer(Number.class,  null);
+            setDefaultRenderer(Boolean.class, null);
+            super.updateUI();
+            highlighter = new HighlightListener();
+            addMouseListener(highlighter);
+            addMouseMotionListener(highlighter);
+            setDefaultRenderer(Object.class,  new RolloverDefaultTableCellRenderer(highlighter));
+            setDefaultRenderer(Number.class,  new RolloverNumberRenderer(highlighter));
+            setDefaultRenderer(Boolean.class, new RolloverBooleanRenderer(highlighter));
+        }
         @Override public Component prepareEditor(TableCellEditor editor, int row, int column) {
             Component c = super.prepareEditor(editor, row, column);
             if (c instanceof JCheckBox) {
                 ((JCheckBox) c).setBackground(getSelectionBackground());
             }
             return c;
-        }
-        private transient HighlightListener highlighter;
-        @Override public void updateUI() {
-            if (highlighter != null) {
-                addMouseListener(highlighter);
-                addMouseMotionListener(highlighter);
-                setDefaultRenderer(Object.class,  null);
-                setDefaultRenderer(Number.class,  null);
-                setDefaultRenderer(Boolean.class, null);
-            }
-            super.updateUI();
-            highlighter = new HighlightListener(this);
-            addMouseListener(highlighter);
-            addMouseMotionListener(highlighter);
-            setDefaultRenderer(Object.class,  new RolloverDefaultTableCellRenderer(highlighter));
-            setDefaultRenderer(Number.class,  new RolloverNumberRenderer(highlighter));
-            setDefaultRenderer(Boolean.class, new RolloverBooleanRenderer(highlighter));
         }
     };
 
@@ -85,68 +84,75 @@ public final class MainPanel extends JPanel {
 class HighlightListener extends MouseAdapter {
     private int row = -1;
     private int col = -1;
-    private final JTable table;
-    public HighlightListener(JTable table) {
-        super();
-        this.table = table;
-    }
     public boolean isHighlightableCell(int row, int column) {
         return this.row == row && this.col == column;
     }
+    private static Optional<JTable> getTable(MouseEvent e) {
+        Component c = e.getComponent();
+        if (c instanceof JTable) {
+            return Optional.of((JTable) c);
+        }
+        return Optional.empty();
+    }
     @Override public void mouseMoved(MouseEvent e) {
-        Point pt = e.getPoint();
-        int prevRow = row;
-        int prevCol = col;
-        row = table.rowAtPoint(pt);
-        col = table.columnAtPoint(pt);
-        if (row < 0 || col < 0) {
-            row = -1;
-            col = -1;
-        }
-// >>>> HyperlinkCellRenderer.java
-// @see http://java.net/projects/swingset3/sources/svn/content/trunk/SwingSet3/src/com/sun/swingset3/demos/table/HyperlinkCellRenderer.java
-        if (row == prevRow && col == prevCol) {
-            return;
-        }
-        Rectangle repaintRect;
-        if (row >= 0 && col >= 0) {
-            Rectangle r = table.getCellRect(row, col, false);
-            if (prevRow >= 0 && prevCol >= 0) {
-                repaintRect = r.union(table.getCellRect(prevRow, prevCol, false));
-            } else {
-                repaintRect = r;
+        getTable(e).ifPresent(table -> {
+            int prevRow = row;
+            int prevCol = col;
+            Point pt = e.getPoint();
+            row = table.rowAtPoint(pt);
+            col = table.columnAtPoint(pt);
+            if (row < 0 || col < 0) {
+                row = -1;
+                col = -1;
             }
-        } else {
-            repaintRect = table.getCellRect(prevRow, prevCol, false);
-        }
-        table.repaint(repaintRect);
-// <<<<
-        //table.repaint();
+            // >>>> HyperlinkCellRenderer.java
+            // @see http://java.net/projects/swingset3/sources/svn/content/trunk/SwingSet3/src/com/sun/swingset3/demos/table/HyperlinkCellRenderer.java
+            if (row == prevRow && col == prevCol) {
+                return;
+            }
+            Rectangle repaintRect;
+            if (row >= 0 && col >= 0) {
+                Rectangle r = table.getCellRect(row, col, false);
+                if (prevRow >= 0 && prevCol >= 0) {
+                    repaintRect = r.union(table.getCellRect(prevRow, prevCol, false));
+                } else {
+                    repaintRect = r;
+                }
+            } else {
+                repaintRect = table.getCellRect(prevRow, prevCol, false);
+            }
+            table.repaint(repaintRect);
+            // <<<<
+            //table.repaint();
+        });
     }
     @Override public void mouseExited(MouseEvent e) {
-        if (row >= 0 && col >= 0) {
-            table.repaint(table.getCellRect(row, col, false));
-        }
-        row = -1;
-        col = -1;
+        getTable(e).ifPresent(table -> {
+            if (row >= 0 && col >= 0) {
+                table.repaint(table.getCellRect(row, col, false));
+            }
+            row = -1;
+            col = -1;
+        });
     }
 }
 
 class RolloverDefaultTableCellRenderer extends DefaultTableCellRenderer {
     private static final Color HIGHLIGHT = new Color(255, 150, 50);
     private final transient HighlightListener highlighter;
-    public RolloverDefaultTableCellRenderer(HighlightListener highlighter) {
+    protected RolloverDefaultTableCellRenderer(HighlightListener highlighter) {
         super();
         this.highlighter = highlighter;
     }
     @Override public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
         super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+        String str = Objects.toString(value, "");
         if (highlighter.isHighlightableCell(row, column)) {
-            setText("<html><u>" + value.toString());
+            setText("<html><u>" + str);
             setForeground(isSelected ? table.getSelectionForeground() : HIGHLIGHT);
             setBackground(isSelected ? table.getSelectionBackground().darker() : table.getBackground());
         } else {
-            setText(value.toString());
+            setText(str);
             setForeground(isSelected ? table.getSelectionForeground() : table.getForeground());
             setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
         }
@@ -155,23 +161,23 @@ class RolloverDefaultTableCellRenderer extends DefaultTableCellRenderer {
 }
 
 class RolloverNumberRenderer extends RolloverDefaultTableCellRenderer {
-    public RolloverNumberRenderer(HighlightListener highlighter) {
+    protected RolloverNumberRenderer(HighlightListener highlighter) {
         super(highlighter);
-        setHorizontalAlignment(JLabel.RIGHT);
+        setHorizontalAlignment(SwingConstants.RIGHT);
     }
 }
 
 class RolloverBooleanRenderer extends JCheckBox implements TableCellRenderer, UIResource {
-    private static final Border NO_FOCUS_BORDER = new EmptyBorder(1, 1, 1, 1);
     private final transient HighlightListener highlighter;
 
-    public RolloverBooleanRenderer(HighlightListener highlighter) {
+    protected RolloverBooleanRenderer(HighlightListener highlighter) {
         super();
         this.highlighter = highlighter;
-        setHorizontalAlignment(JLabel.CENTER);
+        setHorizontalAlignment(SwingConstants.CENTER);
         setBorderPainted(true);
         setRolloverEnabled(true);
         setOpaque(true);
+        setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
     }
     @Override public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
         getModel().setRollover(highlighter.isHighlightableCell(row, column));
@@ -184,24 +190,20 @@ class RolloverBooleanRenderer extends JCheckBox implements TableCellRenderer, UI
             setBackground(table.getBackground());
             //setBackground(row % 2 == 0 ? table.getBackground() : Color.WHITE); //Nimbus
         }
-        setSelected(value != null && ((Boolean) value).booleanValue());
-
-        if (hasFocus) {
-            setBorder(UIManager.getBorder("Table.focusCellHighlightBorder"));
-        } else {
-            setBorder(NO_FOCUS_BORDER);
-        }
+        setSelected(Objects.equals(value, Boolean.TRUE));
         return this;
     }
     //Overridden for performance reasons. ---->
     @Override public boolean isOpaque() {
         Color back = getBackground();
-        Component p = getParent();
-        if (p != null) {
-            p = p.getParent();
-        } // p should now be the JTable.
-        boolean colorMatch = back != null && p != null && back.equals(p.getBackground()) && p.isOpaque();
-        return !colorMatch && super.isOpaque();
+        Object o = SwingUtilities.getAncestorOfClass(JTable.class, this);
+        if (o instanceof JTable) {
+            JTable table = (JTable) o;
+            boolean colorMatch = Objects.nonNull(back) && back.equals(table.getBackground()) && table.isOpaque();
+            return !colorMatch && super.isOpaque();
+        } else {
+            return super.isOpaque();
+        }
     }
     @Override protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
 //         System.out.println(propertyName);

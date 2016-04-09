@@ -7,6 +7,7 @@ import java.awt.geom.*;
 import java.awt.image.*;
 import java.io.IOException;
 import java.net.*;
+import java.util.Objects;
 import javax.imageio.*;
 import javax.swing.*;
 import javax.swing.border.*;
@@ -46,21 +47,20 @@ public final class MainPanel extends JPanel {
         Border outside = BorderFactory.createTitledBorder("setBackground(1.0, 0.8, 0.8, 0.2)");
         setBorder(BorderFactory.createCompoundBorder(outside, inside));
         GridBagConstraints c = new GridBagConstraints();
-        c.gridheight = 1;
 
-        c.gridx   = 0;
-        c.insets  = new Insets(15, 15, 15, 0);
-        c.anchor  = GridBagConstraints.WEST;
-        c.gridy   = 0; add(new JLabel("0. setOpaque(true)"), c);
-        c.gridy   = 1; add(new JLabel("1. setOpaque(false)"), c);
-        c.gridy   = 2; add(new JLabel("2. 1+paintComponent"), c);
+        c.gridx  = 0;
+        c.insets = new Insets(15, 15, 15, 0);
+        c.anchor = GridBagConstraints.LINE_START;
+        add(new JLabel("0. setOpaque(true)"), c);
+        add(new JLabel("1. setOpaque(false)"), c);
+        add(new JLabel("2. 1+paintComponent"), c);
 
         c.gridx   = 1;
         c.weightx = 1d;
         c.fill    = GridBagConstraints.HORIZONTAL;
-        c.gridy   = 0; add(field0, c);
-        c.gridy   = 1; add(field1, c);
-        c.gridy   = 2; add(field2, c);
+        add(field0, c);
+        add(field1, c);
+        add(field2, c);
     }
     private TexturePaint makeTexturePaint() {
         //Viva! edo>http://www.viva-edo.com/komon/edokomon.html
@@ -75,11 +75,11 @@ public final class MainPanel extends JPanel {
         }
         int w = bfimage.getWidth();
         int h = bfimage.getHeight();
-        return new TexturePaint(bfimage, new Rectangle2D.Float(0, 0, w, h));
+        return new TexturePaint(bfimage, new Rectangle(w, h));
     }
-    @Override public void paintComponent(Graphics g) {
+    @Override protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        if (texture == null) {
+        if (Objects.isNull(texture)) {
             texture = makeTexturePaint();
         }
         Graphics2D g2 = (Graphics2D) g.create();
@@ -99,7 +99,9 @@ public final class MainPanel extends JPanel {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             //for (UIManager.LookAndFeelInfo laf: UIManager.getInstalledLookAndFeels()) {
-            //    if ("Nimbus".equals(laf.getName())) { UIManager.setLookAndFeel(laf.getClassName()); }
+            //    if ("Nimbus".equals(laf.getName())) {
+            //        UIManager.setLookAndFeel(laf.getClassName());
+            //    }
             //}
         } catch (ClassNotFoundException | InstantiationException
                | IllegalAccessException | UnsupportedLookAndFeelException ex) {

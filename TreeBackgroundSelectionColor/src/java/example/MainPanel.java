@@ -3,6 +3,8 @@ package example;
 // vim:set fileencoding=utf-8:
 //@homepage@
 import java.awt.*;
+import java.util.Objects;
+import java.util.regex.Pattern;
 import javax.swing.*;
 import javax.swing.tree.*;
 
@@ -33,7 +35,7 @@ public final class MainPanel extends JPanel {
         set1.add(new DefaultMutableTreeNode(Color.BLUE));
         set2.add(new DefaultMutableTreeNode("asdfasdfas"));
         set2.add(new DefaultMutableTreeNode("asdf"));
-        set3.add(new DefaultMutableTreeNode("asdfasdfasdf"));
+        set3.add(new DefaultMutableTreeNode("Asdfasdfasdf"));
         set3.add(new DefaultMutableTreeNode("qwerqwer"));
         set3.add(new DefaultMutableTreeNode("zvxcvzxcvzxzxcvzxcv"));
         root.add(set1);
@@ -66,13 +68,17 @@ public final class MainPanel extends JPanel {
 }
 
 class SelectionColorTreeCellRenderer extends DefaultTreeCellRenderer {
-    @Override public Component getTreeCellRendererComponent(JTree tree, Object value, boolean isSelected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-        JComponent c = (JComponent) super.getTreeCellRendererComponent(tree, value, isSelected, expanded, leaf, row, hasFocus);
-        if (isSelected) {
+    private final Pattern p = Pattern.compile("^a.*", Pattern.CASE_INSENSITIVE);
+    private Color color;
+    @Override public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+        JComponent c = (JComponent) super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
+        if (selected) {
             setParticularCondition(value);
             c.setForeground(getTextSelectionColor());
             c.setBackground(getBackgroundSelectionColor());
-            if (leaf && value.toString().startsWith("a")) {
+            String str = Objects.toString(value, "");
+            //if (leaf && !str.isEmpty() && str.codePointAt(0) == 'a') {
+            if (leaf && p.matcher(str).matches()) {
                 c.setOpaque(true);
                 c.setBackground(Color.RED);
             } else {
@@ -85,7 +91,6 @@ class SelectionColorTreeCellRenderer extends DefaultTreeCellRenderer {
         }
         return c;
     }
-    private Color color;
     private void setParticularCondition(Object value) {
         if (value instanceof DefaultMutableTreeNode) {
             Object uo = ((DefaultMutableTreeNode) value).getUserObject();
@@ -97,6 +102,6 @@ class SelectionColorTreeCellRenderer extends DefaultTreeCellRenderer {
         color = null;
     }
     @Override public Color getBackgroundSelectionColor() {
-        return color == null ? super.getBackgroundSelectionColor() : color;
+        return Objects.nonNull(color) ? color : super.getBackgroundSelectionColor();
     }
 }

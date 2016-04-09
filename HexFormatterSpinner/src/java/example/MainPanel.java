@@ -55,10 +55,10 @@ public final class MainPanel extends JPanel {
         setPreferredSize(new Dimension(320, 240));
     }
     private class GlyphPaintPanel extends JPanel {
-        @Override public void paintComponent(Graphics g) {
+        @Override protected void paintComponent(Graphics g) {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(Color.WHITE);
+            g2.setPaint(Color.WHITE);
             g2.fillRect(0, 0, getWidth(), getHeight());
 
             int code = ((Integer) spinner.getValue()).intValue();
@@ -82,8 +82,7 @@ public final class MainPanel extends JPanel {
             Shape mjShape = new TextLayout(str, ipaMj, frc).getOutline(null);
 
             Rectangle2D b = exShape.getBounds();
-            Point2D.Double p = new Point2D.Double(b.getX() + b.getWidth() / 2d, b.getY() + b.getHeight() / 2d);
-            AffineTransform toCenterAT = AffineTransform.getTranslateInstance(getWidth() / 2d - p.getX(), getHeight() / 2d - p.getY());
+            AffineTransform toCenterAT = AffineTransform.getTranslateInstance(getWidth() / 2d - b.getCenterX(), getHeight() / 2d - b.getCenterY());
 
             g2.setPaint(Color.YELLOW);
             g2.draw(toCenterAT.createTransformedShape(b));
@@ -113,7 +112,7 @@ public final class MainPanel extends JPanel {
                 return Integer.valueOf(text, 16);
 //                 try {
 //                     return Integer.valueOf(text, 16);
-//                 } catch (NumberFormatException nfe) {
+//                 } catch (NumberFormatException ex) {
 //                     throw new ParseException(text, 0);
 //                 }
             }

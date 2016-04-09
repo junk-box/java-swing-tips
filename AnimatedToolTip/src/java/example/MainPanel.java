@@ -5,12 +5,11 @@ package example;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Ellipse2D;
-import java.io.Serializable;
 import java.net.*;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
 import javax.swing.*;
+import javax.swing.Timer;
 
 public final class MainPanel extends JPanel {
     private final URL url = getClass().getResource("anime.gif");
@@ -35,7 +34,7 @@ public final class MainPanel extends JPanel {
         super(new BorderLayout());
         l1.setToolTipText("Test1");
         l2.setToolTipText("Test2");
-        l3.setToolTipText("<html><img src='" + url + "'>Test3</html>");
+        l3.setToolTipText(String.format("<html><img src='%s'>Test3</html>", url));
 
         JPanel p1 = new JPanel(new BorderLayout());
         p1.setBorder(BorderFactory.createTitledBorder("javax.swing.Timer"));
@@ -81,7 +80,7 @@ public final class MainPanel extends JPanel {
 
 class AnimatedToolTip extends JToolTip {
     private final JLabel iconlabel;
-    public AnimatedToolTip(JLabel label) {
+    protected AnimatedToolTip(JLabel label) {
         super();
         this.iconlabel = label;
         LookAndFeel.installColorsAndFont(iconlabel, "ToolTip.background", "ToolTip.foreground", "ToolTip.font");
@@ -99,32 +98,30 @@ class AnimatedToolTip extends JToolTip {
 //         d.height += i.top + i.bottom;
 //         return d;
 //     }
-    @Override public void setTipText(final String tipText) {
+    @Override public void setTipText(String tipText) {
         String oldValue = iconlabel.getText();
         iconlabel.setText(tipText);
         firePropertyChange("tiptext", oldValue, tipText);
     }
     @Override public String getTipText() {
-        return iconlabel == null ? "" : iconlabel.getText();
+        return Objects.nonNull(iconlabel) ? iconlabel.getText() : "";
     }
 }
 
 class AnimatedLabel extends JLabel implements ActionListener {
     private final Timer animator;
-    private final AnimeIcon icon = new AnimeIcon();
-    public AnimatedLabel(String title) {
+    private final transient AnimeIcon icon = new AnimeIcon();
+    protected AnimatedLabel(String title) {
         super(title);
         setOpaque(true);
         animator = new Timer(100, this);
         setIcon(icon);
-        addHierarchyListener(new HierarchyListener() {
-            @Override public void hierarchyChanged(HierarchyEvent e) {
-                if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0) {
-                    if (e.getComponent().isShowing()) {
-                        startAnimation();
-                    } else {
-                        stopAnimation();
-                    }
+        addHierarchyListener(e -> {
+            if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0) {
+                if (e.getComponent().isShowing()) {
+                    startAnimation();
+                } else {
+                    stopAnimation();
                 }
             }
         });
@@ -133,18 +130,17 @@ class AnimatedLabel extends JLabel implements ActionListener {
         icon.next();
         repaint();
     }
-    public void startAnimation() {
+    private void startAnimation() {
         icon.setRunning(true);
         animator.start();
     }
-    public void stopAnimation() {
+    private void stopAnimation() {
         icon.setRunning(false);
         animator.stop();
     }
 }
 
-class AnimeIcon implements Icon, Serializable {
-    private static final long serialVersionUID = 1L;
+class AnimeIcon implements Icon {
     private static final Color ELLIPSE_COLOR = new Color(.5f, .5f, .5f);
     private static final double R  = 2d;
     private static final double SX = 1d;
@@ -171,20 +167,19 @@ class AnimeIcon implements Icon, Serializable {
         this.isRunning = isRunning;
     }
     @Override public void paintIcon(Component c, Graphics g, int x, int y) {
-        Graphics2D g2d = (Graphics2D) g.create();
-        g2d.setPaint(c == null ? Color.WHITE : c.getBackground());
-        g2d.fillRect(x, y, getIconWidth(), getIconHeight());
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2d.setColor(ELLIPSE_COLOR);
-        g2d.translate(x, y);
+        Graphics2D g2 = (Graphics2D) g.create();
+        g2.setPaint(Objects.nonNull(c) ? c.getBackground() : Color.WHITE);
+        g2.fillRect(x, y, getIconWidth(), getIconHeight());
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setPaint(ELLIPSE_COLOR);
+        g2.translate(x, y);
         int size = list.size();
         for (int i = 0; i < size; i++) {
             float alpha = isRunning ? (i + 1) / (float) size : .5f;
-            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-            g2d.fill(list.get(i));
+            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+            g2.fill(list.get(i));
         }
-        //g2d.translate(-x, -y);
-        g2d.dispose();
+        g2.dispose();
     }
     @Override public int getIconWidth() {
         return WIDTH;

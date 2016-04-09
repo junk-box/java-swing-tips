@@ -4,6 +4,7 @@ package example;
 //@homepage@
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Objects;
 import javax.swing.*;
 import javax.swing.plaf.basic.*;
 import javax.swing.text.*;
@@ -22,13 +23,13 @@ public final class MainPanel extends JPanel {
         amc.put("myUp", new AbstractAction() {
             @Override public void actionPerformed(ActionEvent e) {
                 int index = combo.getSelectedIndex();
-                combo.setSelectedIndex((index == 0) ? combo.getItemCount() - 1 : index - 1);
+                combo.setSelectedIndex(index == 0 ? combo.getItemCount() - 1 : index - 1);
             }
         });
         amc.put("myDown", new AbstractAction() {
             @Override public void actionPerformed(ActionEvent e) {
                 int index = combo.getSelectedIndex();
-                combo.setSelectedIndex((index == combo.getItemCount() - 1) ? 0 : index + 1);
+                combo.setSelectedIndex(index == combo.getItemCount() - 1 ? 0 : index + 1);
             }
         });
         amc.put("myEnt", new AbstractAction() {
@@ -47,12 +48,11 @@ public final class MainPanel extends JPanel {
                 try {
                     Rectangle rect = jtp.modelToView(jtp.getCaretPosition());
                     popup.show(jtp, rect.x, rect.y + rect.height);
-                    EventQueue.invokeLater(new Runnable() {
-                        @Override public void run() {
-                            SwingUtilities.getWindowAncestor(popup).toFront();
-                            popup.requestFocusInWindow();
-                        }
-                    });
+//                     Container c = popup.getTopLevelAncestor();
+//                     if (c instanceof Window) {
+//                         ((Window) c).toFront();
+//                     }
+                    popup.requestFocusInWindow();
                 } catch (BadLocationException ble) {
                     ble.printStackTrace();
                 }
@@ -63,13 +63,13 @@ public final class MainPanel extends JPanel {
         add(new JScrollPane(jtp));
         setPreferredSize(new Dimension(320, 240));
     }
-    private void append(final String str) {
+    private void append(String str) {
         popup.hide();
         try {
             Document doc = jtp.getDocument();
             doc.insertString(jtp.getCaretPosition(), str, null);
-        } catch (BadLocationException e) {
-            e.printStackTrace();
+        } catch (BadLocationException ex) {
+            ex.printStackTrace();
         }
     }
 
@@ -99,7 +99,7 @@ public final class MainPanel extends JPanel {
 class EditorComboPopup extends BasicComboPopup {
     private final JTextComponent textArea;
     private transient MouseAdapter listener;
-    public EditorComboPopup(JTextComponent textArea, JComboBox cb) {
+    protected EditorComboPopup(JTextComponent textArea, JComboBox cb) {
         super(cb);
         this.textArea = textArea;
     }
@@ -117,12 +117,12 @@ class EditorComboPopup extends BasicComboPopup {
                 }
             }
         };
-        if (list != null) {
+        if (Objects.nonNull(list)) {
             list.addMouseListener(listener);
         }
     }
     @Override public void uninstallingUI() {
-        if (listener != null) {
+        if (Objects.nonNull(listener)) {
             list.removeMouseListener(listener);
             listener = null;
         }

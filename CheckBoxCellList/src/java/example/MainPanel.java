@@ -20,17 +20,26 @@ public final class MainPanel extends JPanel {
         JList<CheckBoxNode> list2 = new CheckBoxList<>(model);
 
         DefaultMutableTreeNode root = new DefaultMutableTreeNode("JTree");
-        JTree list3 = new JTree();
-        list3.setEditable(true);
-        list3.setRootVisible(false);
-        list3.setCellRenderer(new CheckBoxNodeRenderer());
-        list3.setCellEditor(new CheckBoxNodeEditor());
+        JTree list3 = new JTree() {
+            @Override public void updateUI() {
+                setCellRenderer(null);
+                setCellEditor(null);
+                super.updateUI();
+                setEditable(true);
+                setRootVisible(false);
+                setShowsRootHandles(false);
+                setCellRenderer(new CheckBoxNodeRenderer());
+                setCellEditor(new CheckBoxNodeEditor());
+            }
+        };
 
         for (String title: Arrays.asList(
                 "aaaa", "bbbbbbb", "ccc", "dddddd", "eeeeeee",
                 "fffffffff", "gggggg", "hhhhh", "iiii", "jjjjjjjjjj")) {
             boolean flag = title.length() % 2 == 0;
-            addComp(list1, new JCheckBox(title, flag));
+            JCheckBox c = new JCheckBox(title, flag);
+            c.setAlignmentX(Component.LEFT_ALIGNMENT);
+            list1.add(c);
             model.addElement(new CheckBoxNode(title, flag));
             root.add(new DefaultMutableTreeNode(new CheckBoxNode(title, flag)));
         }
@@ -48,10 +57,6 @@ public final class MainPanel extends JPanel {
         p.setBorder(BorderFactory.createTitledBorder(title));
         p.add(new JScrollPane(tree));
         return p;
-    }
-    private static void addComp(Box box, JComponent c) {
-        c.setAlignmentX(Component.LEFT_ALIGNMENT);
-        box.add(c);
     }
     public static void main(String... args) {
         EventQueue.invokeLater(new Runnable() {
@@ -79,7 +84,7 @@ public final class MainPanel extends JPanel {
 class CheckBoxNode {
     public final String text;
     public final boolean selected;
-    public CheckBoxNode(String text, boolean selected) {
+    protected CheckBoxNode(String text, boolean selected) {
         this.text = text;
         this.selected = selected;
     }
@@ -89,8 +94,8 @@ class CheckBoxNode {
 }
 
 class CheckBoxList<E extends CheckBoxNode> extends JList<E> {
-    private CheckBoxCellRenderer<E> renderer;
-    public CheckBoxList(ListModel<E> model) {
+    private transient CheckBoxCellRenderer<E> renderer;
+    protected CheckBoxList(ListModel<E> model) {
         super(model);
     }
     @Override public void updateUI() {
@@ -98,10 +103,8 @@ class CheckBoxList<E extends CheckBoxNode> extends JList<E> {
         setBackground(null);
         setSelectionForeground(null);
         setSelectionBackground(null);
-        if (renderer != null) {
-            removeMouseListener(renderer);
-            removeMouseMotionListener(renderer);
-        }
+        removeMouseListener(renderer);
+        removeMouseMotionListener(renderer);
         super.updateUI();
         renderer = new CheckBoxCellRenderer<E>();
         setCellRenderer(renderer);
@@ -137,21 +140,22 @@ class CheckBoxList<E extends CheckBoxNode> extends JList<E> {
     }
 }
 
-class CheckBoxCellRenderer<E extends CheckBoxNode> extends JCheckBox implements ListCellRenderer<E>, MouseListener, MouseMotionListener {
+class CheckBoxCellRenderer<E extends CheckBoxNode> extends MouseAdapter implements ListCellRenderer<E> {
+    private final JCheckBox checkBox = new JCheckBox();
     private int rollOverRowIndex = -1;
-    @Override public Component getListCellRendererComponent(JList<? extends E> list, E value, int index, boolean isSelected, boolean cellHasFocus) {
-        this.setOpaque(true);
-        if (isSelected) {
-            this.setBackground(list.getSelectionBackground());
-            this.setForeground(list.getSelectionForeground());
+    @Override public Component getListCellRendererComponent(JList<? extends E> list, E value, int index, boolean selected, boolean cellHasFocus) {
+        checkBox.setOpaque(true);
+        if (selected) {
+            checkBox.setBackground(list.getSelectionBackground());
+            checkBox.setForeground(list.getSelectionForeground());
         } else {
-            this.setBackground(list.getBackground());
-            this.setForeground(list.getForeground());
+            checkBox.setBackground(list.getBackground());
+            checkBox.setForeground(list.getForeground());
         }
-        this.setSelected(value.selected);
-        this.getModel().setRollover(index == rollOverRowIndex);
-        this.setText(value.text);
-        return this;
+        checkBox.setSelected(value.selected);
+        checkBox.getModel().setRollover(index == rollOverRowIndex);
+        checkBox.setText(value.text);
+        return checkBox;
     }
     @Override public void mouseExited(MouseEvent e) {
         if (rollOverRowIndex >= 0) {
@@ -182,41 +186,82 @@ class CheckBoxCellRenderer<E extends CheckBoxNode> extends JCheckBox implements 
             l.repaint();
         }
     }
-    @Override public void mouseEntered(MouseEvent e)  { /* not needed */ }
-    @Override public void mousePressed(MouseEvent e)  { /* not needed */ }
-    @Override public void mouseReleased(MouseEvent e) { /* not needed */ }
-    @Override public void mouseDragged(MouseEvent e)  { /* not needed */ }
 }
 
-class CheckBoxNodeRenderer extends JCheckBox implements TreeCellRenderer {
+class CheckBoxNodeRenderer implements TreeCellRenderer {
+    private final JCheckBox checkBox = new JCheckBox();
     private final TreeCellRenderer renderer = new DefaultTreeCellRenderer();
     @Override public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
         if (leaf && value instanceof DefaultMutableTreeNode) {
-            this.setOpaque(false);
+            checkBox.setOpaque(false);
             Object userObject = ((DefaultMutableTreeNode) value).getUserObject();
             if (userObject instanceof CheckBoxNode) {
                 CheckBoxNode node = (CheckBoxNode) userObject;
-                this.setText(node.text);
-                this.setSelected(node.selected);
+                checkBox.setText(node.text);
+                checkBox.setSelected(node.selected);
             }
-            return this;
+            return checkBox;
         }
         return renderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
     }
 }
-
+//*
+//delegation pattern
+class CheckBoxNodeEditor extends AbstractCellEditor implements TreeCellEditor {
+    private final JCheckBox checkBox = new JCheckBox() {
+        private transient ActionListener handler;
+        @Override public void updateUI() {
+            removeActionListener(handler);
+            super.updateUI();
+            setOpaque(false);
+            setFocusable(false);
+            handler = e -> stopCellEditing();
+            addActionListener(handler);
+        }
+    };
+    @Override public Component getTreeCellEditorComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row) {
+        if (leaf && value instanceof DefaultMutableTreeNode) {
+            Object userObject = ((DefaultMutableTreeNode) value).getUserObject();
+            if (userObject instanceof CheckBoxNode) {
+                checkBox.setSelected(((CheckBoxNode) userObject).selected);
+            } else {
+                checkBox.setSelected(false);
+            }
+            checkBox.setText(value.toString());
+        }
+        return checkBox;
+    }
+    @Override public Object getCellEditorValue() {
+        return new CheckBoxNode(checkBox.getText(), checkBox.isSelected());
+    }
+    @Override public boolean isCellEditable(EventObject e) {
+        return e instanceof MouseEvent;
+    }
+//     //AbstractCellEditor
+//     @Override public boolean shouldSelectCell(EventObject anEvent) {
+//         return true;
+//     }
+//     @Override public boolean stopCellEditing() {
+//         fireEditingStopped();
+//         return true;
+//     }
+//     @Override public void cancelCellEditing() {
+//         fireEditingCanceled();
+//     }
+}
+/*/
+//inheritence to extend a class
 class CheckBoxNodeEditor extends JCheckBox implements TreeCellEditor {
-    public CheckBoxNodeEditor() {
-        super();
+    private transient ActionListener handler;
+    @Override public void updateUI() {
+        removeActionListener(handler);
+        super.updateUI();
         setOpaque(false);
         setFocusable(false);
-        addActionListener(new ActionListener() {
-            @Override public void actionPerformed(ActionEvent e) {
-                stopCellEditing();
-            }
-        });
+        handler = e -> stopCellEditing();
+        addActionListener(handler);
     }
-    @Override public Component getTreeCellEditorComponent(JTree tree, Object value, boolean isSelected, boolean expanded, boolean leaf, int row) {
+    @Override public Component getTreeCellEditorComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row) {
         if (leaf && value instanceof DefaultMutableTreeNode) {
             Object userObject = ((DefaultMutableTreeNode) value).getUserObject();
             if (userObject instanceof CheckBoxNode) {
@@ -264,7 +309,7 @@ class CheckBoxNodeEditor extends JCheckBox implements TreeCellEditor {
         for (int i = listeners.length - 2; i >= 0; i -= 2) {
             if (listeners[i] == CellEditorListener.class) {
                 // Lazily create the event:
-                if (changeEvent == null) {
+                if (Objects.isNull(changeEvent)) {
                     changeEvent = new ChangeEvent(this);
                 }
                 ((CellEditorListener) listeners[i + 1]).editingStopped(changeEvent);
@@ -279,7 +324,7 @@ class CheckBoxNodeEditor extends JCheckBox implements TreeCellEditor {
         for (int i = listeners.length - 2; i >= 0; i -= 2) {
             if (listeners[i] == CellEditorListener.class) {
                 // Lazily create the event:
-                if (changeEvent == null) {
+                if (Objects.isNull(changeEvent)) {
                     changeEvent = new ChangeEvent(this);
                 }
                 ((CellEditorListener) listeners[i + 1]).editingCanceled(changeEvent);
@@ -287,3 +332,4 @@ class CheckBoxNodeEditor extends JCheckBox implements TreeCellEditor {
         }
     }
 }
+//*/

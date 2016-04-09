@@ -55,8 +55,9 @@ public final class MainPanel extends JPanel {
         button.addActionListener(new ActionListener() {
             @Override public void actionPerformed(ActionEvent e) {
                 JComponent b = (JComponent) e.getSource();
-                Window w = SwingUtilities.getWindowAncestor(b);
-                if (w != null) {
+                Container c = b.getTopLevelAncestor();
+                if (c instanceof Window) {
+                    Window w = (Window) c;
                     w.dispatchEvent(new WindowEvent(w, WindowEvent.WINDOW_CLOSING));
                 }
             }
@@ -95,21 +96,21 @@ public final class MainPanel extends JPanel {
         //title.setBackground(Color.ORANGE);
         title.setBorder(BorderFactory.createEmptyBorder(W, W, W, W));
 
-        title.add(new JLabel(str, JLabel.CENTER));
+        title.add(new JLabel(str, SwingConstants.CENTER));
         title.add(makeCloseButton(), BorderLayout.EAST);
         //title.add(iconify, BorderLayout.WEST);
 
-        ResizeWindowListener rwl = new ResizeWindowListener(frame);
+        ResizeWindowListener rwl = new ResizeWindowListener();
         for (SideLabel l: Arrays.asList(left, right, top, bottom, topleft, topright, bottomleft, bottomright)) {
             l.addMouseListener(rwl);
             l.addMouseMotionListener(rwl);
         }
 
-        JPanel titlePanel = new JPanel(new BorderLayout(0, 0));
+        JPanel titlePanel = new JPanel(new BorderLayout());
         titlePanel.add(top,           BorderLayout.NORTH);
         titlePanel.add(title,         BorderLayout.CENTER);
 
-        JPanel northPanel = new JPanel(new BorderLayout(0, 0));
+        JPanel northPanel = new JPanel(new BorderLayout());
         northPanel.add(topleft,       BorderLayout.WEST);
         northPanel.add(titlePanel,    BorderLayout.CENTER);
         northPanel.add(topright,      BorderLayout.EAST);
@@ -161,17 +162,17 @@ public final class MainPanel extends JPanel {
 }
 
 enum Side {
-    N (Cursor.N_RESIZE_CURSOR,  new Dimension(0, 4)),
-    W (Cursor.W_RESIZE_CURSOR,  new Dimension(4, 0)),
-    E (Cursor.E_RESIZE_CURSOR,  new Dimension(4, 0)),
-    S (Cursor.S_RESIZE_CURSOR,  new Dimension(0, 4)),
+    N(Cursor.N_RESIZE_CURSOR,   new Dimension(0, 4)),
+    W(Cursor.W_RESIZE_CURSOR,   new Dimension(4, 0)),
+    E(Cursor.E_RESIZE_CURSOR,   new Dimension(4, 0)),
+    S(Cursor.S_RESIZE_CURSOR,   new Dimension(0, 4)),
     NW(Cursor.NW_RESIZE_CURSOR, new Dimension(4, 4)),
     NE(Cursor.NE_RESIZE_CURSOR, new Dimension(4, 4)),
     SW(Cursor.SW_RESIZE_CURSOR, new Dimension(4, 4)),
     SE(Cursor.SE_RESIZE_CURSOR, new Dimension(4, 4));
     public final Dimension dim;
     public final int cursor;
-    private Side(int cursor, Dimension dim) {
+    Side(int cursor, Dimension dim) {
         this.cursor = cursor;
         this.dim = dim;
     }
@@ -179,7 +180,7 @@ enum Side {
 
 class SideLabel extends JLabel {
     public final Side side;
-    public SideLabel(Side side) {
+    protected SideLabel(Side side) {
         super();
         this.side = side;
         setCursor(Cursor.getPredefinedCursor(side.cursor));
@@ -196,22 +197,20 @@ class SideLabel extends JLabel {
 }
 
 class ResizeWindowListener extends MouseAdapter {
-    private final JFrame frame;
-    private Rectangle rect;
-    public ResizeWindowListener(JFrame frame) {
-        super();
-        this.frame = frame;
-        this.rect  = frame.getBounds();
-    }
+    private final Rectangle rect = new Rectangle();
     @Override public void mousePressed(MouseEvent e) {
-        rect = frame.getBounds();
+        Component p = SwingUtilities.getRoot(e.getComponent());
+        if (p instanceof Window) {
+            rect.setBounds(((Window) p).getBounds());
+        }
     }
     @Override public void mouseDragged(MouseEvent e) {
-        if (rect == null) {
-            return;
+        Component c = e.getComponent();
+        Component p = SwingUtilities.getRoot(c);
+        if (!rect.isEmpty() && c instanceof SideLabel && p instanceof Window) {
+            Side side = ((SideLabel) c).side;
+            ((Window) p).setBounds(getResizedRect(rect, side, e.getX(), e.getY()));
         }
-        Side side = ((SideLabel) e.getComponent()).side;
-        frame.setBounds(getResizedRect(rect, side, e.getX(), e.getY()));
     }
     private static Rectangle getResizedRect(Rectangle r, Side side, int dx, int dy) {
         switch (side) {
@@ -256,39 +255,34 @@ class ResizeWindowListener extends MouseAdapter {
 }
 
 class DragWindowListener extends MouseAdapter {
-    private final transient Point startPt = new Point();
-    private transient Window window;
-    @Override public void mousePressed(MouseEvent me) {
-        if (window == null) {
-            Object o = me.getSource();
-            if (o instanceof Window) {
-                window = (Window) o;
-            } else if (o instanceof JComponent) {
-                window = SwingUtilities.windowForComponent(me.getComponent());
-            }
+    private final Point startPt = new Point();
+    @Override public void mousePressed(MouseEvent e) {
+        if (SwingUtilities.isLeftMouseButton(e)) {
+            startPt.setLocation(e.getPoint());
         }
-        startPt.setLocation(me.getPoint());
     }
-    @Override public void mouseDragged(MouseEvent me) {
-        if (window != null) {
-            Point eventLocationOnScreen = me.getLocationOnScreen();
-            window.setLocation(eventLocationOnScreen.x - startPt.x,
-                               eventLocationOnScreen.y - startPt.y);
+    @Override public void mouseDragged(MouseEvent e) {
+        Component c = SwingUtilities.getRoot(e.getComponent());
+        if (c instanceof Window && SwingUtilities.isLeftMouseButton(e)) {
+            Window window = (Window) c;
+            Point pt = window.getLocation();
+            window.setLocation(pt.x - startPt.x + e.getX(), pt.y - startPt.y + e.getY());
         }
     }
 }
 
 class CloseIcon implements Icon {
     @Override public void paintIcon(Component c, Graphics g, int x, int y) {
-        g.translate(x, y);
-        g.setColor(Color.BLACK);
-        g.drawLine(4,  4, 11, 11);
-        g.drawLine(4,  5, 10, 11);
-        g.drawLine(5,  4, 11, 10);
-        g.drawLine(11, 4,  4, 11);
-        g.drawLine(11, 5,  5, 11);
-        g.drawLine(10, 4,  4, 10);
-        g.translate(-x, -y);
+        Graphics2D g2 = (Graphics2D) g.create();
+        g2.translate(x, y);
+        g2.setPaint(Color.BLACK);
+        g2.drawLine(4,  4, 11, 11);
+        g2.drawLine(4,  5, 10, 11);
+        g2.drawLine(5,  4, 11, 10);
+        g2.drawLine(11, 4,  4, 11);
+        g2.drawLine(11, 5,  5, 11);
+        g2.drawLine(10, 4,  4, 10);
+        g2.dispose();
     }
     @Override public int getIconWidth() {
         return 16;

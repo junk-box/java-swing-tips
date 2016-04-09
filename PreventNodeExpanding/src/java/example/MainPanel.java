@@ -75,7 +75,7 @@ class DirectoryExpandVetoListener implements TreeWillExpandListener {
             File file = (File) node.getUserObject();
             String title = file.getName();
             System.out.println(title);
-            if (title.charAt(0) == '.') {
+            if (title.codePointAt(0) == '.') {
                 throw new ExpandVetoException(e, "Tree expansion cancelled");
             }
         }
@@ -86,7 +86,7 @@ class DirectoryExpandVetoListener implements TreeWillExpandListener {
 class FolderSelectionListener implements TreeSelectionListener {
 //     private JFrame frame = null;
     private final FileSystemView fileSystemView;
-    public FolderSelectionListener(FileSystemView fileSystemView) {
+    protected FolderSelectionListener(FileSystemView fileSystemView) {
         this.fileSystemView = fileSystemView;
     }
     @Override public void valueChanged(TreeSelectionEvent e) {
@@ -101,6 +101,9 @@ class FolderSelectionListener implements TreeSelectionListener {
         final JTree tree = (JTree) e.getSource();
         (new Task(fileSystemView, parent) {
             @Override protected void process(List<File> chunks) {
+                if (isCancelled()) {
+                    return;
+                }
                 if (!tree.isDisplayable()) {
                     cancel(true);
                     return;
@@ -118,7 +121,7 @@ class FolderSelectionListener implements TreeSelectionListener {
 class Task extends SwingWorker<String, File> {
     private final File parent;
     private final FileSystemView fileSystemView;
-    public Task(FileSystemView fileSystemView, File parent) {
+    protected Task(FileSystemView fileSystemView, File parent) {
         super();
         this.fileSystemView = fileSystemView;
         this.parent = parent;
@@ -136,14 +139,14 @@ class Task extends SwingWorker<String, File> {
 class FileTreeCellRenderer extends DefaultTreeCellRenderer {
     private final TreeCellRenderer renderer;
     private final FileSystemView fileSystemView;
-    public FileTreeCellRenderer(TreeCellRenderer renderer, FileSystemView fileSystemView) {
+    protected FileTreeCellRenderer(TreeCellRenderer renderer, FileSystemView fileSystemView) {
         super();
         this.renderer = renderer;
         this.fileSystemView = fileSystemView;
     }
-    @Override public Component getTreeCellRendererComponent(JTree tree, Object value, boolean isSelected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-        JLabel c = (JLabel) renderer.getTreeCellRendererComponent(tree, value, isSelected, expanded, leaf, row, hasFocus);
-        if (isSelected) {
+    @Override public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+        JLabel c = (JLabel) renderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
+        if (selected) {
             c.setOpaque(false);
             c.setForeground(getTextSelectionColor());
         } else {
@@ -159,11 +162,8 @@ class FileTreeCellRenderer extends DefaultTreeCellRenderer {
                 c.setIcon(fileSystemView.getSystemIcon(file));
                 c.setText(fileSystemView.getSystemDisplayName(file));
                 c.setToolTipText(file.getPath());
-                if (file.getName().startsWith(".")) {
-                    c.setEnabled(false);
-                } else {
-                    c.setEnabled(true);
-                }
+                //c.setEnabled(!file.getName().startsWith("."));
+                c.setEnabled(file.getName().codePointAt(0) != '.');
             }
         }
         return c;

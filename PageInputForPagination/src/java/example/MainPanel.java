@@ -14,7 +14,7 @@ public final class MainPanel extends JPanel {
     private final String[] columnNames = {"Year", "String", "Comment"};
     private final DefaultTableModel model = new DefaultTableModel(null, columnNames) {
         @Override public Class<?> getColumnClass(int column) {
-            return (column == 0) ? Integer.class : Object.class;
+            return column == 0 ? Integer.class : Object.class;
         }
     };
     private final transient TableRowSorter<? extends TableModel> sorter = new TableRowSorter<>(model);
@@ -30,7 +30,7 @@ public final class MainPanel extends JPanel {
             if (v > 0 && v <= maxPageIndex) {
                 currentPageIndex = v;
             }
-            initFilterAndButton();
+            initFilterAndButtons();
         }
     };
 
@@ -76,7 +76,7 @@ public final class MainPanel extends JPanel {
                 } else if (last.equals(c)) {
                     currentPageIndex = maxPageIndex;
                 }
-                initFilterAndButton();
+                initFilterAndButtons();
             }
         };
         for (JButton b: Arrays.asList(first, prev, next, last)) {
@@ -95,6 +95,9 @@ public final class MainPanel extends JPanel {
             super(max, itemsPerPage);
         }
         @Override protected void process(List<List<Object[]>> chunks) {
+            if (isCancelled()) {
+                return;
+            }
             if (!isDisplayable()) {
                 System.out.println("process: DISPOSE_ON_CLOSE");
                 cancel(true);
@@ -107,7 +110,7 @@ public final class MainPanel extends JPanel {
             }
             int rowCount = model.getRowCount();
             maxPageIndex = rowCount / itemsPerPage + (rowCount % itemsPerPage == 0 ? 0 : 1);
-            initFilterAndButton();
+            initFilterAndButtons();
         }
         @Override public void done() {
             if (!isDisplayable()) {
@@ -127,7 +130,7 @@ public final class MainPanel extends JPanel {
         }
     }
 
-    private void initFilterAndButton() {
+    private void initFilterAndButtons() {
         sorter.setRowFilter(new RowFilter<TableModel, Integer>() {
             @Override public boolean include(Entry<? extends TableModel, ? extends Integer> entry) {
                 int ti = currentPageIndex - 1;
@@ -198,7 +201,7 @@ class LoadTask extends SwingWorker<String, List<Object[]>> {
         List<Object[]> result = new ArrayList<Object[]>(size);
         int j = current;
         while (j < current + size) {
-            result.add(new Object[] {j, "Test: " + j, (j % 2 == 0) ? "" : "comment..."});
+            result.add(new Object[] {j, "Test: " + j, j % 2 == 0 ? "" : "comment..."});
             j++;
         }
         publish(result);

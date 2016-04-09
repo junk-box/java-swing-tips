@@ -3,7 +3,7 @@ package example;
 // vim:set fileencoding=utf-8:
 //@homepage@
 import java.awt.*;
-import java.util.Locale;
+import java.util.*;
 import javax.swing.*;
 import javax.swing.text.*;
 
@@ -54,17 +54,16 @@ public final class MainPanel extends JPanel {
 }
 class FirstCharToUpperCaseDocumentFilter extends DocumentFilter {
     private final JTextComponent textArea;
-    public FirstCharToUpperCaseDocumentFilter(JTextComponent textArea) {
+    protected FirstCharToUpperCaseDocumentFilter(JTextComponent textArea) {
         super();
         this.textArea = textArea;
     }
-    @Override public void insertString(FilterBypass fb, int offset, String text, AttributeSet attrs) throws BadLocationException {
-        if (text == null) {
-            return;
+    @Override public void insertString(DocumentFilter.FilterBypass fb, int offset, String text, AttributeSet attrs) throws BadLocationException {
+        if (Objects.nonNull(text)) {
+            replace(fb, offset, 0, text, attrs);
         }
-        replace(fb, offset, 0, text, attrs);
     }
-    @Override public void remove(FilterBypass fb, int offset, int length) throws BadLocationException {
+    @Override public void remove(DocumentFilter.FilterBypass fb, int offset, int length) throws BadLocationException {
         Document doc = fb.getDocument();
         if (offset == 0 && doc.getLength() - length > 0) {
             fb.replace(0, length + 1, doc.getText(length, 1).toUpperCase(Locale.ENGLISH), null);
@@ -73,9 +72,9 @@ class FirstCharToUpperCaseDocumentFilter extends DocumentFilter {
             fb.remove(offset, length);
         }
     }
-    @Override public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs) throws BadLocationException {
+    @Override public void replace(DocumentFilter.FilterBypass fb, int offset, int length, String text, AttributeSet attrs) throws BadLocationException {
         String str = text;
-        if (offset == 0 && text != null && text.length() > 0) {
+        if (offset == 0 && Objects.nonNull(text) && !text.isEmpty()) {
             str = text.substring(0, 1).toUpperCase(Locale.ENGLISH) + text.substring(1);
         }
         fb.replace(offset, length, str, attrs);

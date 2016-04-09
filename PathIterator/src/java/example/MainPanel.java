@@ -4,8 +4,13 @@ package example;
 //@homepage@
 import java.awt.*;
 import java.awt.datatransfer.*;
+//import java.awt.dnd.*;
 import java.awt.event.*;
 import java.awt.geom.*;
+// import java.io.*;
+// import java.nio.charset.StandardCharsets;
+// import java.util.Arrays;
+import java.util.Objects;
 import javax.jnlp.*;
 import javax.swing.*;
 import javax.swing.event.*;
@@ -62,21 +67,20 @@ public final class MainPanel extends JPanel {
         JPanel p = new JPanel(new GridBagLayout());
         p.setBorder(BorderFactory.createTitledBorder("Preferences"));
         GridBagConstraints c = new GridBagConstraints();
-        c.gridheight = 1;
 
         c.gridx   = 0;
         c.insets  = new Insets(5, 5, 5, 0);
-        c.anchor  = GridBagConstraints.WEST;
-        c.gridy   = 0; p.add(new JLabel("Addendum Circle Radius:"), c);
-        c.gridy   = 1; p.add(new JLabel("Dedendum Circle Radius:"), c);
-        c.gridy   = 2; p.add(new JLabel("Count of Teeth:"), c);
+        c.anchor  = GridBagConstraints.LINE_END;
+        p.add(new JLabel("Addendum Circle Radius:"), c);
+        p.add(new JLabel("Dedendum Circle Radius:"), c);
+        p.add(new JLabel("Count of Teeth:"), c);
 
         c.gridx   = 1;
         c.weightx = 1d;
         c.fill    = GridBagConstraints.HORIZONTAL;
-        c.gridy   = 0; p.add(spinner1,  c);
-        c.gridy   = 1; p.add(spinner2,  c);
-        c.gridy   = 2; p.add(vcSpinner, c);
+        p.add(spinner1,  c);
+        p.add(spinner2,  c);
+        p.add(vcSpinner, c);
         return p;
     }
     private JComponent makeSVGPanel() {
@@ -100,13 +104,51 @@ public final class MainPanel extends JPanel {
 //         p.add(l, BorderLayout.NORTH);
         return p;
     }
+//     class MyDragGestureListener implements DragGestureListener {
+//         @Override public void dragGestureRecognized(DragGestureEvent dge) {
+//             File outfile;
+//             try {
+//                 outfile = File.createTempFile("starburst", ".svg");
+//                 FileWriter w = new FileWriter(outfile);
+//                 w.writeData(textArea.getText());
+//                 //outfile.deleteOnExit();
+//             } catch (IOException ioe) {
+//                 Toolkit.getDefaultToolkit().beep();
+//                 JOptionPane.showMessageDialog(null, "Could not create file.", "Error", JOptionPane.ERROR_MESSAGE);
+//                 return;
+//             }
+//             if (Objects.isNull(outfile)) {
+//                 return;
+//             }
+//             final File tmpfile = outfile;
+//             Transferable tran = new Transferable() {
+//                 @Override public Object getTransferData(DataFlavor flavor) {
+//                     return Arrays.asList(tmpfile);
+//                 }
+//                 @Override public DataFlavor[] getTransferDataFlavors() {
+//                     return new DataFlavor[] {DataFlavor.javaFileListFlavor};
+//                 }
+//                 @Override public boolean isDataFlavorSupported(DataFlavor flavor) {
+//                     return flavor.equals(DataFlavor.javaFileListFlavor);
+//                 }
+//             };
+//             DragSourceAdapter dsa = new DragSourceAdapter() {
+//                 @Override public void dragDropEnd(DragSourceDropEvent dsde) {
+//                     if (dsde.getDropSuccess()) {
+//                         System.out.println(dsde);
+//                     }
+//                 }
+//             };
+//             dge.startDrag(DragSource.DefaultMoveDrop, tran, dsa);
+//         }
+//     }
     private void initStar() {
         int r1 = outer.getNumber().intValue();
         int r2 = inner.getNumber().intValue();
         int vc = vcModel.getNumber().intValue();
         boolean antialias = check.isSelected();
         //outer.setMinimum(r2 + 1);
-        Path2D.Double star = StarburstSVGMaker.makeStar(r1, r2, vc);
+        Path2D star = StarburstSVGMaker.makeStar(r1, r2, vc);
         label.setIcon(new StarIcon(star, antialias));
         String desc = String.format("addendum_circle_radius=\"%d\" dedendum_circle_radius =\"%d\" number_of_teeth=\"%dT\"", Math.max(r1, r2), Math.min(r1, r2), vc);
         StringBuilder sb = StarburstSVGMaker.makeStarburstSvg(star.getPathIterator(null), Math.max(r1, r2) * 2, styleField.getText().trim(), desc);
@@ -155,15 +197,20 @@ final class StarburstSVGMaker {
         while (!pi.isDone()) {
             switch (pi.currentSegment(c)) {
               case PathIterator.SEG_MOVETO:
-                sb.append(String.format("M%.2f,%.2f ", c[0], c[1])); break;
+                sb.append(String.format("M%.2f,%.2f ", c[0], c[1]));
+                break;
               case PathIterator.SEG_LINETO:
-                sb.append(String.format("L%.2f,%.2f ", c[0], c[1])); break;
+                sb.append(String.format("L%.2f,%.2f ", c[0], c[1]));
+                break;
               case PathIterator.SEG_QUADTO:
-                sb.append(String.format("Q%.2f,%.2f,%.2f,%.2f ", c[0], c[1], c[2], c[3])); break;
+                sb.append(String.format("Q%.2f,%.2f,%.2f,%.2f ", c[0], c[1], c[2], c[3]));
+                break;
               case PathIterator.SEG_CUBICTO:
-                sb.append(String.format("C%.2f,%.2f,%.2f,%.2f,%.2f,%.2f ", c[0], c[1], c[2], c[3], c[4], c[5])); break;
+                sb.append(String.format("C%.2f,%.2f,%.2f,%.2f,%.2f,%.2f ", c[0], c[1], c[2], c[3], c[4], c[5]));
+                break;
               case PathIterator.SEG_CLOSE:
-                sb.append('Z'); break;
+                sb.append('Z');
+                break;
               default:
                 // Should never happen
                 throw new InternalError("unrecognized path type");
@@ -173,12 +220,12 @@ final class StarburstSVGMaker {
         sb.append(String.format("\" style=\"%s\" />%n</svg>%n", style));
         return sb;
     }
-    public static Path2D.Double makeStar(int r1, int r2, int vc) {
+    public static Path2D makeStar(int r1, int r2, int vc) {
         int or = Math.max(r1, r2);
         int ir = Math.min(r1, r2);
         double agl = 0d;
         double add = 2 * Math.PI / (vc * 2);
-        Path2D.Double p = new Path2D.Double();
+        Path2D p = new Path2D.Double();
         p.moveTo(or * 1, or * 0);
         for (int i = 0; i < vc * 2 - 1; i++) {
             agl += add;
@@ -189,48 +236,12 @@ final class StarburstSVGMaker {
         AffineTransform at = AffineTransform.getRotateInstance(-Math.PI / 2, or, 0);
         return new Path2D.Double(p, at);
     }
-//     class MyDragGestureListener implements DragGestureListener {
-//         @Override public void dragGestureRecognized(DragGestureEvent dge) {
-//             File outfile;
-//             try {
-//                 outfile = File.createTempFile("starburst", ".svg");
-//                 FileWriter w = new FileWriter(outfile);
-//                 w.writeData(textArea.getText());
-//                 //outfile.deleteOnExit();
-//             } catch (IOException ioe) {
-//                 Toolkit.getDefaultToolkit().beep();
-//                 JOptionPane.showMessageDialog(null, "Could not create file.", "Error", JOptionPane.ERROR_MESSAGE);
-//                 return;
-//             }
-//             if (outfile == null) { return; }
-//             final File tmpfile = outfile;
-//             Transferable tran = new Transferable() {
-//                 @Override public Object getTransferData(DataFlavor flavor) {
-//                     return Arrays.asList(tmpfile);
-//                 }
-//                 @Override public DataFlavor[] getTransferDataFlavors() {
-//                     return new DataFlavor[] { DataFlavor.javaFileListFlavor };
-//                 }
-//                 @Override public boolean isDataFlavorSupported(DataFlavor flavor) {
-//                     return flavor.equals(DataFlavor.javaFileListFlavor);
-//                 }
-//             };
-//             DragSourceAdapter dsa = new DragSourceAdapter() {
-//                 @Override public void dragDropEnd(DragSourceDropEvent dsde) {
-//                     if (dsde.getDropSuccess()) {
-//                         System.out.println(dsde);
-//                     }
-//                 }
-//             };
-//             dge.startDrag(DragSource.DefaultMoveDrop, tran, dsa);
-//         }
-//     }
 }
 
 class StarIcon implements Icon {
     private final Shape star;
     private final boolean antialias;
-    public StarIcon(Shape s, boolean a) {
+    protected StarIcon(Shape s, boolean a) {
         star = s;
         antialias = a;
     }
@@ -241,47 +252,34 @@ class StarIcon implements Icon {
         return star.getBounds().height;
     }
     @Override public void paintIcon(Component c, Graphics g, int x, int y) {
-        Graphics2D g2d = (Graphics2D) g.create();
-        g2d.translate(x, y);
-        g2d.setPaint(Color.PINK);
+        Graphics2D g2 = (Graphics2D) g.create();
+        g2.translate(x, y);
+        g2.setPaint(Color.PINK);
         if (antialias) {
-            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         }
-        g2d.fill(star);
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-        //g2d.setPaint(Color.BLACK);
-        //g2d.draw(star);
-        //g2d.translate(-x, -y);
-        g2d.dispose();
+        g2.fill(star);
+        g2.dispose();
     }
 }
 
 // class FileWriter {
 //     private final File file;
-//     public FileWriter(File file) {
+//     protected FileWriter(File file) {
 //         this.file = file;
 //     }
 //     public void writeData(String str) {
-//         BufferedWriter bufferedWriter = null;
-//         try {
-//             bufferedWriter = new BufferedWriter(
-//                 new OutputStreamWriter(new FileOutputStream(file), "UTF-8"));
-//             bufferedWriter.write(str, 0, str.length());
-//         } catch (IOException e) {
-//             e.printStackTrace();
-//         } finally {
-//             try {
-//                 bufferedWriter.close();
-//             } catch (IOException e) {
-//                 e.printStackTrace();
-//             }
+//         try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8))) {
+//             writer.write(str, 0, str.length());
+//         } catch (IOException ex) {
+//             ex.printStackTrace();
 //         }
 //     }
 // }
 
 class ClipboardServiceTextArea extends JTextArea {
     private ClipboardService cs;
-    public ClipboardServiceTextArea() {
+    protected ClipboardServiceTextArea() {
         super();
         try {
             cs = (ClipboardService) ServiceManager.lookup("javax.jnlp.ClipboardService");
@@ -290,27 +288,27 @@ class ClipboardServiceTextArea extends JTextArea {
         }
     }
     @Override public void copy() {
-        if (cs == null) {
-            super.copy();
-        } else {
+        if (Objects.nonNull(cs)) {
             cs.setContents(new StringSelection(getSelectedText()));
+        } else {
+            super.copy();
         }
     }
     @Override public void cut() {
-        if (cs == null) {
-            super.cut();
-        } else {
+        if (Objects.nonNull(cs)) {
             cs.setContents(new StringSelection(getSelectedText()));
+        } else {
+            super.cut();
         }
     }
     @Override public void paste() {
-        if (cs == null) {
-            super.paste();
-        } else {
+        if (Objects.nonNull(cs)) {
             Transferable tr = cs.getContents();
             if (tr.isDataFlavorSupported(DataFlavor.stringFlavor)) {
                 getTransferHandler().importData(this, tr);
             }
+        } else {
+            super.paste();
         }
     }
 }

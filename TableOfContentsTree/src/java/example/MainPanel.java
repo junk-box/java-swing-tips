@@ -11,7 +11,7 @@ public final class MainPanel extends JPanel {
         super(new BorderLayout());
 
         JTree tree = new JTree(makeModel()) {
-            @Override public boolean getScrollableTracksViewportWidth() { //NOPMD
+            @Override public boolean getScrollableTracksViewportWidth() { //NOPMD A getX() method which returns a boolean should be named isX()
                 return true;
             }
             @Override public void updateUI() {
@@ -46,7 +46,9 @@ public final class MainPanel extends JPanel {
         s2.add(new DefaultMutableTreeNode(new TableOfContents("eee",     24)));
         s2.add(new DefaultMutableTreeNode(new TableOfContents("f",       38)));
 
-        root.add(s0); root.add(s1); root.add(s2);
+        root.add(s0);
+        root.add(s1);
+        root.add(s2);
         return new DefaultTreeModel(root);
     }
     public static void main(String... args) {
@@ -75,7 +77,7 @@ public final class MainPanel extends JPanel {
 class TableOfContents {
     public final String title;
     public final Integer page;
-    public TableOfContents(String title, int page) {
+    protected TableOfContents(String title, int page) {
         this.title = title;
         this.page  = page;
     }
@@ -88,14 +90,15 @@ class TableOfContentsTreeCellRenderer extends DefaultTreeCellRenderer {
     private static final BasicStroke READER = new BasicStroke(1f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 1f, new float[] {1f}, 0f);
     private String pn;
     private final Point pnPt = new Point();
-    private int rxs, rxe;
+    private int rxs;
+    private int rxe;
     private boolean isSynth;
     private final JPanel p = new JPanel(new BorderLayout()) {
-        @Override public void paintComponent(Graphics g) {
+        @Override protected void paintComponent(Graphics g) {
             super.paintComponent(g);
             if (pn != null) {
                 Graphics2D g2 = (Graphics2D) g.create();
-                g2.setColor(isSynth ? getForeground() : getTextNonSelectionColor());
+                g2.setPaint(isSynth ? getForeground() : getTextNonSelectionColor());
                 g2.drawString(pn, pnPt.x - getX(), pnPt.y);
                 g2.setStroke(READER);
                 g2.drawLine(rxs, pnPt.y, rxe - getX(), pnPt.y);
@@ -108,16 +111,12 @@ class TableOfContentsTreeCellRenderer extends DefaultTreeCellRenderer {
             return d;
         }
     };
-    public TableOfContentsTreeCellRenderer() {
-        super();
-        p.setOpaque(false);
-    }
     @Override public void updateUI() {
         super.updateUI();
         isSynth = getUI().getClass().getName().contains("Synth");
         if (isSynth) {
             //System.out.println("XXX: FocusBorder bug?, JDK 1.7.0, Nimbus start LnF");
-            setBackgroundSelectionColor(new Color(0, true));
+            setBackgroundSelectionColor(new Color(0x0, true));
         }
     }
     @Override public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
@@ -145,6 +144,7 @@ class TableOfContentsTreeCellRenderer extends DefaultTreeCellRenderer {
                 rxs = d.width + gap;
                 rxe = tree.getWidth() - ins.right - metrics.stringWidth("000") - gap;
 
+                p.setOpaque(false);
                 return p;
             }
         }
@@ -155,15 +155,15 @@ class TableOfContentsTreeCellRenderer extends DefaultTreeCellRenderer {
 
 class TableOfContentsTreeCellRenderer1 extends DefaultTreeCellRenderer {
     private static final String READER = "... ";
+    private final Point pt = new Point(-1, -1);
     private String pn;
-    private int pnx = -1, pny = -1;
     private boolean isSynth;
     private final JPanel p = new JPanel(new BorderLayout()) {
-        @Override public void paintComponent(Graphics g) {
+        @Override protected void paintComponent(Graphics g) {
             super.paintComponent(g);
             if (pn != null) {
                 g.setColor(isSynth ? getForeground() : getTextNonSelectionColor());
-                g.drawString(pn, pnx - getX(), pny);
+                g.drawString(pn, pt.x - getX(), pt.y);
             }
         }
         @Override public Dimension getPreferredSize() {
@@ -172,16 +172,12 @@ class TableOfContentsTreeCellRenderer1 extends DefaultTreeCellRenderer {
             return d;
         }
     };
-    public TableOfContentsTreeCellRenderer1() {
-        super();
-        p.setOpaque(false);
-    }
     @Override public void updateUI() {
         super.updateUI();
         isSynth = getUI().getClass().getName().contains("Synth");
         if (isSynth) {
             //System.out.println("XXX: FocusBorder bug?, JDK 1.7.0, Nimbus start LnF");
-            setBackgroundSelectionColor(new Color(0, true));
+            setBackgroundSelectionColor(new Color(0x0, true));
         }
     }
     @Override public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
@@ -201,9 +197,10 @@ class TableOfContentsTreeCellRenderer1 extends DefaultTreeCellRenderer {
                 }
 
                 pn = String.format("%s%3d", READER, toc.page);
-                pnx = tree.getWidth() - metrics.stringWidth(pn) - gap;
-                //pnx = Math.max(pnx, titlex + metrics.stringWidth(pair.title) + gap);
-                pny = (l.getIcon().getIconHeight() + metrics.getAscent()) / 2;
+                pt.x = tree.getWidth() - metrics.stringWidth(pn) - gap;
+                //pt.x = Math.max(pnx, titlex + metrics.stringWidth(pair.title) + gap);
+                pt.y = (l.getIcon().getIconHeight() + metrics.getAscent()) / 2;
+                p.setOpaque(false);
 
                 return p;
             }
@@ -216,7 +213,7 @@ class TableOfContentsTreeCellRenderer1 extends DefaultTreeCellRenderer {
 class TableOfContentsTree extends JTree {
     private static final BasicStroke READER = new BasicStroke(1f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 1f, new float[] {1f}, 0f);
     private boolean isSynth;
-    public TableOfContentsTree(TreeModel model) {
+    protected TableOfContentsTree(TreeModel model) {
         super(model);
     }
     @Override public void updateUI() {
@@ -249,7 +246,7 @@ class TableOfContentsTree extends JTree {
         }
         return visRect;
     }
-    @Override public void paintComponent(Graphics g) {
+    @Override protected void paintComponent(Graphics g) {
         g.setColor(getBackground());
         g.fillRect(0, 0, getWidth(), getHeight());
         super.paintComponent(g);
@@ -267,10 +264,10 @@ class TableOfContentsTree extends JTree {
                 if (isSynth && isRowSelected(i)) {
                     if (tcr instanceof DefaultTreeCellRenderer) {
                         DefaultTreeCellRenderer renderer = (DefaultTreeCellRenderer) tcr;
-                        g2.setColor(renderer.getTextSelectionColor());
+                        g2.setPaint(renderer.getTextSelectionColor());
                     }
                 } else {
-                    g2.setColor(getForeground());
+                    g2.setPaint(getForeground());
                 }
                 DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getLastPathComponent();
                 Object o = node.getUserObject();

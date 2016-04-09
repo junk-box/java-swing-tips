@@ -3,6 +3,7 @@ package example;
 // vim:set fileencoding=utf-8:
 //@homepage@
 import java.awt.*;
+import java.util.Objects;
 import javax.swing.*;
 import javax.swing.text.*;
 
@@ -42,22 +43,36 @@ public final class MainPanel extends JPanel {
 // @author camickr
 // @author David Underhill
 // https://community.oracle.com/thread/2105230
+// modified by aterai aterai@outlook.com
 class SimpleSyntaxDocument extends DefaultStyledDocument {
+    private static final char LB = '\n';
     //HashMap<String, AttributeSet> keywords = new HashMap<>();
-    private final Style normal; //MutableAttributeSet normal = new SimpleAttributeSet();
     private static final String OPERANDS = ".,";
-    public SimpleSyntaxDocument() {
+    private final Style def = getStyle(StyleContext.DEFAULT_STYLE);
+    protected SimpleSyntaxDocument() {
         super();
-        Style def = StyleContext.getDefaultStyleContext().getStyle(StyleContext.DEFAULT_STYLE);
-        normal = addStyle("normal", def);
-        StyleConstants.setForeground(normal, Color.BLACK);
-        StyleConstants.setForeground(addStyle("red",   normal), Color.RED);
-        StyleConstants.setForeground(addStyle("green", normal), Color.GREEN);
-        StyleConstants.setForeground(addStyle("blue",  normal), Color.BLUE);
+        //Style def = StyleContext.getDefaultStyleContext().getStyle(StyleContext.DEFAULT_STYLE);
+        StyleConstants.setForeground(addStyle("red",   def), Color.RED);
+        StyleConstants.setForeground(addStyle("green", def), Color.GREEN);
+        StyleConstants.setForeground(addStyle("blue",  def), Color.BLUE);
     }
-    @Override public void insertString(int offset, String str, AttributeSet a) throws BadLocationException {
+    @Override public void insertString(int offset, String text, AttributeSet a) throws BadLocationException {
+        // @see PlainDocument#insertString(...)
+        int length = 0;
+        String str = text;
+        if (Objects.nonNull(str) && str.indexOf(LB) >= 0) {
+            StringBuilder filtered = new StringBuilder(str);
+            int n = filtered.length();
+            for (int i = 0; i < n; i++) {
+                if (filtered.charAt(i) == LB) {
+                    filtered.setCharAt(i, ' ');
+                }
+            }
+            str = filtered.toString();
+            length = str.length();
+        }
         super.insertString(offset, str, a);
-        processChangedLines(offset, str.length());
+        processChangedLines(offset, length);
     }
     @Override public void remove(int offset, int length) throws BadLocationException {
         super.remove(offset, length);
@@ -78,10 +93,8 @@ class SimpleSyntaxDocument extends DefaultStyledDocument {
         int endOffset     = root.getElement(line).getEndOffset() - 1;
         int lineLength    = endOffset - startOffset;
         int contentLength = content.length();
-        if (endOffset >= contentLength) {
-            endOffset = contentLength - 1;
-        }
-        setCharacterAttributes(startOffset, lineLength, normal, true);
+        endOffset = endOffset >= contentLength ? contentLength - 1 : endOffset;
+        setCharacterAttributes(startOffset, lineLength, def, true);
         checkForTokens(content, startOffset, endOffset);
     }
     private void checkForTokens(String content, int startOffset, int endOffset) {
@@ -109,7 +122,7 @@ class SimpleSyntaxDocument extends DefaultStyledDocument {
         Style s = getStyle(token);
         //if (keywords.containsKey(token)) {
         //    setCharacterAttributes(startOffset, endOfToken - startOffset, keywords.get(token), false);
-        if (s != null) {
+        if (Objects.nonNull(s)) {
             setCharacterAttributes(startOffset, endOfToken - startOffset, s, false);
         }
         return endOfToken + 1;

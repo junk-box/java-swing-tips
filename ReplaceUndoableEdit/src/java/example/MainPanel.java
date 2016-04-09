@@ -160,7 +160,8 @@ class DocumentFilterUndoManager extends UndoManager {
 
 // class CustomUndoPlainDocument extends PlainDocument {
 // //     private final UndoManager undoManager;
-// //     public CustomUndoPlainDocument(UndoManager undoManager) {
+// //     protected CustomUndoPlainDocument(UndoManager undoManager) {
+// //         super();
 // //         this.undoManager = undoManager;
 // //     }
 //     @Override public void replace(int offset, int length, String text, AttributeSet attrs) throws BadLocationException {
@@ -189,12 +190,12 @@ class DocumentFilterUndoManager extends UndoManager {
 //         private final String oldValue;
 //         private final String newValue;
 //         private final int offset;
-//         public ReplaceUndoableEdit(int offset, int length, String newValue) {
+//         protected ReplaceUndoableEdit(int offset, int length, String newValue) {
 //             super();
 //             String txt;
 //             try {
 //                 txt = getText(offset, length);
-//             } catch (BadLocationException e) {
+//             } catch (BadLocationException ex) {
 //                 txt = null;
 //             }
 //             this.oldValue = txt;
@@ -204,19 +205,15 @@ class DocumentFilterUndoManager extends UndoManager {
 //         @Override public void undo() { //throws CannotUndoException {
 //             try {
 //                 replaceIgnoringUndo(offset, newValue.length(), oldValue, null);
-//             } catch (BadLocationException e) {
-//                 CannotUndoException ex = new CannotUndoException();
-//                 ex.initCause(e);
-//                 throw ex;
+//             } catch (BadLocationException ex) {
+//                 throw (CannotUndoException) new CannotUndoException().initCause(ex);
 //             }
 //         }
 //         @Override public void redo() { //throws CannotRedoException {
 //             try {
 //                 replaceIgnoringUndo(offset, oldValue.length(), newValue, null);
-//             } catch (BadLocationException e) {
-//                 CannotUndoException ex = new CannotUndoException();
-//                 ex.initCause(e);
-//                 throw ex;
+//             } catch (BadLocationException ex) {
+//                 throw (CannotUndoException) new CannotUndoException().initCause(ex);
 //             }
 //         }
 //         @Override public boolean canUndo() {

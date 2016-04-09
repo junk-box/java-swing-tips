@@ -5,6 +5,7 @@ package example;
 import java.awt.*;
 import java.awt.event.*;
 import java.net.URL;
+import java.util.Objects;
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.plaf.basic.*;
@@ -12,10 +13,11 @@ import javax.swing.text.*;
 import javax.swing.text.html.*;
 
 public final class MainPanel extends JPanel {
-    private static final String LINK = "http://terai.xrea.jp/";
+    private static final String LINK = "http://ateraimemo.com/";
     private static final String HTML_TEXT = "<html><body>"
                                           + "html tag: <br /><a href='" + LINK + "'>" + LINK + "</a>"
                                           + "</body></html>";
+    private static String tooltip;
 
     private MainPanel() {
         super(new BorderLayout());
@@ -32,18 +34,15 @@ public final class MainPanel extends JPanel {
         editorPane.setContentType("text/html");
         editorPane.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
         editorPane.setText(HTML_TEXT);
-        editorPane.addHyperlinkListener(new HyperlinkListener() {
-            private String tooltip;
-            @Override public void hyperlinkUpdate(HyperlinkEvent e) {
-                if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-                    JOptionPane.showMessageDialog(editorPane, "You click the link with the URL " + e.getURL());
-                } else if (e.getEventType() == HyperlinkEvent.EventType.ENTERED) {
-                    tooltip = editorPane.getToolTipText();
-                    URL url = e.getURL();
-                    editorPane.setToolTipText(url == null ? null : url.toExternalForm());
-                } else if (e.getEventType() == HyperlinkEvent.EventType.EXITED) {
-                    editorPane.setToolTipText(tooltip);
-                }
+        editorPane.addHyperlinkListener(e -> {
+            if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+                JOptionPane.showMessageDialog(editorPane, "You click the link with the URL " + e.getURL());
+            } else if (e.getEventType() == HyperlinkEvent.EventType.ENTERED) {
+                tooltip = editorPane.getToolTipText();
+                URL url = e.getURL();
+                editorPane.setToolTipText(Objects.nonNull(url) ? url.toExternalForm() : null);
+            } else if (e.getEventType() == HyperlinkEvent.EventType.EXITED) {
+                editorPane.setToolTipText(tooltip);
             }
         });
 
@@ -69,7 +68,6 @@ public final class MainPanel extends JPanel {
         }
         return editorPane;
     }
-
     public static void main(String... args) {
         EventQueue.invokeLater(new Runnable() {
             @Override public void run() {
@@ -95,8 +93,8 @@ public final class MainPanel extends JPanel {
 
 // class URILabel extends JLabel {
 //     private final String href;
-//     public URILabel(String str) {
-//         super("<html><a href='" + str + "'>" + str + "</a>");
+//     protected URILabel(String h) {
+//         super(String.format("<html><a href='%s'>%s</a>", h, h));
 //         href = str;
 //         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 //         addMouseListener(new MouseAdapter() {
@@ -117,10 +115,10 @@ class HyperlinkButton extends JButton {
 //     }
     @Override public void updateUI() {
         super.updateUI();
-        if (UIManager.get(UI_CLASS_ID) == null) {
-            setUI(BasicLinkViewButtonUI.createUI(this));
-        } else {
+        if (Objects.nonNull(UIManager.get(UI_CLASS_ID))) {
             setUI((LinkViewButtonUI) UIManager.getUI(this));
+        } else {
+            setUI(BasicLinkViewButtonUI.createUI(this));
         }
         setForeground(Color.BLUE);
         setBorder(BorderFactory.createEmptyBorder(0, 0, 2, 0));
@@ -129,20 +127,20 @@ class HyperlinkButton extends JButton {
     @Override public LinkViewButtonUI getUI() {
         return BasicLinkViewButtonUI.createUI(this);
     }
-    public HyperlinkButton() {
+    protected HyperlinkButton() {
         this(null, null);
     }
-    public HyperlinkButton(Icon icon) {
+    protected HyperlinkButton(Icon icon) {
         this(null, icon);
     }
-    public HyperlinkButton(String text) {
+    protected HyperlinkButton(String text) {
         this(text, null);
     }
-    public HyperlinkButton(Action a) {
+    protected HyperlinkButton(Action a) {
         this();
         super.setAction(a);
     }
-    public HyperlinkButton(String text, Icon icon) {
+    protected HyperlinkButton(String text, Icon icon) {
         super(text, icon);
     }
 }
@@ -162,7 +160,7 @@ class BasicLinkViewButtonUI extends LinkViewButtonUI {
 //         b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         return LINKVIEW_BUTTON_UI;
     }
-    public BasicLinkViewButtonUI() {
+    protected BasicLinkViewButtonUI() {
         super();
         size = new Dimension();
         viewRect = new Rectangle();
@@ -206,10 +204,10 @@ class BasicLinkViewButtonUI extends LinkViewButtonUI {
                        viewRect.x + viewRect.width, viewRect.y + viewRect.height);
         }
         View v = (View) c.getClientProperty(BasicHTML.propertyKey);
-        if (v == null) {
-            paintText(g, b, textRect, text);
-        } else {
+        if (Objects.nonNull(v)) {
             v.paint(g, textRect);
+        } else {
+            paintText(g, b, textRect, text);
         }
     }
 }

@@ -34,7 +34,9 @@ public final class MainPanel extends JPanel {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             //for (UIManager.LookAndFeelInfo laf: UIManager.getInstalledLookAndFeels()) {
-            //    if ("Nimbus".equals(laf.getName())) { UIManager.setLookAndFeel(laf.getClassName()); }
+            //    if ("Nimbus".equals(laf.getName())) {
+            //        UIManager.setLookAndFeel(laf.getClassName());
+            //    }
             //}
         } catch (ClassNotFoundException | InstantiationException
                | IllegalAccessException | UnsupportedLookAndFeelException ex) {
@@ -52,17 +54,10 @@ public final class MainPanel extends JPanel {
 class CardLayoutTabbedPane extends JPanel {
     protected final CardLayout cardLayout = new CardLayout();
     protected final JPanel tabPanel = new JPanel(new TabLayout());
-    protected final JPanel wrapPanel = new JPanel(new BorderLayout(0, 0));
+    protected final JPanel wrapPanel = new JPanel(new BorderLayout());
     protected final JPanel contentsPanel = new JPanel(cardLayout);
     protected final ButtonGroup bg = new ButtonGroup();
-
-    private int count;
-    private final JButton button = new JButton(new AbstractAction("+") {
-        @Override public void actionPerformed(ActionEvent e) {
-            addTab("new tab:" + count, new JLabel("xxx:" + count));
-            count++;
-        }
-    });
+    private final JButton button = new JButton(new PlusIcon());
 
     //http://www.icongalore.com/ XP Style Icons - Windows Application Icon, Software XP Icons
     private final List<ImageIcon> icons = Arrays.asList(
@@ -78,7 +73,7 @@ class CardLayoutTabbedPane extends JPanel {
         new ImageIcon(getClass().getResource("wi0126-16.png"))
     );
 
-    public CardLayoutTabbedPane() {
+    protected CardLayoutTabbedPane() {
         super(new BorderLayout());
         int left  = 0;
         int right = 0;
@@ -103,10 +98,14 @@ class CardLayoutTabbedPane extends JPanel {
         add(wrapPanel, BorderLayout.NORTH);
         add(contentsPanel);
 
-        DummyIcon icon = new DummyIcon();
-        button.setText("");
-        button.setIcon(icon);
         button.setBorder(BorderFactory.createEmptyBorder());
+        button.addActionListener(new ActionListener() {
+            private int count;
+            @Override public void actionPerformed(ActionEvent e) {
+                addTab("new tab:" + count, new JLabel("xxx:" + count));
+                count++;
+            }
+        });
     }
     protected JComponent createTabComponent(final String title, final Component comp) {
 //         final TabButton tab = new TabButton(new AbstractAction(title) {
@@ -123,7 +122,12 @@ class CardLayoutTabbedPane extends JPanel {
         });
         tab.setIcon(icons.get(new Random().nextInt(icons.size())));
         tab.setLayout(new BorderLayout());
-        JButton close = new JButton(new AbstractAction("") {
+        JButton close = new JButton(new CloseTabIcon(Color.GRAY)) {
+            @Override public Dimension getPreferredSize() {
+                return new Dimension(12, 12);
+            }
+        };
+        close.addActionListener(new ActionListener() {
             @Override public void actionPerformed(ActionEvent e) {
                 tabPanel.remove(tab);
                 contentsPanel.remove(comp);
@@ -136,13 +140,9 @@ class CardLayoutTabbedPane extends JPanel {
                 tabPanel.revalidate();
             }
         });
-        Dimension dim = new Dimension(12, 12);
-        close.setPreferredSize(dim);
-        close.setMaximumSize(dim);
         close.setBorder(BorderFactory.createEmptyBorder());
         close.setFocusPainted(false);
         close.setContentAreaFilled(false);
-        close.setIcon(new CloseTabIcon(Color.GRAY));
         close.setPressedIcon(new CloseTabIcon(Color.BLACK));
         close.setRolloverIcon(new CloseTabIcon(Color.ORANGE));
 
@@ -172,10 +172,10 @@ class TabButton extends JRadioButton {
     private Color rolloverSelectedTextColor; // = Color.WHITE;
     private Color selectedTextColor; // = Color.WHITE;
     @Override public void updateUI() {
-        if (UIManager.get(getUIClassID()) == null) {
-            setUI(new BasicTabViewButtonUI());
-        } else {
+        if (Objects.nonNull(UIManager.get(getUIClassID()))) {
             setUI((TabViewButtonUI) UIManager.getUI(this));
+        } else {
+            setUI(new BasicTabViewButtonUI());
         }
     }
     @Override public String getUIClassID() {
@@ -184,24 +184,24 @@ class TabButton extends JRadioButton {
 //     @Override public void setUI(TabViewButtonUI ui) {
 //         super.setUI(ui);
 //     }
-    public TabViewButtonUI getUI() {
+    @Override public TabViewButtonUI getUI() {
         return (TabViewButtonUI) ui;
     }
-    public TabButton() {
+    protected TabButton() {
         super(null, null);
     }
-    public TabButton(Icon icon) {
+    protected TabButton(Icon icon) {
         super(null, icon);
     }
-    public TabButton(String text) {
+    protected TabButton(String text) {
         super(text, null);
     }
-    public TabButton(Action a) {
+    protected TabButton(Action a) {
         super(a);
         //super.setAction(a);
         //updateUI();
     }
-    public TabButton(String text, Icon icon) {
+    protected TabButton(String text, Icon icon) {
         super(text, icon);
         //updateUI();
     }
@@ -254,32 +254,9 @@ class TabButton extends JRadioButton {
     }
 }
 
-class CloseTabIcon implements Icon {
-    private final Color color;
-    public CloseTabIcon(Color color) {
-        this.color = color;
-    }
-    @Override public void paintIcon(Component c, Graphics g, int x, int y) {
-        //g.translate(x, y);
-        g.setColor(color);
-        g.drawLine(2, 2, 9, 9);
-        g.drawLine(2, 3, 8, 9);
-        g.drawLine(3, 2, 9, 8);
-        g.drawLine(9, 2, 2, 9);
-        g.drawLine(9, 3, 3, 9);
-        g.drawLine(8, 2, 2, 8);
-        //g.translate(-x, -y);
-    }
-    @Override public int getIconWidth() {
-        return 12;
-    }
-    @Override public int getIconHeight() {
-        return 12;
-    }
-}
-
 class TabLayout implements LayoutManager, Serializable {
     private static final long serialVersionUID = 1L;
+    private static final int TAB_WIDTH = 100;
     @Override public void addLayoutComponent(String name, Component comp) { /* not needed */ }
     @Override public void removeLayoutComponent(Component comp)           { /* not needed */ }
     @Override public Dimension preferredLayoutSize(Container parent) {
@@ -318,66 +295,18 @@ class TabLayout implements LayoutManager, Serializable {
             int lastw = parent.getComponent(ncomponents - 1).getPreferredSize().width;
             int width = parent.getWidth() - insets.left - insets.right - lastw;
             int h = parent.getHeight() - insets.top - insets.bottom;
-            int w = width > 100 * (ncomponents - 1) ? 100 : width / ncols;
+            int w = width > TAB_WIDTH * ncols ? TAB_WIDTH : width / ncols;
             int gap = width - w * ncols;
             int x = insets.left;
             int y = insets.top;
             for (int i = 0; i < ncomponents; i++) {
-                int a = 0;
-                if (gap > 0) {
-                    a = 1;
-                    gap--;
-                }
-                int cw = w + a;
-                if (i == ncols) {
-                    cw = lastw;
-                }
+                int cw = i == ncols ? lastw : w + (gap-- > 0 ? 1 : 0);
                 parent.getComponent(i).setBounds(x, y, cw, h);
-                x += w + a;
+                x += cw;
             }
         }
     }
     @Override public String toString() {
         return getClass().getName();
-    }
-}
-
-class DummyIcon implements Icon {
-    private static Rectangle viewRect = new Rectangle();
-    @Override public void paintIcon(Component c, Graphics g, int x, int y) {
-        Graphics2D g2 = (Graphics2D) g.create();
-        g2.translate(x, y);
-
-        Insets i;
-        if (c instanceof JComponent) {
-            i = ((JComponent) c).getInsets();
-        } else {
-            i = new Insets(0, 0, 0, 0);
-        }
-        Dimension size = c.getSize();
-
-        viewRect.x      = i.left;
-        viewRect.y      = i.top;
-        viewRect.width  = size.width  - i.right  - viewRect.x;
-        viewRect.height = size.height - i.bottom - viewRect.y;
-        OperaTabViewButtonUI.tabPainter(g2, viewRect);
-
-        g2.setPaint(Color.WHITE);
-        int w = viewRect.width;
-        int a = w / 2;
-        int b = w / 3;
-        w -= 2;
-        g2.drawLine(a,     b,     a,     w - b);
-        g2.drawLine(a - 1, b,     a - 1, w - b);
-        g2.drawLine(b,     a,     w - b, a);
-        g2.drawLine(b,     a - 1, w - b, a - 1);
-        //g2.translate(-x, -y);
-        g2.dispose();
-    }
-    @Override public int getIconWidth() {
-        return 24;
-    }
-    @Override public int getIconHeight() {
-        return 24;
     }
 }

@@ -20,30 +20,30 @@ public final class MainPanel extends JPanel {
         JPopupMenu popup = new JPopupMenu();
         GridBagConstraints c = new GridBagConstraints();
         popup.setLayout(new GridBagLayout());
-        c.gridheight = 1;
 
         c.weightx = 1d;
         c.weighty = 0d;
         c.fill = GridBagConstraints.HORIZONTAL;
         c.anchor = GridBagConstraints.CENTER;
 
-        c.gridwidth = 1;
         c.gridy = 0;
-        c.gridx = 0; popup.add(makeButton("\u21E6"), c);
-        c.gridx = 1; popup.add(makeButton("\u21E8"), c);
-        c.gridx = 2; popup.add(makeButton("\u21BB"), c);
-        c.gridx = 3; popup.add(makeButton("\u2729"), c);
+        popup.add(makeButton("\u21E6"), c);
+        popup.add(makeButton("\u21E8"), c);
+        popup.add(makeButton("\u21BB"), c);
+        popup.add(makeButton("\u2729"), c);
 
+        c.insets = new Insets(2, 0, 2, 0);
         c.gridwidth = 4;
         c.gridx = 0;
-        c.insets = new Insets(2, 0, 2, 0);
-        c.gridy = 1; popup.add(new JSeparator(), c);
+        c.gridy = GridBagConstraints.RELATIVE;
+        popup.add(new JSeparator(), c);
+
         c.insets = new Insets(0, 0, 0, 0);
-        c.gridy = 2; popup.add(new JMenuItem("aaaaaaaaaa"), c);
-        c.gridy = 3; popup.add(new JPopupMenu.Separator(), c);
-        c.gridy = 4; popup.add(new JMenuItem("bbbb"), c);
-        c.gridy = 5; popup.add(new JMenuItem("ccccccccccccccccccccc"), c);
-        c.gridy = 6; popup.add(new JMenuItem("dddddddddd"), c);
+        popup.add(new JMenuItem("aaaaaaaaaa"), c);
+        popup.add(new JPopupMenu.Separator(), c);
+        popup.add(new JMenuItem("bbbb"), c);
+        popup.add(new JMenuItem("ccccccccccccccccccccc"), c);
+        popup.add(new JMenuItem("dddddddddd"), c);
 
         return popup;
     }
@@ -54,7 +54,7 @@ public final class MainPanel extends JPanel {
             @Override public Dimension getPreferredSize() {
                 return d;
             }
-            @Override public void paintComponent(Graphics g) {
+            @Override protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 Dimension cd = getSize();
                 Dimension pd = getPreferredSize();
@@ -99,7 +99,7 @@ class SymbolIcon implements Icon {
     private static FontRenderContext frc = new FontRenderContext(null, true, true);
     private final Shape symbol;
 
-    public SymbolIcon(String str) {
+    protected SymbolIcon(String str) {
          symbol = new TextLayout(str, font, frc).getOutline(null);
     }
     @Override public void paintIcon(Component c, Graphics g, int x, int y) {
@@ -108,10 +108,8 @@ class SymbolIcon implements Icon {
         g2.translate(x, y);
         g2.setPaint(c.isEnabled() ? Color.BLACK : Color.GRAY);
         Rectangle2D b = symbol.getBounds();
-        Point2D p = new Point2D.Double(b.getX() + b.getWidth() / 2d, b.getY() + b.getHeight() / 2d);
-        AffineTransform toCenterAT = AffineTransform.getTranslateInstance(getIconWidth() / 2d - p.getX(), getIconHeight() / 2d - p.getY());
+        AffineTransform toCenterAT = AffineTransform.getTranslateInstance(getIconWidth() / 2d - b.getCenterX(), getIconHeight() / 2d - b.getCenterY());
         g2.fill(toCenterAT.createTransformedShape(symbol));
-        g2.translate(-x, -y);
         g2.dispose();
     }
     @Override public int getIconWidth() {

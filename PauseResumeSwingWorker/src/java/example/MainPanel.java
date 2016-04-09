@@ -27,14 +27,7 @@ public final class MainPanel extends JPanel {
         pauseButton.setEnabled(false);
         canButton.setEnabled(false);
 
-        JPanel p = new JPanel(new GridLayout(1, 3, 2, 2));
-        p.add(runButton);
-        p.add(canButton);
-        p.add(pauseButton);
-        Box box = Box.createHorizontalBox();
-        box.add(Box.createHorizontalGlue());
-        box.add(p);
-        box.add(Box.createHorizontalStrut(2));
+        JComponent box = createRightAlignButtonBox4(Arrays.asList(pauseButton, canButton, runButton), 80, 5);
         add(new JScrollPane(area));
         add(box, BorderLayout.NORTH);
         add(statusPanel, BorderLayout.SOUTH);
@@ -42,10 +35,10 @@ public final class MainPanel extends JPanel {
         setPreferredSize(new Dimension(320, 240));
     }
     private class RunAction extends AbstractAction {
-        public RunAction() {
+        protected RunAction() {
             super("run");
         }
-        @Override public void actionPerformed(ActionEvent evt) {
+        @Override public void actionPerformed(ActionEvent e) {
             //System.out.println("actionPerformed() is EDT?: " + EventQueue.isDispatchThread());
             runButton.setEnabled(false);
             canButton.setEnabled(true);
@@ -62,6 +55,9 @@ public final class MainPanel extends JPanel {
     private class ProgressTask extends Task {
         @Override protected void process(List<Progress> chunks) {
             //System.out.println("process() is EDT?: " + EventQueue.isDispatchThread());
+            if (isCancelled()) {
+                return;
+            }
             if (!isDisplayable()) {
                 System.out.println("process: DISPOSE_ON_CLOSE");
                 cancel(true);
@@ -69,23 +65,32 @@ public final class MainPanel extends JPanel {
             }
             for (Progress s: chunks) {
                 switch (s.component) {
-                  case TOTAL: bar1.setValue((Integer) s.value); break;
-                  case FILE:  bar2.setValue((Integer) s.value); break;
-                  case LOG:   area.append((String) s.value);    break;
-                  case PAUSE: {
-                      if ((Boolean) s.value) {
-                          area.append("*");
-                      } else {
-                          try {
-                              Document doc = area.getDocument();
-                              doc.remove(area.getDocument().getLength() - 1, 1);
-                          } catch (BadLocationException ex) {
-                              ex.printStackTrace();
-                          }
-                      }
-                      break;
-                  }
-                  default: throw new AssertionError("Unknown Progress");
+                  case TOTAL:
+                    bar1.setValue((Integer) s.value);
+                    break;
+                  case FILE:
+                    bar2.setValue((Integer) s.value);
+                    break;
+                  case LOG:
+                    area.append((String) s.value);
+                    break;
+                  case PAUSE:
+                    textProgress((Boolean) s.value);
+                    break;
+                  default:
+                    throw new AssertionError("Unknown Progress");
+                }
+            }
+        }
+        private void textProgress(boolean append) {
+            if (append) {
+                area.append("*");
+            } else {
+                try {
+                    Document doc = area.getDocument();
+                    doc.remove(area.getDocument().getLength() - 1, 1);
+                } catch (BadLocationException ex) {
+                    ex.printStackTrace();
                 }
             }
         }
@@ -112,11 +117,11 @@ public final class MainPanel extends JPanel {
         }
     }
     private class CancelAction extends AbstractAction {
-        public CancelAction() {
+        protected CancelAction() {
             super("cancel");
         }
-        @Override public void actionPerformed(ActionEvent evt) {
-            if (worker != null && !worker.isDone()) {
+        @Override public void actionPerformed(ActionEvent e) {
+            if (Objects.nonNull(worker) && !worker.isDone()) {
                 worker.cancel(true);
             }
             worker = null;
@@ -125,29 +130,55 @@ public final class MainPanel extends JPanel {
         }
     }
     private class PauseAction extends AbstractAction {
-        public PauseAction() {
+        protected PauseAction() {
             super("pause");
         }
         @Override public void actionPerformed(ActionEvent e) {
             JButton b = (JButton) e.getSource();
             String pause = (String) getValue(Action.NAME);
-            if (worker == null) {
-                b.setText(pause);
-            } else {
+            if (Objects.nonNull(worker)) {
                 if (worker.isCancelled() || worker.isPaused) {
                     b.setText(pause);
                 } else {
                     b.setText("resume");
                 }
                 worker.isPaused ^= true;
+            } else {
+                b.setText(pause);
             }
         }
+    }
+    //@see http://ateraimemo.com/Swing/ButtonWidth.html
+    private static JComponent createRightAlignButtonBox4(final List<JButton> list, final int buttonWidth, final int gap) {
+        SpringLayout layout = new SpringLayout();
+        JPanel p = new JPanel(layout) {
+            @Override public Dimension getPreferredSize() {
+                int maxHeight = 0;
+                for (JButton b: list) {
+                    maxHeight = Math.max(maxHeight, b.getPreferredSize().height);
+                }
+                return new Dimension(buttonWidth * list.size() + gap + gap, maxHeight + gap + gap);
+            }
+        };
+        Spring x = layout.getConstraint(SpringLayout.WIDTH, p);
+        Spring y = Spring.constant(gap);
+        Spring g = Spring.minus(Spring.constant(gap));
+        Spring w = Spring.constant(buttonWidth);
+        for (JButton b: list) {
+            SpringLayout.Constraints constraints = layout.getConstraints(b);
+            x = Spring.sum(x, g);
+            constraints.setConstraint(SpringLayout.EAST, x);
+            constraints.setY(y);
+            constraints.setWidth(w);
+            p.add(b);
+            x = Spring.sum(x, Spring.minus(w));
+        }
+        return p;
     }
 //     private void appendLine(String str) {
 //         area.append(str);
 //         area.setCaretPosition(area.getDocument().getLength());
 //     }
-
     public static void main(String... args) {
         EventQueue.invokeLater(new Runnable() {
             @Override public void run() {
@@ -177,7 +208,7 @@ enum Component { TOTAL, FILE, LOG, PAUSE }
 class Progress {
     public final Object value;
     public final Component component;
-    public Progress(Component component, Object value) {
+    protected Progress(Component component, Object value) {
         this.component = component;
         this.value = value;
     }
@@ -255,7 +286,7 @@ class Task extends SwingWorker<String, Progress> {
 //         public RunAction() {
 //             super("run");
 //         }
-//         @Override public void actionPerformed(ActionEvent evt) {
+//         @Override public void actionPerformed(ActionEvent e) {
 //             //System.out.println("actionPerformed() is EDT?: " + EventQueue.isDispatchThread());
 //             final JProgressBar bar1 = new JProgressBar(0, 100);
 //             final JProgressBar bar2 = new JProgressBar(0, 100);
@@ -339,8 +370,8 @@ class Task extends SwingWorker<String, Progress> {
 //         public CancelAction() {
 //             super("cancel");
 //         }
-//         @Override public void actionPerformed(ActionEvent evt) {
-//             if (worker != null && !worker.isDone()) {
+//         @Override public void actionPerformed(ActionEvent e) {
+//             if (Objects.nonNull(worker) && !worker.isDone()) {
 //                 worker.cancel(true);
 //             }
 //             worker = null;
@@ -361,8 +392,9 @@ class Task extends SwingWorker<String, Progress> {
 //     public static void createAndShowGUI() {
 //         try {
 //             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-//         } catch (Exception e) {
-//             e.printStackTrace();
+//         } catch (ClassNotFoundException | InstantiationException
+//                | IllegalAccessException | UnsupportedLookAndFeelException ex) {
+//             ex.printStackTrace();
 //         }
 //         JFrame frame = new JFrame("@title@");
 //         //frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
@@ -376,7 +408,7 @@ class Task extends SwingWorker<String, Progress> {
 //
 // class MainProgressListener implements PropertyChangeListener {
 //     protected final JProgressBar progressBar;
-//     public MainProgressListener(JProgressBar progressBar) {
+//     protected MainProgressListener(JProgressBar progressBar) {
 //         this.progressBar = progressBar;
 //         this.progressBar.setValue(0);
 //     }
@@ -391,7 +423,7 @@ class Task extends SwingWorker<String, Progress> {
 // }
 // class SubProgressListener implements PropertyChangeListener {
 //     private final JProgressBar progressBar;
-//     public SubProgressListener(JProgressBar progressBar) {
+//     protected SubProgressListener(JProgressBar progressBar) {
 //         this.progressBar = progressBar;
 //         this.progressBar.setValue(0);
 //     }

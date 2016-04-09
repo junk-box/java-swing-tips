@@ -13,7 +13,7 @@ public final class MainPanel extends JPanel {
     private final JScrollPane scroll = new JScrollPane(label);
     private final JScrollBar vBar = scroll.getVerticalScrollBar();
     private final JScrollBar hBar = scroll.getHorizontalScrollBar();
-    private final JScrollBar vsb = new JScrollBar(JScrollBar.VERTICAL) {
+    private final JScrollBar vsb = new JScrollBar(Adjustable.VERTICAL) {
         @Override public boolean isVisible() {
             if (isPressed) {
                 return false;
@@ -26,7 +26,7 @@ public final class MainPanel extends JPanel {
             return new Dimension(0, dim.height);
         }
     };
-    private final JScrollBar hsb = new JScrollBar(JScrollBar.HORIZONTAL) {
+    private final JScrollBar hsb = new JScrollBar(Adjustable.HORIZONTAL) {
         @Override public Dimension getPreferredSize() {
             Dimension dim = super.getPreferredSize();
             return new Dimension(dim.width, 0);
@@ -76,13 +76,16 @@ public final class MainPanel extends JPanel {
         };
         ButtonGroup bg = new ButtonGroup();
         for (AbstractButton b: Arrays.asList(r0, r1, r2)) {
-            b.addActionListener(al); bg.add(b);
+            b.addActionListener(al);
+            bg.add(b);
         }
 
         Box b = Box.createHorizontalBox();
         JPanel p = new JPanel(new GridLayout(2, 1));
-        b.add(r1); b.add(r2);
-        p.add(r0); p.add(b);
+        b.add(r1);
+        b.add(r2);
+        p.add(r0);
+        p.add(b);
 
         r0.setSelected(true);
         scroll.setVerticalScrollBar(vsb);

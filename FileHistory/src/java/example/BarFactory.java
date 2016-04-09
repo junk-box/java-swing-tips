@@ -5,6 +5,7 @@ package example;
 import java.awt.*;
 import java.io.*;
 import java.net.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.*;
@@ -36,12 +37,12 @@ public final class BarFactory {
             //System.exit(1);
         }
         resources = res;
-        //actions   = act;
+        //actions = act;
         //initActions();
     }
     public BarFactory(ResourceBundle res) {
         resources = res;
-        //actions   = act;
+        //actions = act;
         //initActions();
     }
 
@@ -54,7 +55,7 @@ public final class BarFactory {
 
     public URL getResource(String key) {
         String name = getResourceString(key);
-        if (name == null) {
+        if (Objects.isNull(name)) {
             return null;
         }
         return getClass().getResource(name);
@@ -71,21 +72,22 @@ public final class BarFactory {
     }
 
     private String[] tokenize(String input) {
-        List<String> v = new ArrayList<>();
-        StringTokenizer t = new StringTokenizer(input);
-        while (t.hasMoreTokens()) {
-            v.add(t.nextToken());
-        }
-        String[] cmd = new String[v.size()];
-        for (int i = 0; i < cmd.length; i++) {
-            cmd[i] = v.get(i);
-        }
-        return cmd;
+//         List<String> v = new ArrayList<>();
+//         StringTokenizer t = new StringTokenizer(input);
+//         while (t.hasMoreTokens()) {
+//             v.add(t.nextToken());
+//         }
+//         String[] cmd = new String[v.size()];
+//         for (int i = 0; i < cmd.length; i++) {
+//             cmd[i] = v.get(i);
+//         }
+//         return cmd;
+        return input.split("\\s");
     }
 
-    public JToolBar createToolbar() {
+    public JToolBar createToolBar() {
         String tmp = getResourceString("toolbar");
-        if (tmp == null) {
+        if (Objects.isNull(tmp)) {
             return null;
         }
         JToolBar toolbar = new JToolBar();
@@ -106,16 +108,16 @@ public final class BarFactory {
     }
 
     private Component createTool(String key) {
-        return createToolbarButton(key);
+        return createToolBarButton(key);
     }
 
-    private JButton createToolbarButton(String key) {
+    private JButton createToolBarButton(String key) {
         URL url = getResource(key + IMAGE_SUFFIX);
         JButton b;
-        if (url == null) {
-            b = new JButton(getResourceString(key + LABEL_SUFFIX));
-        } else {
+        if (Objects.nonNull(url)) {
             b = new JButton(new ImageIcon(url));
+        } else {
+            b = new JButton(getResourceString(key + LABEL_SUFFIX));
         }
         b.setAlignmentY(Component.CENTER_ALIGNMENT);
         b.setFocusPainted(false);
@@ -124,19 +126,19 @@ public final class BarFactory {
         b.setMargin(new Insets(1, 1, 1, 1));
 
         String astr = getResourceString(key + ACTION_SUFFIX);
-        if (astr == null) {
+        if (Objects.isNull(astr)) {
             astr = key;
         }
         Action a = getAction(astr);
-        if (a == null) {
-            b.setEnabled(false);
-        } else {
+        if (Objects.nonNull(a)) {
             b.setActionCommand(astr);
             b.addActionListener(a);
+        } else {
+            b.setEnabled(false);
         }
 
         String tip = getResourceString(key + TIP_SUFFIX);
-        //if (tip != null) {
+        //if (Objects.nonNull(tip)) {
         b.setToolTipText(tip);
         //}
 
@@ -152,12 +154,12 @@ public final class BarFactory {
         return (JButton) toolButtons.get(key);
     }
 
-    public JMenuBar createMenubar() {
+    public JMenuBar createMenuBar() {
         JMenuBar mb = new JMenuBar();
         String[] menuKeys = tokenize(getResourceString("menubar"));
         for (int i = 0; i < menuKeys.length; i++) {
             JMenu m = createMenu(menuKeys[i]);
-            //if (m != null)
+            //if (Objects.nonNull(m))
             mb.add(m);
         }
         return mb;
@@ -168,14 +170,13 @@ public final class BarFactory {
         String mitext = getResourceString(key + LABEL_SUFFIX);
         JMenu menu = new JMenu(mitext);
         String mn = getResourceString(key + MNE_SUFFIX);
-        if (mn != null) {
+        if (Objects.nonNull(mn)) {
             String tmp = mn.toUpperCase(Locale.ENGLISH).trim();
-            if (tmp.length() == 1) {
+            if (tmp.length() > 0) {
                 if (mitext.indexOf(tmp) < 0) {
                     menu.setText(String.format("%s (%s)", mitext, tmp));
                 }
-                //byte[] bt = tmp.getBytes();
-                menu.setMnemonic((int) tmp.charAt(0));
+                menu.setMnemonic(tmp.codePointAt(0));
             }
         }
         for (int i = 0; i < itemKeys.length; i++) {
@@ -194,35 +195,33 @@ public final class BarFactory {
         String mitext = getResourceString(cmd + LABEL_SUFFIX);
         JMenuItem mi = new JMenuItem(mitext);
         URL url = getResource(cmd + IMAGE_SUFFIX);
-        if (url != null) {
-            mi.setHorizontalTextPosition(JButton.RIGHT);
+        if (Objects.nonNull(url)) {
+            mi.setHorizontalTextPosition(SwingConstants.RIGHT);
             mi.setIcon(new ImageIcon(url));
         }
         String astr = getResourceString(cmd + ACTION_SUFFIX);
-        if (astr == null) {
+        if (Objects.isNull(astr)) {
             astr = cmd;
         }
         String mn = getResourceString(cmd + MNE_SUFFIX);
         //System.out.println(mn);
-        if (mn != null) {
+        if (Objects.nonNull(mn)) {
             String tmp = mn.toUpperCase(Locale.ENGLISH).trim();
-            if (tmp.length() == 1) {
+            if (tmp.length() > 0) {
                 if (mitext.indexOf(tmp) < 0) {
                     mi.setText(String.format("%s (%s)", mitext, tmp));
                 }
-                //byte[] bt = tmp.getBytes();
-                mi.setMnemonic((int) tmp.charAt(0));
-                //System.out.println(cmd + ", " + tmp);
+                mi.setMnemonic(tmp.codePointAt(0));
             }
         }
         mi.setActionCommand(astr);
         Action a = getAction(astr);
-        if (a == null) {
-            mi.setEnabled(false);
-        } else {
+        if (Objects.nonNull(a)) {
             mi.addActionListener(a);
             //a.addPropertyChangeListener(createActionChangeListener(mi));
             mi.setEnabled(a.isEnabled());
+        } else {
+            mi.setEnabled(false);
         }
         menuItems.put(cmd, mi);
         return mi;
@@ -266,9 +265,9 @@ class UTF8ResourceBundleControl extends ResourceBundle.Control {
             ClassLoader cloader = Objects.requireNonNull(loader, "loader must not be null");
             if (reload) {
                 URL url = cloader.getResource(resourceName);
-                if (url != null) {
+                if (Objects.nonNull(url)) {
                     URLConnection connection = url.openConnection();
-                    if (connection != null) {
+                    if (Objects.nonNull(connection)) {
                         connection.setUseCaches(false);
                         stream = connection.getInputStream();
                     }
@@ -276,9 +275,9 @@ class UTF8ResourceBundleControl extends ResourceBundle.Control {
             } else {
                 stream = cloader.getResourceAsStream(resourceName);
             }
-            if (stream != null) {
+            if (Objects.nonNull(stream)) {
                 //BufferedInputStream bis = new BufferedInputStream(stream);
-                try (Reader r = new BufferedReader(new InputStreamReader(stream, "UTF-8"))) {
+                try (Reader r = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
                     bundle = new PropertyResourceBundle(r);
                 }
             }

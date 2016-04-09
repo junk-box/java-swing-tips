@@ -4,6 +4,7 @@ package example;
 //@homepage@
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Objects;
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.tree.*;
@@ -97,7 +98,7 @@ class TreePopupMenu extends JPopupMenu {
     private TreePath path;
     private final Action addFolderAction = new AbstractAction("add folder") {
         @Override public void actionPerformed(ActionEvent e) {
-            final JTree tree = (JTree) getInvoker();
+            JTree tree = (JTree) getInvoker();
             DefaultTreeModel model = (DefaultTreeModel) tree.getModel();
             DefaultMutableTreeNode parent = (DefaultMutableTreeNode) path.getLastPathComponent();
             DefaultMutableTreeNode child  = new DefaultMutableTreeNode("New Folder", true);
@@ -117,15 +118,12 @@ class TreePopupMenu extends JPopupMenu {
     };
     private final Action editNodeAction = new AbstractAction("edit") {
         @Override public void actionPerformed(ActionEvent e) {
-            //if (path == null) { return; }
             Object node = path.getLastPathComponent();
             if (node instanceof DefaultMutableTreeNode) {
                 DefaultMutableTreeNode leaf = (DefaultMutableTreeNode) node;
                 textField.setText(leaf.getUserObject().toString());
                 JTree tree = (JTree) getInvoker();
-                int result = JOptionPane.showConfirmDialog(
-                    tree, textField, "edit",
-                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+                int result = JOptionPane.showConfirmDialog(tree, textField, "edit", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
                 if (result == JOptionPane.OK_OPTION) {
                     String str = textField.getText();
                     if (!str.trim().isEmpty()) {
@@ -141,7 +139,6 @@ class TreePopupMenu extends JPopupMenu {
     private final Action removeNodeAction = new AbstractAction("remove") {
         @Override public void actionPerformed(ActionEvent e) {
             DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getLastPathComponent();
-            //if (path.getParentPath() != null) {
             if (!node.isRoot()) {
                 JTree tree = (JTree) getInvoker();
                 DefaultTreeModel model = (DefaultTreeModel) tree.getModel();
@@ -149,7 +146,7 @@ class TreePopupMenu extends JPopupMenu {
             }
         }
     };
-    public TreePopupMenu() {
+    protected TreePopupMenu() {
         super();
         textField.addAncestorListener(new AncestorListener() {
             @Override public void ancestorAdded(AncestorEvent e) {
@@ -168,7 +165,7 @@ class TreePopupMenu extends JPopupMenu {
         if (c instanceof JTree) {
             JTree tree = (JTree) c;
             path = tree.getPathForLocation(x, y);
-            if (path != null) {
+            if (Objects.nonNull(path)) {
                 DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getLastPathComponent();
                 boolean flag = node.getAllowsChildren();
                 addFolderAction.setEnabled(flag);

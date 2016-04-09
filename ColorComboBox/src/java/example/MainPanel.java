@@ -114,31 +114,34 @@ class AlternateRowColorComboBox<E> extends JComboBox<E> {
                 return c;
             }
         });
-        if (itemColorListener == null) {
-            itemColorListener = new ItemListener() {
-                @Override public void itemStateChanged(ItemEvent e) {
-                    if (e.getStateChange() != ItemEvent.SELECTED) {
-                        return;
-                    }
-                    JComboBox cb = (JComboBox) e.getItemSelectable();
-                    Color rc = getAlternateRowColor(cb.getSelectedIndex());
-                    if (cb.isEditable()) {
-                        JTextField field = (JTextField) cb.getEditor().getEditorComponent();
-                        field.setBackground(rc);
-                    } else {
-                        cb.setBackground(rc);
-                    }
+        itemColorListener = new ItemListener() {
+            @Override public void itemStateChanged(ItemEvent e) {
+                if (e.getStateChange() != ItemEvent.SELECTED) {
+                    return;
                 }
-            };
-        }
+                JComboBox cb = (JComboBox) e.getItemSelectable();
+                Color rc = getAlternateRowColor(cb.getSelectedIndex());
+                if (cb.isEditable()) {
+                    JTextField field = (JTextField) cb.getEditor().getEditorComponent();
+                    field.setBackground(rc);
+                } else {
+                    cb.setBackground(rc);
+                }
+            }
+        };
         addItemListener(itemColorListener);
-        JTextField field = (JTextField) getEditor().getEditorComponent();
-        if (field != null) {
-            field.setOpaque(true);
-            field.setBackground(getAlternateRowColor(getSelectedIndex()));
-        }
+        EventQueue.invokeLater(new Runnable() {
+            @Override public void run() {
+                Component c = getEditor().getEditorComponent();
+                if (c instanceof JTextField) {
+                    JTextField field = (JTextField) c;
+                    field.setOpaque(true);
+                    field.setBackground(getAlternateRowColor(getSelectedIndex()));
+                }
+            }
+        });
     }
     private static Color getAlternateRowColor(int index) {
-        return (index % 2 == 0) ? EVEN_BGCOLOR : ODD_BGCOLOR;
+        return index % 2 == 0 ? EVEN_BGCOLOR : ODD_BGCOLOR;
     }
 }

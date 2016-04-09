@@ -24,8 +24,7 @@ public final class MainPanel extends JPanel {
         setPreferredSize(new Dimension(320, 240));
     }
     private static SpinnerNumberModel makeSpinnerNumberModel() {
-        return new SpinnerNumberModel(Long.valueOf(10),    Long.valueOf(0),
-                                      Long.valueOf(99999), Long.valueOf(1));
+        return new SpinnerNumberModel(Long.valueOf(10), Long.valueOf(0), Long.valueOf(99999), Long.valueOf(1));
     }
     private JComponent makeTitlePanel(JComponent cmp, String title) {
         JPanel p = new JPanel(new GridBagLayout());
@@ -62,7 +61,7 @@ public final class MainPanel extends JPanel {
 
 class WarningSpinner extends JSpinner {
     private static final Color ERROR_BG = new Color(255, 200, 200);
-    public WarningSpinner(SpinnerNumberModel model) {
+    protected WarningSpinner(SpinnerNumberModel model) {
         super(model);
         JSpinner.NumberEditor editor = (JSpinner.NumberEditor) getEditor();
         final JFormattedTextField ftf = (JFormattedTextField) editor.getTextField();
@@ -95,10 +94,8 @@ class WarningSpinner extends JSpinner {
             @Override public Object stringToValue(String text) throws ParseException {
                 try {
                     Long.parseLong(text);
-                } catch (NumberFormatException e) {
-                    ParseException ex = new ParseException(e.getMessage(), 0);
-                    ex.initCause(e);
-                    throw ex;
+                } catch (NumberFormatException ex) {
+                    throw (ParseException) new ParseException(ex.getMessage(), 0).initCause(ex);
                 }
                 Object o = format.parse(text);
                 if (o instanceof Long) {
@@ -158,9 +155,7 @@ class WarningSpinner extends JSpinner {
 
 // class IntegerDocumentFilter extends DocumentFilter {
 //     @Override public void insertString(DocumentFilter.FilterBypass fb, int offset, String string, AttributeSet attr) throws BadLocationException {
-//         if (string == null) {
-//             return;
-//         } else {
+//         if (Objects.nonNull(string)) {
 //             replace(fb, offset, 0, string, attr);
 //         }
 //     }
@@ -173,17 +168,17 @@ class WarningSpinner extends JSpinner {
 //         String currentContent = doc.getText(0, currentLength);
 //         String before = currentContent.substring(0, offset);
 //         String after = currentContent.substring(length + offset, currentLength);
-//         String newValue = before + (text == null ? "" : text) + after;
+//         String newValue = before + Objects.toString(text, "") + after;
 //         //currentValue =
 //         checkInput(newValue, offset);
 //         fb.replace(offset, length, text, attrs);
 //     }
 //     private static int checkInput(String proposedValue, int offset) throws BadLocationException {
 //         int newValue = 0;
-//         if (proposedValue.length() > 0) {
+//         if (!proposedValue.isEmpty()) {
 //             try {
 //                 newValue = Integer.parseInt(proposedValue);
-//             } catch (NumberFormatException e) {
+//             } catch (NumberFormatException ex) {
 //                 throw new BadLocationException(proposedValue, offset);
 //             }
 //         }

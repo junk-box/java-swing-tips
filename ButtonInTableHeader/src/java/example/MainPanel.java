@@ -6,6 +6,7 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.border.*;
+import javax.swing.plaf.ColorUIResource;
 import javax.swing.table.*;
 
 public final class MainPanel extends JPanel {
@@ -23,11 +24,18 @@ public final class MainPanel extends JPanel {
     };
     private final JTable table = new JTable(model) {
         @Override public void updateUI() {
+            // Bug ID: 6788475 Changing to Nimbus LAF and back doesn't reset look and feel of JTable completely
+            // http://bugs.java.com/view_bug.do?bug_id=6788475
+            // XXX: set dummy ColorUIResource
+            setSelectionForeground(new ColorUIResource(Color.RED));
+            setSelectionBackground(new ColorUIResource(Color.RED));
             super.updateUI();
-            //XXX: Nimbus
-            TableCellRenderer r = getDefaultRenderer(Boolean.class);
-            if (r instanceof JComponent) {
-                ((JComponent) r).updateUI();
+            TableModel m = getModel();
+            for (int i = 0; i < m.getColumnCount(); i++) {
+                TableCellRenderer r = getDefaultRenderer(m.getColumnClass(i));
+                if (r instanceof Component) {
+                    SwingUtilities.updateComponentTreeUI((Component) r);
+                }
             }
         }
         @Override public Component prepareEditor(TableCellEditor editor, int row, int column) {
@@ -42,7 +50,13 @@ public final class MainPanel extends JPanel {
     };
     public MainPanel() {
         super(new BorderLayout());
-        HeaderRenderer r = new HeaderRenderer(table.getTableHeader());
+
+        JPopupMenu pop = new JPopupMenu();
+        pop.add("000");
+        pop.add("11111");
+        pop.add("2222222");
+
+        HeaderRenderer r = new HeaderRenderer(table.getTableHeader(), pop);
         table.getColumnModel().getColumn(0).setHeaderRenderer(r);
         table.getColumnModel().getColumn(1).setHeaderRenderer(r);
         table.getColumnModel().getColumn(2).setHeaderRenderer(r);
@@ -77,9 +91,9 @@ public final class MainPanel extends JPanel {
 class HeaderRenderer extends JButton implements TableCellRenderer {
     private static final int BUTTON_WIDTH = 16;
     private static final Color BUTTONBGC = new Color(200, 200, 200, 100);
-    private JPopupMenu pop;
+    private final JPopupMenu pop;
     private int rolloverIndex = -1;
-    private final transient MouseAdapter ma = new MouseAdapter() {
+    private final transient MouseAdapter handler = new MouseAdapter() {
         @Override public void mouseClicked(MouseEvent e) {
             JTableHeader header = (JTableHeader) e.getComponent();
             JTable table = header.getTable();
@@ -98,7 +112,7 @@ class HeaderRenderer extends JButton implements TableCellRenderer {
             r.translate(r.width - BUTTON_WIDTH, 0);
             r.setSize(BUTTON_WIDTH, r.height);
             Point pt = e.getPoint();
-            if (c.getComponentCount() > 0 && r.contains(pt) && pop != null) {
+            if (c.getComponentCount() > 0 && r.contains(pt)) {
                 pop.show(header, r.x, r.height);
                 JButton b = (JButton) c.getComponent(0);
                 b.doClick();
@@ -118,26 +132,24 @@ class HeaderRenderer extends JButton implements TableCellRenderer {
         }
     };
 
-    public HeaderRenderer(JTableHeader header) {
+    protected HeaderRenderer(JTableHeader header, JPopupMenu pop) {
         super();
-        //setOpaque(false);
-        //setFont(header.getFont());
-        setBorder(BorderFactory.createEmptyBorder());
-        setContentAreaFilled(false);
-        pop.add("000");
-        pop.add("11111");
-        pop.add("2222222");
-        header.addMouseListener(ma);
-        header.addMouseMotionListener(ma);
+        this.pop = pop;
+        header.addMouseListener(handler);
+        header.addMouseMotionListener(handler);
     }
 
     @Override public void updateUI() {
         super.updateUI();
-        if (pop == null) {
-            pop = new JPopupMenu();
-        } else {
-            SwingUtilities.updateComponentTreeUI(pop);
-        }
+        //setOpaque(false);
+        //setFont(header.getFont());
+        setBorder(BorderFactory.createEmptyBorder());
+        setContentAreaFilled(false);
+        EventQueue.invokeLater(new Runnable() {
+            @Override public void run() {
+                SwingUtilities.updateComponentTreeUI(pop);
+            }
+        });
     }
 
 //     JButton button = new JButton(new AbstractAction() {
@@ -145,17 +157,16 @@ class HeaderRenderer extends JButton implements TableCellRenderer {
 //             System.out.println("clicked");
 //         }
 //     });
-    @Override public Component getTableCellRendererComponent(JTable tbl, Object val, boolean isS, boolean hasF, int row, int col) {
-        TableCellRenderer r = tbl.getTableHeader().getDefaultRenderer();
-        JLabel l = (JLabel) r.getTableCellRendererComponent(tbl, val, isS, hasF, row, col);
+    @Override public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+        TableCellRenderer r = table.getTableHeader().getDefaultRenderer();
+        JLabel l = (JLabel) r.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
         setIcon(new MenuArrowIcon());
         l.removeAll();
-        int mci = tbl.convertColumnIndexToModel(col);
+        int mci = table.convertColumnIndexToModel(column);
 
         if (rolloverIndex == mci) {
-            TableColumn column = tbl.getColumnModel().getColumn(mci);
-            int w = column.getWidth();
-            int h = tbl.getTableHeader().getHeight();
+            int w = table.getColumnModel().getColumn(mci).getWidth();
+            int h = table.getTableHeader().getHeight();
             //Icon icon = new MenuArrowIcon();
             Border outside = l.getBorder();
             Border inside  = BorderFactory.createEmptyBorder(0, 0, 0, BUTTON_WIDTH);
@@ -185,7 +196,6 @@ class MenuArrowIcon implements Icon {
         g2.drawLine(2, 3, 6, 3);
         g2.drawLine(3, 4, 5, 4);
         g2.drawLine(4, 5, 4, 5);
-        //g2.translate(-x, -y);
         g2.dispose();
     }
     @Override public int getIconWidth() {

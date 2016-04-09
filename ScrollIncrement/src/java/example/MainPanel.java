@@ -12,12 +12,11 @@ public final class MainPanel extends JPanel {
         super(new BorderLayout());
         StringBuffer buf = new StringBuffer();
         for (int i = 0; i < 100; i++) {
-            String s = i + LF;
-            buf.append(s);
+            buf.append(i + LF);
         }
 
         final JScrollPane scrollPane = new JScrollPane(new JTextArea(buf.toString()));
-        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 
         JSpinner spinner = new JSpinner(new SpinnerNumberModel(scrollPane.getVerticalScrollBar().getUnitIncrement(1), 1, 100000, 1));
         spinner.setEditor(new JSpinner.NumberEditor(spinner, "#####0"));
@@ -34,7 +33,7 @@ public final class MainPanel extends JPanel {
         box.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         add(box, BorderLayout.NORTH);
         add(scrollPane);
-        setPreferredSize(new Dimension(320, 200));
+        setPreferredSize(new Dimension(320, 240));
     }
 
     public static void main(String... args) {

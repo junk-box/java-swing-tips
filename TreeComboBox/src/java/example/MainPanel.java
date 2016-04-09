@@ -19,7 +19,9 @@ public final class MainPanel extends JPanel {
 //         Enumeration depth = root.depthFirstEnumeration();
 //         while (depth.hasMoreElements()) {
 //             DefaultMutableTreeNode node = (DefaultMutableTreeNode) depth.nextElement();
-//             if (node.isRoot()) { break; }
+//             if (node.isRoot()) {
+//                 break;
+//             }
 //             model.insertElementAt(node, 0);
 //         }
         makeComboBoxModel(model1, root);
@@ -165,7 +167,7 @@ class TreeComboBox<E extends TreeNode> extends JComboBox<E> {
     }
     @Override public void setSelectedIndex(int index) {
         TreeNode node = getItemAt(index);
-        if (node != null && node.isLeaf()) {
+        if (Objects.nonNull(node) && node.isLeaf()) {
             super.setSelectedIndex(index);
         } else {
             isNotSelectableIndex = true;

@@ -71,12 +71,11 @@ class ColumnSpanningCellRenderer extends JPanel implements TableCellRenderer {
     private final JTextArea textArea = new JTextArea(2, 999999);
     private final JLabel label = new JLabel();
     private final JLabel iconLabel = new JLabel();
-    private final JScrollPane scroll = new JScrollPane();
+    private final JScrollPane scroll = new JScrollPane(textArea);
 
-    public ColumnSpanningCellRenderer() {
-        super(new BorderLayout(0, 0));
+    protected ColumnSpanningCellRenderer() {
+        super(new BorderLayout());
 
-        scroll.setViewportView(textArea);
         scroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
         scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         scroll.setBorder(BorderFactory.createEmptyBorder());
@@ -111,11 +110,12 @@ class ColumnSpanningCellRenderer extends JPanel implements TableCellRenderer {
         } else {
             String title = Objects.toString(value, "");
             int mrow = table.convertRowIndexToModel(row);
-            Test t = (Test) table.getModel().getValueAt(mrow, 0);
-            if (t == null) {
-                test = new Test(title, null, "");
-            } else {
+            Object o = table.getModel().getValueAt(mrow, 0);
+            if (o instanceof Test) {
+                Test t = (Test) o;
                 test = new Test(title, t.icon, t.text);
+            } else {
+                test = new Test(title, null, "");
             }
             remove(iconLabel);
         }
@@ -151,7 +151,7 @@ class Test {
     public final String title;
     public final Icon icon;
     public final String text;
-    public Test(String title, Icon icon, String text) {
+    protected Test(String title, Icon icon, String text) {
         this.title = title;
         this.icon  = icon;
         this.text  = text;

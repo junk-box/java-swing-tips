@@ -52,7 +52,7 @@ public final class MainPanel extends JPanel {
         box.add(new JButton(new AbstractAction("Load") {
             @Override public void actionPerformed(ActionEvent e) {
                 visitAll(tree, rootPath, false);
-                if (expandedState == null) {
+                if (Objects.isNull(expandedState)) {
                     return;
                 }
                 while (expandedState.hasMoreElements()) {
@@ -88,7 +88,7 @@ public final class MainPanel extends JPanel {
         }
         if (expand) {
             tree.expandPath(parent);
-        } else if (tree.isRootVisible() || parent.getParentPath() != null) {
+        } else if (tree.isRootVisible() || Objects.nonNull(parent.getParentPath())) {
             tree.collapsePath(parent);
         }
     }
@@ -158,7 +158,7 @@ public final class MainPanel extends JPanel {
 //     @Override public void valueChanged(TreeSelectionEvent e) {
 //         final JTree tree = (JTree) e.getSource();
 //         final DefaultMutableTreeNode node = (DefaultMutableTreeNode) e.getPath().getLastPathComponent();
-// //         if (frame == null) {
+// //         if (Objects.isNull(frame)) {
 // //             frame = (JFrame) SwingUtilities.getWindowAncestor(tree);
 // //             frame.setGlassPane(new LockingGlassPane());
 // //         }
@@ -167,9 +167,13 @@ public final class MainPanel extends JPanel {
 //         final DefaultTreeModel model = (DefaultTreeModel) tree.getModel();
 //         //final TreePath path = e.getPath();
 //
-//         if (!node.isLeaf()) { return; }
+//         if (!node.isLeaf()) {
+//             return;
+//         }
 //         final File parent = (File) node.getUserObject();
-//         if (!parent.isDirectory()) return;
+//         if (!parent.isDirectory()) {
+//           return;
+//         }
 //
 //         SwingWorker<String, File> worker = new SwingWorker<String, File>() {
 //             @Override public String doInBackground() {
@@ -209,9 +213,9 @@ public final class MainPanel extends JPanel {
 //         this.renderer = renderer;
 //         this.fileSystemView = fileSystemView;
 //     }
-//     @Override public Component getTreeCellRendererComponent(JTree tree, Object value, boolean isSelected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-//         JLabel c = (JLabel) renderer.getTreeCellRendererComponent(tree, value, isSelected, expanded, leaf, row, hasFocus);
-//         if (isSelected) {
+//     @Override public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+//         JLabel c = (JLabel) renderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
+//         if (selected) {
 //             c.setOpaque(false);
 //             c.setForeground(getTextSelectionColor());
 //             //c.setBackground(Color.BLUE); //getBackgroundSelectionColor());

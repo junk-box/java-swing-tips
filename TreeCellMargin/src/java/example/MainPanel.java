@@ -3,9 +3,10 @@ package example;
 // vim:set fileencoding=utf-8:
 //@homepage@
 import java.awt.*;
+import java.util.Objects;
 import javax.swing.*;
 import javax.swing.border.*;
-import javax.swing.plaf.basic.*;
+import javax.swing.plaf.basic.BasicGraphicsUtils;
 import javax.swing.tree.*;
 
 public final class MainPanel extends JPanel {
@@ -15,10 +16,10 @@ public final class MainPanel extends JPanel {
             @Override public void updateUI() {
                 setCellRenderer(null);
                 super.updateUI();
-                setCellRenderer(new MyTreeCellRenderer());
+                setCellRenderer(new MarginTreeCellRenderer());
             }
         };
-        //tree1.setCellRenderer(new MyTreeCellRenderer());
+        //tree1.setCellRenderer(new MarginTreeCellRenderer());
 
         JTree tree2 = new JTree() {
             @Override public void updateUI() {
@@ -63,18 +64,18 @@ public final class MainPanel extends JPanel {
     }
 }
 
-class MyTreeCellRenderer extends DefaultTreeCellRenderer {
+class MarginTreeCellRenderer extends DefaultTreeCellRenderer {
     private static final int MARGIN = 2; // < 3
-    protected final boolean drawsFocusBorderAroundIcon;
-    protected final boolean drawDashedFocusIndicator;
-    protected final boolean fillBackground;
+    protected boolean drawsFocusBorderAroundIcon;
+    protected boolean drawDashedFocusIndicator;
+    protected boolean fillBackground;
     protected Color treeBGColor;
     protected Color focusBGColor;
     //protected boolean selected;
     //protected boolean hasFocus;
 
-    public MyTreeCellRenderer() {
-        super();
+    @Override public void updateUI() {
+        super.updateUI();
         drawsFocusBorderAroundIcon = UIManager.getBoolean("Tree.drawsFocusBorderAroundIcon");
         drawDashedFocusIndicator   = UIManager.getBoolean("Tree.drawDashedFocusIndicator");
         fillBackground             = UIManager.getBoolean("Tree.rendererFillBackground");
@@ -99,13 +100,13 @@ class MyTreeCellRenderer extends DefaultTreeCellRenderer {
             bColor = getBackgroundSelectionColor();
         } else {
             bColor = getBackgroundNonSelectionColor();
-            if (bColor == null) {
+            if (Objects.isNull(bColor)) {
                 bColor = getBackground();
             }
         }
 
         int imageOffset = -1;
-        if (bColor != null && fillBackground) {
+        if (Objects.nonNull(bColor) && fillBackground) {
             imageOffset = getLabelStart();
             g.setColor(bColor);
             g.fillRect(imageOffset - MARGIN, 0, getWidth() + MARGIN - imageOffset, getHeight());
@@ -132,11 +133,11 @@ class MyTreeCellRenderer extends DefaultTreeCellRenderer {
     private void paintFocus(Graphics g, int x, int y, int w, int h, Color notColor) {
         Color bsColor = getBorderSelectionColor();
         boolean b = selected || !drawDashedFocusIndicator;
-        if (bsColor != null && b) {
+        if (Objects.nonNull(bsColor) && b) {
             g.setColor(bsColor);
             g.drawRect(x, y, w - 1, h - 1);
         }
-        if (drawDashedFocusIndicator && notColor != null) {
+        if (drawDashedFocusIndicator && Objects.nonNull(notColor)) {
             if (!notColor.equals(treeBGColor)) {
                 treeBGColor = notColor;
                 focusBGColor = new Color(~notColor.getRGB());
@@ -147,7 +148,7 @@ class MyTreeCellRenderer extends DefaultTreeCellRenderer {
     }
     private int getLabelStart() {
         Icon currentI = getIcon();
-        if (currentI != null && getText() != null) {
+        if (Objects.nonNull(currentI) && Objects.nonNull(getText())) {
             return currentI.getIconWidth() + Math.max(0, getIconTextGap() - 1);
         }
         return 0;
@@ -163,7 +164,7 @@ class CompoundTreeCellRenderer extends DefaultTreeCellRenderer {
     private final Border compoundFocusBorder;
     private final boolean isSynth;
 
-    public CompoundTreeCellRenderer() {
+    protected CompoundTreeCellRenderer() {
         super();
 
         isSynth = getUI().getClass().getName().contains("Synth");
@@ -204,10 +205,10 @@ class CompoundTreeCellRenderer extends DefaultTreeCellRenderer {
         } else {
             bColor = getBackgroundNonSelectionColor();
             fColor = getTextNonSelectionColor();
-            if (bColor == null) {
+            if (Objects.isNull(bColor)) {
                 bColor = getBackground();
             }
-            if (fColor == null) {
+            if (Objects.isNull(fColor)) {
                 fColor = getForeground();
             }
             text.setOpaque(false);
@@ -225,7 +226,7 @@ class CompoundTreeCellRenderer extends DefaultTreeCellRenderer {
 
 class DotBorder extends LineBorder {
     private final Color borderSelectionColor;
-    public DotBorder(Color color, Color borderSelectionColor) {
+    protected DotBorder(Color color, Color borderSelectionColor) {
         super(color, 1);
         this.borderSelectionColor = borderSelectionColor;
     }
@@ -234,12 +235,11 @@ class DotBorder extends LineBorder {
     }
     @Override public void paintBorder(Component c, Graphics g, int x, int y, int w, int h) {
         Graphics2D g2 = (Graphics2D) g.create();
-        //g2.translate(x, y);
+        g2.translate(x, y);
         g2.setPaint(borderSelectionColor);
-        g2.drawRect(x, y, w - 1, h - 1);
+        g2.drawRect(0, 0, w - 1, h - 1);
         g2.setPaint(getLineColor());
-        javax.swing.plaf.basic.BasicGraphicsUtils.drawDashedRect(g2, x, y, w, h);
-        //g2.translate(-x, -y);
+        BasicGraphicsUtils.drawDashedRect(g2, 0, 0, w, h);
         g2.dispose();
     }
 }

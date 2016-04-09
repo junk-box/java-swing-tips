@@ -20,7 +20,7 @@ public final class MainPanel extends JPanel {
         add(makeTitlePanel(field1, "undo:Ctrl-z, redo:Ctrl-y"));
         add(makeTitlePanel(field2, "test"));
         setBorder(BorderFactory.createEmptyBorder(10, 5, 10, 5));
-        setPreferredSize(new Dimension(320, 200));
+        setPreferredSize(new Dimension(320, 240));
     }
     private static void initUndoRedo(JTextComponent tc) {
         UndoManager manager = new UndoManager();
@@ -33,7 +33,7 @@ public final class MainPanel extends JPanel {
     }
     private static class UndoAction extends AbstractAction {
         private final UndoManager undoManager;
-        public UndoAction(UndoManager manager) {
+        protected UndoAction(UndoManager manager) {
             super("undo");
             this.undoManager = manager;
         }
@@ -48,7 +48,7 @@ public final class MainPanel extends JPanel {
     }
     private static class RedoAction extends AbstractAction {
         private final UndoManager undoManager;
-        public RedoAction(UndoManager manager) {
+        protected RedoAction(UndoManager manager) {
             super("redo");
             this.undoManager = manager;
         }

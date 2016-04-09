@@ -26,7 +26,7 @@ public final class MainPanel extends JPanel {
                 c.setBackground(getSelectionBackground());
             } else {
                 c.setForeground(getForeground());
-                c.setBackground((row % 2 == 0) ? EVEN_COLOR : getBackground());
+                c.setBackground(row % 2 == 0 ? EVEN_COLOR : getBackground());
             }
             return c;
         }
@@ -46,7 +46,7 @@ public final class MainPanel extends JPanel {
         table.setAutoCreateRowSorter(true);
 
 //         // Bug ID: 4330950 Lost newly entered data in the cell when resizing column width
-//         // http://bugs.sun.com/view_bug.do?bug_id=4330950
+//         // http://bugs.java.com/view_bug.do?bug_id=4330950
 //         frame.addWindowListener(new WindowAdapter() {
 //             @Override public void windowClosing(WindowEvent e) {
 // //                 if (table.isEditing()) {
@@ -57,7 +57,7 @@ public final class MainPanel extends JPanel {
 //         });
 //         frame.addWindowStateListener(new WindowStateListener() {
 //             @Override public void windowStateChanged(WindowEvent e) {
-//                 if (frame.getExtendedState() == JFrame.MAXIMIZED_BOTH && table.isEditing()) {
+//                 if (frame.getExtendedState() == Frame.MAXIMIZED_BOTH && table.isEditing()) {
 //                     table.getCellEditor().stopCellEditing();
 //                 }
 //             }
@@ -90,7 +90,7 @@ public final class MainPanel extends JPanel {
         });
 
 //         // Bug ID: 4330950 Lost newly entered data in the cell when resizing column width
-//         // http://bugs.sun.com/view_bug.do?bug_id=4330950
+//         // http://bugs.java.com/view_bug.do?bug_id=4330950
 //         table.getTableHeader().addComponentListener(new ComponentAdapter() {
 //             @Override public void componentResized(ComponentEvent e) {
 //                 System.out.println("componentResized");
@@ -103,11 +103,9 @@ public final class MainPanel extends JPanel {
         teoflCheck.setSelected(true);
 
         table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-        combobox.addItemListener(new ItemListener() {
-            @Override public void itemStateChanged(ItemEvent e) {
-                if (e.getStateChange() == ItemEvent.SELECTED) {
-                    table.setAutoResizeMode(((AutoResizeMode) e.getItem()).mode);
-                }
+        combobox.addItemListener(e -> {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                table.setAutoResizeMode(((AutoResizeMode) e.getItem()).mode);
             }
         });
 
@@ -158,7 +156,7 @@ enum AutoResizeMode {
     AUTO_RESIZE_OFF(JTable.AUTO_RESIZE_OFF),
     AUTO_RESIZE_ALL_COLUMNS(JTable.AUTO_RESIZE_ALL_COLUMNS);
     public int mode;
-    private AutoResizeMode(int mode) {
+    AutoResizeMode(int mode) {
         this.mode = mode;
     }
 }

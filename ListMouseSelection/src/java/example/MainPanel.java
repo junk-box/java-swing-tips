@@ -53,7 +53,7 @@ public final class MainPanel extends JPanel {
 }
 
 class SingleMouseClickSelectList<E> extends JList<E> {
-    public SingleMouseClickSelectList(ListModel<E> model) {
+    protected SingleMouseClickSelectList(ListModel<E> model) {
         super(model);
     }
     @Override public void updateUI() {
@@ -79,12 +79,13 @@ class SingleMouseClickSelectList<E> extends JList<E> {
         }
     }
     private MouseEvent convertMouseEvent(MouseEvent e) {
-        // https://forums.oracle.com/thread/1351452 JList where mouse click acts like ctrl-mouse click
+        // JList where mouse click acts like ctrl-mouse click
+        // https://community.oracle.com/thread/1351452
         return new MouseEvent(
             e.getComponent(),
             e.getID(), e.getWhen(),
             //e.getModifiers() | InputEvent.CTRL_MASK,
-            //select multiple objects in OS X: Command+click
+            //select multiple objects in OS X: Command + click
             //pointed out by nsby
             e.getModifiers() | Toolkit.getDefaultToolkit().getMenuShortcutKeyMask(),
             e.getX(), e.getY(),
@@ -95,61 +96,14 @@ class SingleMouseClickSelectList<E> extends JList<E> {
     }
 }
 
-class ClearSelectionListener extends MouseAdapter {
-    public boolean  isDragging;
-    public boolean  isCellInsideDragging;
-    private boolean startOutside;
-    private int     startIndex = -1;
-
-    private static void clearSelectionAndFocus(JList list) {
-        list.getSelectionModel().clearSelection();
-        list.getSelectionModel().setAnchorSelectionIndex(-1);
-        list.getSelectionModel().setLeadSelectionIndex(-1);
-    }
-    private static boolean contains(JList list, Point pt) {
-        for (int i = 0; i < list.getModel().getSize(); i++) {
-            Rectangle r = list.getCellBounds(i, i);
-            if (r.contains(pt)) {
-                return true;
-            }
-        }
-        return false;
-    }
-    @Override public void mousePressed(MouseEvent e) {
-        JList list = (JList) e.getComponent();
-        startOutside = contains(list, e.getPoint());
-        startOutside ^= true;
-        startIndex = list.locationToIndex(e.getPoint());
-        if (startOutside) {
-            clearSelectionAndFocus(list);
-        }
-    }
-    @Override public void mouseReleased(MouseEvent e) {
-        startOutside = false;
-        isDragging = false;
-        isCellInsideDragging = false;
-        startIndex = -1;
-    }
-    @Override public void mouseDragged(MouseEvent e) {
-        JList list = (JList) e.getComponent();
-        if (!isDragging && startIndex == list.locationToIndex(e.getPoint())) {
-            isCellInsideDragging = true;
-        } else {
-            isDragging = true;
-            isCellInsideDragging = false;
-        }
-        if (contains(list, e.getPoint())) {
-            startOutside = false;
-            isDragging = true;
-        } else if (startOutside) {
-            clearSelectionAndFocus(list);
-        }
-    }
-}
-
 class SingleClickSelectList<E> extends JList<E> {
-    private transient ClearSelectionListener listener;
-    public SingleClickSelectList(ListModel<E> model) {
+    protected transient SelectionHandler listener;
+    protected boolean isDragging;
+    protected boolean isCellInsideDragging;
+    protected boolean startOutside;
+    protected int startIndex = -1;
+
+    protected SingleClickSelectList(ListModel<E> model) {
         super(model);
     }
     @Override public void updateUI() {
@@ -160,26 +114,69 @@ class SingleClickSelectList<E> extends JList<E> {
         setSelectionForeground(null);
         setSelectionBackground(null);
         super.updateUI();
-        if (listener == null) {
-            listener = new ClearSelectionListener();
-        }
+        listener = new SelectionHandler();
         addMouseListener(listener);
         addMouseMotionListener(listener);
     }
     @Override public void setSelectionInterval(int anchor, int lead) {
-        if (anchor == lead && lead >= 0 && anchor >= 0 && listener != null) {
-            if (listener.isDragging) {
+        if (anchor == lead && lead >= 0 && anchor >= 0) {
+            if (isDragging) {
                 addSelectionInterval(anchor, anchor);
-            } else if (!listener.isCellInsideDragging) {
+            } else if (!isCellInsideDragging) {
                 if (isSelectedIndex(anchor)) {
                     removeSelectionInterval(anchor, anchor);
                 } else {
                     addSelectionInterval(anchor, anchor);
                 }
-                listener.isCellInsideDragging = true;
+                isCellInsideDragging = true;
             }
         } else {
             super.setSelectionInterval(anchor, lead);
+        }
+    }
+    private void clearSelectionAndFocus() {
+        getSelectionModel().clearSelection();
+        getSelectionModel().setAnchorSelectionIndex(-1);
+        getSelectionModel().setLeadSelectionIndex(-1);
+    }
+    private boolean cellsContains(Point pt) {
+        for (int i = 0; i < getModel().getSize(); i++) {
+            Rectangle r = getCellBounds(i, i);
+            if (r.contains(pt)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    private class SelectionHandler extends MouseAdapter {
+        @Override public void mousePressed(MouseEvent e) {
+            //JList list = (JList) e.getComponent();
+            startOutside = !cellsContains(e.getPoint());
+            startIndex = locationToIndex(e.getPoint());
+            if (startOutside) {
+                clearSelectionAndFocus();
+            }
+        }
+        @Override public void mouseReleased(MouseEvent e) {
+            startOutside = false;
+            isDragging = false;
+            isCellInsideDragging = false;
+            startIndex = -1;
+        }
+        @Override public void mouseDragged(MouseEvent e) {
+            //JList list = (JList) e.getComponent();
+            if (!isDragging && startIndex == locationToIndex(e.getPoint())) {
+                isCellInsideDragging = true;
+            } else {
+                isDragging = true;
+                isCellInsideDragging = false;
+            }
+            if (cellsContains(e.getPoint())) {
+                startOutside = false;
+                isDragging = true;
+            } else if (startOutside) {
+                clearSelectionAndFocus();
+            }
         }
     }
 }

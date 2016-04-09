@@ -101,7 +101,7 @@ public final class MainPanel extends JPanel {
     }
 }
 
-// https://forums.oracle.com/thread/1373824 XMLViewer
+// https://community.oracle.com/thread/1373824 XMLViewer
 class XMLTreeNode implements TreeNode {
     private Node xmlNode;
     private XMLTreeNode parent;
@@ -116,10 +116,10 @@ class XMLTreeNode implements TreeNode {
         this.parent = parent;
     }
     public boolean isShowAttributes() {
-        if (showAttributes != null) {
+        if (Objects.nonNull(showAttributes)) {
             return showAttributes.booleanValue();
         }
-        if (parent != null) {
+        if (Objects.nonNull(parent)) {
             return parent.isShowAttributes();
         }
         return false;
@@ -154,7 +154,7 @@ class XMLTreeNode implements TreeNode {
         return xmlNode.getNodeName();
     }
 //     private List<XMLTreeNode> getChildren() {
-//         if (list == null) {
+//         if (Objects.isNull(list)) {
 //             loadChildren();
 //         }
 //         return new ArrayList<XMLTreeNode>(list);
@@ -165,14 +165,14 @@ class XMLTreeNode implements TreeNode {
         list = new ArrayList<XMLTreeNode>(count);
         for (int i = 0; i < count; i++) {
             Node c = cn.item(i);
-            if (c instanceof Text && c.getNodeValue().trim().length() == 0) {
+            if (c instanceof Text && c.getNodeValue().trim().isEmpty()) {
                 continue;
             }
             list.add(new XMLTreeNode(cn.item(i), this));
         }
     }
     @Override public Enumeration<XMLTreeNode> children() {
-        if (list == null) {
+        if (Objects.isNull(list)) {
             loadChildren();
         }
         final Iterator<XMLTreeNode> iter = list.iterator();
@@ -185,23 +185,23 @@ class XMLTreeNode implements TreeNode {
             }
         };
     }
-    @Override public boolean getAllowsChildren() { //NOPMD
+    @Override public boolean getAllowsChildren() { //NOPMD A getX() method which returns a boolean should be named isX()
         return true;
     }
     @Override public TreeNode getChildAt(int childIndex) {
-        if (list == null) {
+        if (Objects.isNull(list)) {
             loadChildren();
         }
         return list.get(childIndex);
     }
     @Override public int getChildCount() {
-        if (list == null) {
+        if (Objects.isNull(list)) {
             loadChildren();
         }
         return list.size();
     }
     @Override public int getIndex(TreeNode node) {
-        if (list == null) {
+        if (Objects.isNull(list)) {
             loadChildren();
         }
         int i = 0;
@@ -220,7 +220,7 @@ class XMLTreeNode implements TreeNode {
         if (xmlNode instanceof Element) {
             return false;
         }
-        if (list == null) {
+        if (Objects.isNull(list)) {
             loadChildren();
         }
         return list.isEmpty();

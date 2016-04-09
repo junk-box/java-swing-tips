@@ -39,7 +39,7 @@ public final class MainPanel extends JPanel {
                     } else {
                         TreeUtil.sortTree3(r);
                     }
-                    log(check.getText());
+                    //log(check.getText());
                     tree.setModel(new DefaultTreeModel(r));
                 } else {
                     tree.setModel(new DefaultTreeModel(root));
@@ -61,15 +61,15 @@ public final class MainPanel extends JPanel {
         setPreferredSize(new Dimension(320, 240));
     }
 
-    private static void log(String title) {
-        if (TreeUtil.swapCount.get() == 0) {
-            System.out.format("%-24s - compare: %3d, swap: ---%n",
-                              title, TreeUtil.compareCount.get());
-        } else {
-            System.out.format("%-24s - compare: %3d, swap: %3d%n",
-                              title, TreeUtil.compareCount.get(), TreeUtil.swapCount.get());
-        }
-    }
+//     private static void log(String title) {
+//         if (TreeUtil.swapCount.get() == 0) {
+//             System.out.format("%-24s - compare: %3d, swap: ---%n",
+//                               title, TreeUtil.compareCount.get());
+//         } else {
+//             System.out.format("%-24s - compare: %3d, swap: %3d%n",
+//                               title, TreeUtil.compareCount.get(), TreeUtil.swapCount.get());
+//         }
+//     }
 
     public static void main(String... args) {
         EventQueue.invokeLater(new Runnable() {
@@ -123,7 +123,7 @@ final class TreeUtil {
 
     private TreeUtil() { /* Singleton */ }
 
-    // https://forums.oracle.com/thread/1355435 How to sort jTree Nodes
+    // https://community.oracle.com/thread/1355435 How to sort jTree Nodes
     public static void sortTree0(DefaultMutableTreeNode root) {
         for (int i = 0; i < root.getChildCount(); i++) {
             DefaultMutableTreeNode node = (DefaultMutableTreeNode) root.getChildAt(i);
@@ -146,7 +146,7 @@ final class TreeUtil {
         }
     }
 
-    // https://forums.oracle.com/thread/1355435 How to sort jTree Nodes
+    // https://community.oracle.com/thread/1355435 How to sort jTree Nodes
     public static void sortTree1(DefaultMutableTreeNode root) {
         int n = root.getChildCount();
         for (int i = 0; i < n - 1; i++) {

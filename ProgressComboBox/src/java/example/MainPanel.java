@@ -4,7 +4,7 @@ package example;
 //@homepage@
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import javax.swing.*;
@@ -15,52 +15,58 @@ public final class MainPanel extends JPanel {
     private SwingWorker<String[], Integer> worker;
     private int counter;
     public MainPanel() {
-        super(new BorderLayout());
+        super(new BorderLayout(5, 5));
         combo.setRenderer(new ProgressCellRenderer());
         button = new JButton(new AbstractAction("load") {
             @Override public void actionPerformed(ActionEvent e) {
                 button.setEnabled(false);
                 combo.setEnabled(false);
                 //combo.removeAllItems();
-                worker = new Task() {
-                    @Override protected void process(List<Integer> chunks) {
-                        if (!isDisplayable()) {
-                            System.out.println("process: DISPOSE_ON_CLOSE");
-                            cancel(true);
-                            return;
-                        }
-                        for (Integer i: chunks) {
-                            counter = i;
-                        }
-                        combo.setSelectedIndex(-1);
-                        combo.repaint();
-                    }
-                    @Override public void done() {
-                        if (!isDisplayable()) {
-                            System.out.println("done: DISPOSE_ON_CLOSE");
-                            cancel(true);
-                            return;
-                        }
-                        try {
-                            if (!isCancelled()) {
-                                String[] array = get();
-                                combo.setModel(new DefaultComboBoxModel<String>(array));
-                                combo.setSelectedIndex(0);
-                            }
-                        } catch (InterruptedException | ExecutionException ex) {
-                            System.out.println("Interrupted");
-                        }
-                        combo.setEnabled(true);
-                        button.setEnabled(true);
-                        counter = 0;
-                    }
-                };
+                worker = new UITask();
                 worker.execute();
             }
         });
         add(createPanel(combo, button, "ProgressComboBox: "), BorderLayout.NORTH);
         add(new JScrollPane(new JTextArea()));
+        setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         setPreferredSize(new Dimension(320, 240));
+    }
+
+    class UITask extends Task {
+        @Override protected void process(List<Integer> chunks) {
+            if (isCancelled()) {
+                return;
+            }
+            if (!isDisplayable()) {
+                System.out.println("process: DISPOSE_ON_CLOSE");
+                cancel(true);
+                return;
+            }
+            for (Integer i: chunks) {
+                counter = i;
+            }
+            combo.setSelectedIndex(-1);
+            combo.repaint();
+        }
+        @Override public void done() {
+            if (!isDisplayable()) {
+                System.out.println("done: DISPOSE_ON_CLOSE");
+                cancel(true);
+                return;
+            }
+            try {
+                if (!isCancelled()) {
+                    String[] array = get();
+                    combo.setModel(new DefaultComboBoxModel<String>(array));
+                    combo.setSelectedIndex(0);
+                }
+            } catch (InterruptedException | ExecutionException ex) {
+                System.out.println("Interrupted");
+            }
+            combo.setEnabled(true);
+            button.setEnabled(true);
+            counter = 0;
+        }
     }
 
     class ProgressCellRenderer extends DefaultListCellRenderer {
@@ -70,9 +76,9 @@ public final class MainPanel extends JPanel {
             }
         };
         @Override public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-            if (index < 0 && worker != null && !worker.isDone()) {
+            if (index < 0 && Objects.nonNull(worker) && !worker.isDone()) {
                 bar.setFont(list.getFont());
-                bar.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+                bar.setBorder(BorderFactory.createEmptyBorder());
                 bar.setValue(counter);
                 return bar;
             }
@@ -80,45 +86,29 @@ public final class MainPanel extends JPanel {
         }
         @Override public void updateUI() {
             super.updateUI();
-            if (bar != null) {
+            if (Objects.nonNull(bar)) {
                 SwingUtilities.updateComponentTreeUI(bar);
             }
         }
     }
 
     public JPanel createPanel(JComponent cmp, JButton btn, String str) {
-//         JPanel panel = new JPanel(new BorderLayout(5, 5));
-//         panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-//         panel.add(new JLabel(str), BorderLayout.WEST);
-//         panel.add(cmp);
-//         panel.add(btn, BorderLayout.EAST);
-
         GridBagConstraints c = new GridBagConstraints();
-        JPanel panel = new JPanel(new GridBagLayout());
+        JPanel p = new JPanel(new GridBagLayout());
 
-        c.gridheight = 1;
-        c.gridwidth  = 1;
-        c.gridy = 0;
-
-        c.gridx = 0;
-        c.weightx = 0d;
         c.insets = new Insets(5, 5, 5, 0);
-        c.anchor = GridBagConstraints.WEST;
-        panel.add(new JLabel(str), c);
+        p.add(new JLabel(str), c);
 
-        c.gridx = 1;
         c.weightx = 1d;
-        //c.insets = new Insets(5, 5, 5, 0);
         c.fill = GridBagConstraints.HORIZONTAL;
-        panel.add(cmp, c);
+        p.add(cmp, c);
 
-        c.gridx = 2;
         c.weightx = 0d;
+        c.fill = GridBagConstraints.NONE;
         c.insets = new Insets(5, 5, 5, 5);
-        c.anchor = GridBagConstraints.WEST;
-        panel.add(btn, c);
+        p.add(btn, c);
 
-        return panel;
+        return p;
     }
 
     public static void main(String... args) {

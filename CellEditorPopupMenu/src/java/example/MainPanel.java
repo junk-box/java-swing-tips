@@ -31,7 +31,7 @@ public final class MainPanel extends JPanel {
         JPopupMenu popup = new TextComponentPopupMenu(textField);
         textField.setComponentPopupMenu(popup);
         add(new JScrollPane(table));
-        setPreferredSize(new Dimension(320, 200));
+        setPreferredSize(new Dimension(320, 240));
     }
 
     public static void main(String... args) {
@@ -58,7 +58,7 @@ public final class MainPanel extends JPanel {
 }
 
 class TextComponentPopupMenu extends JPopupMenu {
-    public TextComponentPopupMenu(final JTextComponent tc) {
+    protected TextComponentPopupMenu(JTextComponent tc) {
         super();
 
         final UndoManager manager = new UndoManager();
@@ -67,16 +67,16 @@ class TextComponentPopupMenu extends JPopupMenu {
         final Action cutAction    = new DefaultEditorKit.CutAction();
         final Action copyAction   = new DefaultEditorKit.CopyAction();
         final Action pasteAction  = new DefaultEditorKit.PasteAction();
-        final Action deleteAction = new AbstractAction("delete") {
-            @Override public void actionPerformed(ActionEvent e) {
-                JPopupMenu pop = (JPopupMenu) e.getSource();
-                ((JTextComponent) pop.getInvoker()).replaceSelection(null);
-            }
-        };
+        final Action deleteAction = new DeleteAction();
+//         final Action deleteAction = new AbstractAction("delete") {
+//             @Override public void actionPerformed(ActionEvent e) {
+//                 ((JTextComponent) getInvoker()).replaceSelection(null);
+//             }
+//         };
         tc.addAncestorListener(new AncestorListener() {
             @Override public void ancestorAdded(AncestorEvent e) {
                 manager.discardAllEdits();
-                tc.requestFocusInWindow();
+                e.getComponent().requestFocusInWindow();
             }
             @Override public void ancestorMoved(AncestorEvent e)   { /* not needed */ }
             @Override public void ancestorRemoved(AncestorEvent e) { /* not needed */ }
@@ -103,9 +103,8 @@ class TextComponentPopupMenu extends JPopupMenu {
                 redoAction.setEnabled(true);
             }
             @Override public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-                JPopupMenu pop = (JPopupMenu) e.getSource();
-                JTextComponent field = (JTextComponent) pop.getInvoker();
-                boolean flg = field.getSelectedText() != null;
+                JTextComponent tc = (JTextComponent) getInvoker();
+                boolean flg = tc.getSelectionStart() != tc.getSelectionEnd();
                 cutAction.setEnabled(flg);
                 copyAction.setEnabled(flg);
                 deleteAction.setEnabled(flg);
@@ -118,7 +117,7 @@ class TextComponentPopupMenu extends JPopupMenu {
 
 class UndoAction extends AbstractAction {
     private final UndoManager undoManager;
-    public UndoAction(UndoManager manager) {
+    protected UndoAction(UndoManager manager) {
         super("undo");
         this.undoManager = manager;
     }
@@ -133,7 +132,7 @@ class UndoAction extends AbstractAction {
 
 class RedoAction extends AbstractAction {
     private final UndoManager undoManager;
-    public RedoAction(UndoManager manager) {
+    protected RedoAction(UndoManager manager) {
         super("redo");
         this.undoManager = manager;
     }
@@ -142,6 +141,20 @@ class RedoAction extends AbstractAction {
             undoManager.redo();
         } catch (CannotRedoException cre) {
             Toolkit.getDefaultToolkit().beep();
+        }
+    }
+}
+
+class DeleteAction extends AbstractAction {
+    protected DeleteAction() {
+        super("delete");
+    }
+    @Override public void actionPerformed(ActionEvent e) {
+        //Container c = SwingUtilities.getAncestorOfClass(JPopupMenu.class, (Component) e.getSource());
+        Container c = SwingUtilities.getUnwrappedParent((Component) e.getSource());
+        if (c instanceof JPopupMenu) {
+            JPopupMenu pop = (JPopupMenu) c;
+            ((JTextComponent) pop.getInvoker()).replaceSelection(null);
         }
     }
 }

@@ -24,7 +24,7 @@ public final class MainPanel extends JPanel {
         p1.setOpaque(false);
 
         JPanel p2 = new JPanel() {
-            @Override public void paintComponent(Graphics g) {
+            @Override protected void paintComponent(Graphics g) {
                 //super.paintComponent(g);
                 g.setColor(new Color(100, 50, 50, 100));
                 g.fillRect(0, 0, getWidth(), getHeight());
@@ -32,7 +32,7 @@ public final class MainPanel extends JPanel {
         };
 
         JPanel p3 = new JPanel() {
-            @Override public void paintComponent(Graphics g) {
+            @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setPaint(TEXTURE);
                 g2.fillRect(0, 0, getWidth(), getHeight());
@@ -40,15 +40,15 @@ public final class MainPanel extends JPanel {
             }
         };
 
-        createFrame(p1);
-        createFrame(p2);
-        createFrame(p3);
+        desktop.add(createFrame(p1));
+        desktop.add(createFrame(p2));
+        desktop.add(createFrame(p3));
 
         URL url = getClass().getResource("tokeidai.jpg");
         BufferedImage bi = getFilteredImage(url);
         desktop.setBorder(new CentredBackgroundBorder(bi));
         // Bug ID: 6655001 D3D/OGL: Window translucency doesn't work with accelerated pipelines
-        // http://bugs.sun.com/view_bug.do?bug_id=6655001
+        // http://bugs.java.com/view_bug.do?bug_id=6655001
         //desktop.setDragMode(JDesktopPane.OUTLINE_DRAG_MODE);
         add(desktop);
         add(createMenuBar(), BorderLayout.NORTH);
@@ -76,26 +76,22 @@ public final class MainPanel extends JPanel {
     private JInternalFrame createFrame() {
         return createFrame(null);
     }
-    private JInternalFrame createFrame(JPanel panel) {
-        JInternalFrame frame = new MyInternalFrame();
-        if (panel != null) {
-            frame.setContentPane(panel);
-            panel.add(new JLabel("label"));
-            panel.add(new JButton("button"));
+
+    private static JInternalFrame createFrame(JComponent c) {
+        String title = String.format("Frame #%s", ++openFrameCount);
+        JInternalFrame frame = new JInternalFrame(title, true, true, true, true);
+        if (c instanceof JPanel) {
+            JPanel p = (JPanel) c;
+            p.add(new JLabel("label"));
+            p.add(new JButton("button"));
+            frame.setContentPane(p);
         }
-        desktop.add(frame);
+        frame.setSize(160, 100);
+        frame.setLocation(30 * openFrameCount, 30 * openFrameCount);
         frame.setOpaque(false);
         frame.setVisible(true);
         //desktop.getDesktopManager().activateFrame(frame);
         return frame;
-    }
-
-    private static class MyInternalFrame extends JInternalFrame {
-        public MyInternalFrame() {
-            super(String.format("Frame #%s", ++openFrameCount), true, true, true, true);
-            setSize(160, 100);
-            setLocation(30 * openFrameCount, 30 * openFrameCount);
-        }
     }
 
     private static TexturePaint makeTexturePaint() {
@@ -112,7 +108,7 @@ public final class MainPanel extends JPanel {
             }
         }
         g2.dispose();
-        return new TexturePaint(img, new Rectangle2D.Double(0, 0, 16, 16));
+        return new TexturePaint(img, new Rectangle(16, 16));
     }
 
     private static BufferedImage getFilteredImage(URL url) {
@@ -149,12 +145,12 @@ public final class MainPanel extends JPanel {
     }
 }
 
-// https://forums.oracle.com/thread/1395763 How can I use TextArea with Background Picture ?
-// http://terai.xrea.jp/Swing/CentredBackgroundBorder.html
+// https://community.oracle.com/thread/1395763 How can I use TextArea with Background Picture ?
+// http://ateraimemo.com/Swing/CentredBackgroundBorder.html
 class CentredBackgroundBorder implements Border {
     private final Insets insets = new Insets(0, 0, 0, 0);
     private final BufferedImage image;
-    public CentredBackgroundBorder(BufferedImage image) {
+    protected CentredBackgroundBorder(BufferedImage image) {
         this.image = image;
     }
     @Override public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {

@@ -42,7 +42,7 @@ public final class MainPanel extends JPanel {
     }
 }
 
-// https://forums.oracle.com/thread/1479759 Advice for editor gutter implementation...
+// https://community.oracle.com/thread/1479759 Advice for editor gutter implementation...
 // Original author: Alan Moore
 // Modified by: TERAI Atsuhiro
 class LineNumberView extends JComponent {
@@ -55,7 +55,7 @@ class LineNumberView extends JComponent {
     private final int fontDescent;
     private final int fontLeading;
 
-    public LineNumberView(JTextArea textArea) {
+    protected LineNumberView(JTextArea textArea) {
         super();
         this.textArea = textArea;
         Font font   = textArea.getFont();
@@ -106,7 +106,7 @@ class LineNumberView extends JComponent {
     @Override public Dimension getPreferredSize() {
         return new Dimension(getComponentWidth(), textArea.getHeight());
     }
-    @Override public void paintComponent(Graphics g) {
+    @Override protected void paintComponent(Graphics g) {
         g.setColor(getBackground());
         Rectangle clip = g.getClipBounds();
         g.fillRect(clip.x, clip.y, clip.width, clip.height);

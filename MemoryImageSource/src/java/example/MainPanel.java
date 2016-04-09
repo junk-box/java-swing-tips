@@ -42,21 +42,22 @@ class PaintPanel extends JPanel implements MouseMotionListener, MouseListener {
     private Point startPoint = new Point(-1, -1);
     private final transient BufferedImage backImage;
     private static final TexturePaint TEXTURE = TextureFactory.createCheckerTexture(6, new Color(200, 150, 100, 50));
-    private final int[] pixels = new int[320 * 240];
-    private final transient MemoryImageSource source = new MemoryImageSource(320, 240, pixels, 0, 320);
+    private final Rectangle r = new Rectangle(320, 240);
+    private final int[] pixels = new int[r.width * r.height];
+    private final transient MemoryImageSource source = new MemoryImageSource(r.width, r.height, pixels, 0, r.width);
     private int penc;
 
-    public PaintPanel() {
+    protected PaintPanel() {
         super();
         addMouseMotionListener(this);
         addMouseListener(this);
-        backImage = new BufferedImage(320, 240, BufferedImage.TYPE_INT_ARGB);
+        backImage = new BufferedImage(r.width, r.height, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2 = backImage.createGraphics();
         g2.setPaint(TEXTURE);
-        g2.fillRect(0, 0, 320, 240);
+        g2.fill(r);
         g2.dispose();
     }
-    @Override public void paintComponent(Graphics g) {
+    @Override protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         if (backImage != null) {
             Graphics2D g2 = (Graphics2D) g.create();
@@ -79,7 +80,8 @@ class PaintPanel extends JPanel implements MouseMotionListener, MouseListener {
         double yStart = startPoint.y;
         for (int i = 0; i < delta; i++) {
             Point p = new Point((int) xStart, (int) yStart);
-            if (p.x < 0 || p.y < 0 || p.x >= 320 || p.y >= 240) {
+            //if (p.x < 0 || p.y < 0 || p.x >= r.width || p.y >= r.height) {
+            if (!r.contains(p)) {
                 break;
             }
             paintStamp(pixels, p, penc);
@@ -95,8 +97,8 @@ class PaintPanel extends JPanel implements MouseMotionListener, MouseListener {
         //3x3 square:
         for (int n = -1; n <= 1; n++) {
             for (int m = -1; m <= 1; m++) {
-                int t = p.x + n + (p.y + m) * 320;
-                if (t >= 0 && t < 320 * 240) {
+                int t = p.x + n + (p.y + m) * r.width;
+                if (t >= 0 && t < r.width * r.height) {
                     pixels[t] = penc;
                 }
             }
@@ -105,7 +107,7 @@ class PaintPanel extends JPanel implements MouseMotionListener, MouseListener {
     }
     @Override public void mousePressed(MouseEvent e) {
         startPoint = e.getPoint();
-        penc = (e.getButton() == MouseEvent.BUTTON1) ? 0xff000000 : 0x0;
+        penc = e.getButton() == MouseEvent.BUTTON1 ? 0xFF000000 : 0x0;
     }
     @Override public void mouseMoved(MouseEvent e)    { /* not needed */ }
     @Override public void mouseExited(MouseEvent e)   { /* not needed */ }
@@ -131,7 +133,7 @@ final class TextureFactory {
             }
         }
         g2.dispose();
-        return new TexturePaint(img, new Rectangle(0, 0, size, size));
+        return new TexturePaint(img, new Rectangle(size, size));
     }
     public static TexturePaint createCheckerTexture(int cs) {
         return createCheckerTexture(cs, DEFAULT_COLOR);
@@ -139,13 +141,13 @@ final class TextureFactory {
 }
 
 // class PaintPanel extends JPanel implements MouseMotionListener, MouseListener {
-//     private static final Color ERASER = new Color(0, 0, 0, 0);
+//     private static final Color ERASER = new Color(0x0, true);
 //     private boolean isPen = true;
 //     private Point startPoint = new Point(-10, -10);
 //     private BufferedImage currentImage = null;
 //     private BufferedImage backImage = null;
 //     private TexturePaint texture = makeTexturePaint();
-//     public PaintPanel() {
+//     protected PaintPanel() {
 //         super();
 //         addMouseMotionListener(this);
 //         addMouseListener(this);
@@ -158,14 +160,17 @@ final class TextureFactory {
 //     }
 //     private static BufferedImage makeBGImage() {
 //         Color color = new Color(200, 150, 100, 50);
-//         int cs = 6, sz = cs * cs;
+//         int cs = 6;
+//         int sz = cs * cs;
 //         BufferedImage img = new BufferedImage(sz, sz, BufferedImage.TYPE_INT_ARGB);
 //         Graphics2D g2 = img.createGraphics();
 //         g2.setPaint(color);
 //         g2.fillRect(0, 0, sz, sz);
 //         for (int i = 0; i * cs < sz; i++) {
 //             for (int j = 0; j * cs < sz; j++) {
-//                 if ((i + j) % 2 == 0) { g2.fillRect(i * cs, j * cs, cs, cs); }
+//                 if ((i + j) % 2 == 0) {
+//                     g2.fillRect(i * cs, j * cs, cs, cs);
+//                 }
 //             }
 //         }
 //         g2.dispose();
@@ -173,11 +178,9 @@ final class TextureFactory {
 //     }
 //     private static TexturePaint makeTexturePaint() {
 //         BufferedImage img = makeBGImage();
-//         int w = img.getWidth(), h = img.getHeight();
-//         Rectangle2D r2d = new Rectangle2D.Float(0, 0, w, h);
-//         return new TexturePaint(img, r2d);
+//         return new TexturePaint(img, new Rectangle(img.getWidth(), img.getHeight()));
 //     }
-//     @Override public void paintComponent(Graphics g) {
+//     @Override protected void paintComponent(Graphics g) {
 //         super.paintComponent(g);
 //         if (backImage != null) {
 //             g.drawImage(backImage, 0, 0, this);
@@ -188,16 +191,16 @@ final class TextureFactory {
 //     }
 //     @Override public void mouseDragged(MouseEvent e) {
 //         Point pt = e.getPoint();
-//         Graphics2D g2d = currentImage.createGraphics();
-//         g2d.setStroke(new BasicStroke(3f));
+//         Graphics2D g2 = currentImage.createGraphics();
+//         g2.setStroke(new BasicStroke(3f));
 //         if (isPen) {
-//             g2d.setPaint(Color.BLACK);
+//             g2.setPaint(Color.BLACK);
 //         } else {
-//             g2d.setComposite(AlphaComposite.Clear);
-//             g2d.setPaint(ERASER);
+//             g2.setComposite(AlphaComposite.Clear);
+//             g2.setPaint(ERASER);
 //         }
-//         g2d.drawLine(startPoint.x, startPoint.y, pt.x, pt.y);
-//         g2d.dispose();
+//         g2.drawLine(startPoint.x, startPoint.y, pt.x, pt.y);
+//         g2.dispose();
 //         startPoint = pt;
 //         repaint();
 //     }

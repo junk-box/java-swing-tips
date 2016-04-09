@@ -73,7 +73,7 @@ class TextFieldPopupMenu extends JPopupMenu {
             }
         }
     };
-    public TextFieldPopupMenu() {
+    protected TextFieldPopupMenu() {
         super();
         add(cutAction);
         add(copyAction);
@@ -83,17 +83,14 @@ class TextFieldPopupMenu extends JPopupMenu {
         add(cut2Action);
     }
     @Override public void show(Component c, int x, int y) {
-        boolean flg;
         if (c instanceof JTextComponent) {
-            JTextComponent field = (JTextComponent) c;
-            flg = field.getSelectedText() != null;
-        } else {
-            flg = false;
+            JTextComponent tc = (JTextComponent) c;
+            boolean f =  tc.getSelectionStart() != tc.getSelectionEnd();
+            cutAction.setEnabled(f);
+            copyAction.setEnabled(f);
+            deleteAction.setEnabled(f);
+            cut2Action.setEnabled(f);
+            super.show(c, x, y);
         }
-        cutAction.setEnabled(flg);
-        copyAction.setEnabled(flg);
-        deleteAction.setEnabled(flg);
-        cut2Action.setEnabled(flg);
-        super.show(c, x, y);
     }
 }

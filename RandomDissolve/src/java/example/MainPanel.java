@@ -18,7 +18,7 @@ public final class MainPanel extends JPanel {
         BufferedImage i2 = makeImage(getClass().getResource("test.jpg"));
         final RandomDissolve randomDissolve = new RandomDissolve(i1, i2);
         JButton button = new JButton(new AbstractAction("change") {
-            @Override public void actionPerformed(ActionEvent ae) {
+            @Override public void actionPerformed(ActionEvent e) {
                 randomDissolve.animationStart();
             }
         });
@@ -70,7 +70,7 @@ class RandomDissolve extends JComponent implements ActionListener {
     private int currentStage;
     private int[] src, dst, step;
 
-    public RandomDissolve(BufferedImage i1, BufferedImage i2) {
+    protected RandomDissolve(BufferedImage i1, BufferedImage i2) {
         super();
         this.image1 = i1;
         this.image2 = i2;
@@ -103,7 +103,7 @@ class RandomDissolve extends JComponent implements ActionListener {
         WritableRaster wr = image.getRaster();
         DataBufferInt dbi = (DataBufferInt) wr.getDataBuffer();
         return dbi.getData();
-        //return ((DataBufferInt)(image.getRaster().getDataBuffer())).getData();
+        //return ((DataBufferInt) (image.getRaster().getDataBuffer())).getData();
     }
     public void animationStart() {
         currentStage = STAGES;
@@ -118,13 +118,13 @@ class RandomDissolve extends JComponent implements ActionListener {
         }
         animator.start();
     }
-    @Override public void paintComponent(Graphics g) {
+    @Override protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        Graphics2D g2d = (Graphics2D) g.create();
-        g2d.setPaint(getBackground());
-        g2d.fillRect(0, 0, getWidth(), getHeight());
-        g2d.drawImage(srcimg, 0, 0, srcimg.getWidth(), srcimg.getHeight(), this);
-        g2d.dispose();
+        Graphics2D g2 = (Graphics2D) g.create();
+        g2.setPaint(getBackground());
+        g2.fillRect(0, 0, getWidth(), getHeight());
+        g2.drawImage(srcimg, 0, 0, srcimg.getWidth(), srcimg.getHeight(), this);
+        g2.dispose();
     }
     @Override public void actionPerformed(ActionEvent e) {
         if (nextStage()) {

@@ -6,6 +6,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.*;
 import java.awt.geom.*;
+import java.util.Objects;
 import javax.swing.*;
 
 public final class MainPanel extends JPanel {
@@ -17,8 +18,7 @@ public final class MainPanel extends JPanel {
         private JFrame frame;
         @Override public void actionPerformed(ActionEvent e) {
             AbstractButton button = (AbstractButton) e.getSource();
-            Window parent = SwingUtilities.getWindowAncestor(button);
-            if (frame == null) {
+            if (Objects.isNull(frame)) {
                 frame = new JFrame();
                 frame.setUndecorated(true);
                 frame.setAlwaysOnTop(true);
@@ -48,9 +48,9 @@ public final class MainPanel extends JPanel {
 
                 frame.setBounds(shape.getBounds());
                 //frame.setSize(shape.getBounds().width, shape.getBounds().height);
-                //com.sun.awt.AWTUtilities.setWindowShape(frame, shape); //JDK 1.6.0
+                //AWTUtilities.setWindowShape(frame, shape); //JDK 1.6.0
                 frame.setShape(shape); //JDK 1.7.0
-                frame.setLocationRelativeTo(parent);
+                frame.setLocationRelativeTo(button.getTopLevelAncestor());
                 frame.setVisible(true);
             } else {
                 frame.setVisible(false);
@@ -91,24 +91,18 @@ public final class MainPanel extends JPanel {
 }
 
 class DragWindowListener extends MouseAdapter {
-    private final transient Point startPt = new Point();
-    private transient Window window;
-    @Override public void mousePressed(MouseEvent me) {
-        if (window == null) {
-            Object o = me.getSource();
-            if (o instanceof Window) {
-                window = (Window) o;
-            } else if (o instanceof JComponent) {
-                window = SwingUtilities.windowForComponent(me.getComponent());
-            }
+    private final Point startPt = new Point();
+    @Override public void mousePressed(MouseEvent e) {
+        if (SwingUtilities.isLeftMouseButton(e)) {
+            startPt.setLocation(e.getPoint());
         }
-        startPt.setLocation(me.getPoint());
     }
-    @Override public void mouseDragged(MouseEvent me) {
-        if (window != null) {
-            Point eventLocationOnScreen = me.getLocationOnScreen();
-            window.setLocation(eventLocationOnScreen.x - startPt.x,
-                               eventLocationOnScreen.y - startPt.y);
+    @Override public void mouseDragged(MouseEvent e) {
+        Component c = SwingUtilities.getRoot(e.getComponent());
+        if (c instanceof Window && SwingUtilities.isLeftMouseButton(e)) {
+            Window window = (Window) c;
+            Point pt = window.getLocation();
+            window.setLocation(pt.x - startPt.x + e.getX(), pt.y - startPt.y + e.getY());
         }
     }
 }

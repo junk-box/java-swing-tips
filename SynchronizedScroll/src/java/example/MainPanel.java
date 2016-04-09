@@ -3,18 +3,25 @@ package example;
 // vim:set fileencoding=utf-8:
 //@homepage@
 import java.awt.*;
+import java.util.Objects;
 import javax.swing.*;
 import javax.swing.event.*;
 
 public final class MainPanel extends JPanel {
-    private final JLabel lbl1 = new JLabel("aaaaaaaaaa");
-    private final JLabel lbl2 = new JLabel("bbbbbbbbbb");
+    private final JLabel lbl1 = new JLabel("aaaaaaaaaa") {
+        @Override public Dimension getPreferredSize() {
+            return new Dimension(1200, 600);
+        }
+    };
+    private final JLabel lbl2 = new JLabel("bbbbbbbbbb") {
+        @Override public Dimension getPreferredSize() {
+            return new Dimension(600, 1200);
+        }
+    };
     private final JScrollPane sp1 = new JScrollPane(lbl1);
     private final JScrollPane sp2 = new JScrollPane(lbl2);
     public MainPanel() {
         super();
-        lbl1.setPreferredSize(new Dimension(1200, 600));
-        lbl2.setPreferredSize(new Dimension(600, 1200));
         setLayout(new GridLayout(2, 1));
         add(sp1);
         add(sp2);
@@ -31,7 +38,7 @@ public final class MainPanel extends JPanel {
                     src = sp2.getViewport();
                     tgt = sp1.getViewport();
                 }
-                if (adjflg || tgt == null || src == null) {
+                if (adjflg || Objects.isNull(tgt) || Objects.isNull(src)) {
                     return;
                 }
                 adjflg = true;

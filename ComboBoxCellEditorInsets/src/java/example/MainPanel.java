@@ -70,7 +70,7 @@ public final class MainPanel extends JPanel {
 //*
 class ComboBoxPanel extends JPanel {
     public final JComboBox<String> comboBox = new JComboBox<>(new String[] {"aaaaaa", "bbb", "c"});
-    public ComboBoxPanel() {
+    protected ComboBoxPanel() {
         super(new GridBagLayout());
         GridBagConstraints c = new GridBagConstraints();
 
@@ -86,7 +86,7 @@ class ComboBoxPanel extends JPanel {
 }
 /*/ //TEST:
 class ComboBoxPanel extends JPanel {
-    private String[] m = new String[] {"a", "b", "c"};
+    private String[] m = {"a", "b", "c"};
     protected JComboBox<String> comboBox = new JComboBox<String>(m) {
         @Override public Dimension getPreferredSize() {
             Dimension d = super.getPreferredSize();
@@ -102,13 +102,13 @@ class ComboBoxPanel extends JPanel {
 }
 //*/
 class ComboBoxCellRenderer extends ComboBoxPanel implements TableCellRenderer {
-    public ComboBoxCellRenderer() {
-        super();
+    @Override public void updateUI() {
+        super.updateUI();
         setName("Table.cellRenderer");
     }
     @Override public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
         this.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
-        if (value != null) {
+        if (Objects.nonNull(value)) {
             comboBox.setSelectedItem(value);
         }
         return this;
@@ -117,8 +117,10 @@ class ComboBoxCellRenderer extends ComboBoxPanel implements TableCellRenderer {
 class ComboBoxCellEditor extends ComboBoxPanel implements TableCellEditor {
     protected transient ChangeEvent changeEvent;
 
-    public ComboBoxCellEditor() {
+    protected ComboBoxCellEditor() {
         super();
+        // PMD: False positive: ConstructorCallsOverridableMethod
+        // comboBox.addActionListener(e -> fireEditingStopped());
         comboBox.addActionListener(new ActionListener() {
             @Override public void actionPerformed(ActionEvent e) {
                 fireEditingStopped();
@@ -181,7 +183,7 @@ class ComboBoxCellEditor extends ComboBoxPanel implements TableCellEditor {
         for (int i = listeners.length - 2; i >= 0; i -= 2) {
             if (listeners[i] == CellEditorListener.class) {
                 // Lazily create the event:
-                if (changeEvent == null) {
+                if (Objects.isNull(changeEvent)) {
                     changeEvent = new ChangeEvent(this);
                 }
                 ((CellEditorListener) listeners[i + 1]).editingStopped(changeEvent);
@@ -196,7 +198,7 @@ class ComboBoxCellEditor extends ComboBoxPanel implements TableCellEditor {
         for (int i = listeners.length - 2; i >= 0; i -= 2) {
             if (listeners[i] == CellEditorListener.class) {
                 // Lazily create the event:
-                if (changeEvent == null) {
+                if (Objects.isNull(changeEvent)) {
                     changeEvent = new ChangeEvent(this);
                 }
                 ((CellEditorListener) listeners[i + 1]).editingCanceled(changeEvent);
@@ -207,7 +209,7 @@ class ComboBoxCellEditor extends ComboBoxPanel implements TableCellEditor {
 class ComboCellRenderer extends JComboBox<String> implements TableCellRenderer {
     private final JTextField editor;
     //private JButton button;
-    public ComboCellRenderer() {
+    protected ComboCellRenderer() {
         super();
         setEditable(true);
         //setBorder(BorderFactory.createEmptyBorder(8, 10, 8, 10));
@@ -233,12 +235,14 @@ class ComboCellRenderer extends JComboBox<String> implements TableCellRenderer {
     //Overridden for performance reasons. ---->
     @Override public boolean isOpaque() {
         Color back = getBackground();
-        Component p = getParent();
-        if (p != null) {
-            p = p.getParent();
-        } // p should now be the JTable.
-        boolean colorMatch = back != null && p != null && back.equals(p.getBackground()) && p.isOpaque();
-        return !colorMatch && super.isOpaque();
+        Object o = SwingUtilities.getAncestorOfClass(JTable.class, this);
+        if (o instanceof JTable) {
+            JTable table = (JTable) o;
+            boolean colorMatch = Objects.nonNull(back) && back.equals(table.getBackground()) && table.isOpaque();
+            return !colorMatch && super.isOpaque();
+        } else {
+            return super.isOpaque();
+        }
     }
     @Override protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
         //System.out.println(propertyName);

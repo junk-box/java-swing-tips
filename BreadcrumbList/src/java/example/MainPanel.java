@@ -5,7 +5,6 @@ package example;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.*;
-import java.io.Serializable;
 import java.util.*;
 import java.util.List;
 import javax.swing.*;
@@ -22,7 +21,7 @@ public final class MainPanel extends JPanel {
         tree.addTreeSelectionListener(new TreeSelectionListener() {
             @Override public void valueChanged(TreeSelectionEvent e) {
                 DefaultMutableTreeNode node = (DefaultMutableTreeNode) tree.getLastSelectedPathComponent();
-                if (node == null || node.isLeaf()) {
+                if (Objects.isNull(node) || node.isLeaf()) {
                     return;
                 } else {
                     initBreadcrumbList(breadcrumb, tree);
@@ -73,17 +72,17 @@ public final class MainPanel extends JPanel {
         return p;
     }
     private static AbstractButton makeButton(final JTree tree, final TreePath path, Color color) {
-        final ToggleButtonBarCellIcon icon = new ToggleButtonBarCellIcon();
         AbstractButton b = new JRadioButton(path.getLastPathComponent().toString()) {
             @Override public boolean contains(int x, int y) {
-                if (icon == null || icon.area == null) {
-                    return super.contains(x, y);
+                Icon i = getIcon();
+                if (i instanceof ArrowToggleButtonBarCellIcon) {
+                    return ((ArrowToggleButtonBarCellIcon) i).getShape().contains(x, y);
                 } else {
-                    return icon.area.contains(x, y);
+                    return super.contains(x, y);
                 }
             }
         };
-        if (tree != null) {
+        if (Objects.nonNull(tree)) {
             b.addActionListener(new ActionListener() {
                 @Override public void actionPerformed(ActionEvent e) {
                     JRadioButton r = (JRadioButton) e.getSource();
@@ -92,7 +91,7 @@ public final class MainPanel extends JPanel {
                 }
             });
         }
-        b.setIcon(icon);
+        b.setIcon(new ArrowToggleButtonBarCellIcon());
         b.setContentAreaFilled(false);
         b.setBorder(BorderFactory.createEmptyBorder());
         b.setVerticalAlignment(SwingConstants.CENTER);
@@ -127,18 +126,21 @@ public final class MainPanel extends JPanel {
     }
 }
 
-//http://terai.xrea.jp/Swing/ToggleButtonBar.html
-class ToggleButtonBarCellIcon implements Icon, Serializable {
-    private static final long serialVersionUID = 1L;
-    private static final int W = 10;
-    private static final int H = 21;
-    public Shape area;
-    public Shape getShape(Container parent, Component c, int x, int y) {
+//http://ateraimemo.com/Swing/ToggleButtonBar.html
+class ArrowToggleButtonBarCellIcon implements Icon {
+    public static final int TH = 10; //The height of a triangle
+    private static final int HEIGHT = TH * 2 + 1;
+    private static final int WIDTH = 100;
+    private Shape shape;
+    public Shape getShape() {
+        return shape;
+    }
+    protected Shape makeShape(Container parent, Component c, int x, int y) {
         int w = c.getWidth() - 1;
         int h = c.getHeight() - 1;
         int h2 = (int) (h * .5 + .5);
-        int w2 = W;
-        Path2D.Float p = new Path2D.Float();
+        int w2 = TH;
+        Path2D p = new Path2D.Double();
         p.moveTo(0,      0);
         p.lineTo(w - w2, 0);
         p.lineTo(w,      h2);
@@ -152,10 +154,10 @@ class ToggleButtonBarCellIcon implements Icon, Serializable {
     }
     @Override public void paintIcon(Component c, Graphics g, int x, int y) {
         Container parent = c.getParent();
-        if (parent == null) {
+        if (Objects.isNull(parent)) {
             return;
         }
-        area = getShape(parent, c, x, y);
+        shape = makeShape(parent, c, x, y);
 
         Color bgc = parent.getBackground();
         Color borderColor = Color.GRAY.brighter();
@@ -166,20 +168,18 @@ class ToggleButtonBarCellIcon implements Icon, Serializable {
                 borderColor = Color.GRAY;
             }
         }
-
         Graphics2D g2 = (Graphics2D) g.create();
-        //g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setPaint(bgc);
-        g2.fill(area);
+        g2.fill(shape);
         g2.setPaint(borderColor);
-        g2.draw(area);
+        g2.draw(shape);
         g2.dispose();
     }
     @Override public int getIconWidth() {
-        return 100;
+        return WIDTH;
     }
     @Override public int getIconHeight() {
-        return H;
+        return HEIGHT;
     }
 }
 
@@ -187,7 +187,7 @@ class BreadcrumbLayerUI extends LayerUI<JPanel> {
     private Shape shape;
     @Override public void paint(Graphics g, JComponent c) {
         super.paint(g, c);
-        if (shape != null) {
+        if (Objects.nonNull(shape)) {
             Graphics2D g2 = (Graphics2D) g.create();
             //g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2.setPaint(Color.GRAY);
@@ -214,11 +214,11 @@ class BreadcrumbLayerUI extends LayerUI<JPanel> {
             Component c = e.getComponent();
             if (c instanceof AbstractButton) {
                 AbstractButton b = (AbstractButton) c;
-                if (b.getIcon() instanceof ToggleButtonBarCellIcon) {
-                    ToggleButtonBarCellIcon icon = (ToggleButtonBarCellIcon) b.getIcon();
+                if (b.getIcon() instanceof ArrowToggleButtonBarCellIcon) {
+                    ArrowToggleButtonBarCellIcon icon = (ArrowToggleButtonBarCellIcon) b.getIcon();
                     Rectangle r = c.getBounds();
                     AffineTransform at = AffineTransform.getTranslateInstance(r.x, r.y);
-                    s = at.createTransformedShape(icon.area);
+                    s = at.createTransformedShape(icon.getShape());
                 }
             }
         }

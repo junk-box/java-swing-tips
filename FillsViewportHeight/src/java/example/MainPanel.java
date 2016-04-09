@@ -20,7 +20,7 @@ public final class MainPanel extends JPanel {
         @Override public Class<?> getColumnClass(int column) {
             // ArrayIndexOutOfBoundsException: 0 >= 0
             // Bug ID: JDK-6967479 JTable sorter fires even if the model is empty
-            // http://bugs.sun.com/view_bug.do?bug_id=6967479
+            // http://bugs.java.com/view_bug.do?bug_id=6967479
             //return getValueAt(0, column).getClass();
             switch (column) {
               case 0:
@@ -42,7 +42,7 @@ public final class MainPanel extends JPanel {
                 c.setBackground(getSelectionBackground());
             } else {
                 c.setForeground(getForeground());
-                c.setBackground((row % 2 == 0) ? EVEN_COLOR : getBackground());
+                c.setBackground(row % 2 == 0 ? EVEN_COLOR : getBackground());
             }
             return c;
         }
@@ -95,8 +95,13 @@ public final class MainPanel extends JPanel {
             }
         };
         p.add(new JLabel("table.setBackground: "));
-        bg.add(r1); p.add(r1); r1.addActionListener(al);
-        bg.add(r2); p.add(r2); r2.addActionListener(al);
+        bg.add(r1);
+        p.add(r1);
+        r1.addActionListener(al);
+
+        bg.add(r2);
+        p.add(r2);
+        r2.addActionListener(al);
         r1.setSelected(true);
         return p;
     }
@@ -128,9 +133,6 @@ class TablePopupMenu extends JPopupMenu {
     private final Action deleteAction = new AbstractAction("delete") {
         @Override public void actionPerformed(ActionEvent e) {
             int[] selection = table.getSelectedRows();
-            if (selection.length == 0) {
-                return;
-            }
             for (int i = selection.length - 1; i >= 0; i--) {
                 model.removeRow(table.convertRowIndexToModel(selection[i]));
             }
@@ -143,7 +145,7 @@ class TablePopupMenu extends JPopupMenu {
     };
     private final DefaultTableModel model;
     private final JTable table;
-    public TablePopupMenu(JTable table, DefaultTableModel model) {
+    protected TablePopupMenu(JTable table, DefaultTableModel model) {
         super();
         this.table = table;
         this.model = model;
@@ -152,8 +154,7 @@ class TablePopupMenu extends JPopupMenu {
         add(deleteAction);
     }
     @Override public void show(Component c, int x, int y) {
-        int[] l = table.getSelectedRows();
-        deleteAction.setEnabled(l.length > 0);
+        deleteAction.setEnabled(table.getSelectedRowCount() > 0);
         super.show(c, x, y);
     }
 }

@@ -13,27 +13,42 @@ import javax.swing.table.*;
 public final class MainPanel extends JPanel {
     public MainPanel() {
         super(new BorderLayout());
-        DefaultListModel<MyIcon> list = makeIconList();
-        MyIconModel model = new MyIconModel(list);
-        MyIconTable table = new MyIconTable(model, list);
+        ListModel<IconItem> list = makeIconList();
+        TableModel model = makeIconTableModel(list);
+        JTable table = new IconTable(model, list);
         JPanel p = new JPanel(new GridBagLayout());
         p.add(table, new GridBagConstraints());
         p.setBackground(Color.WHITE);
         add(p);
         setPreferredSize(new Dimension(320, 240));
     }
-    private DefaultListModel<MyIcon> makeIconList() {
-        DefaultListModel<MyIcon> list = new DefaultListModel<>();
-        list.addElement(new MyIcon("wi0009"));
-        list.addElement(new MyIcon("wi0054"));
-        list.addElement(new MyIcon("wi0062"));
-        list.addElement(new MyIcon("wi0063"));
-        list.addElement(new MyIcon("wi0064"));
-        list.addElement(new MyIcon("wi0096"));
-        list.addElement(new MyIcon("wi0111"));
-        list.addElement(new MyIcon("wi0122"));
-        list.addElement(new MyIcon("wi0124"));
+    private ListModel<IconItem> makeIconList() {
+        DefaultListModel<IconItem> list = new DefaultListModel<>();
+        list.addElement(new IconItem("wi0009"));
+        list.addElement(new IconItem("wi0054"));
+        list.addElement(new IconItem("wi0062"));
+        list.addElement(new IconItem("wi0063"));
+        list.addElement(new IconItem("wi0064"));
+        list.addElement(new IconItem("wi0096"));
+        list.addElement(new IconItem("wi0111"));
+        list.addElement(new IconItem("wi0122"));
+        list.addElement(new IconItem("wi0124"));
         return list;
+    }
+    private static TableModel makeIconTableModel(ListModel<?> list) {
+        Object[][] data = {
+            {list.getElementAt(0), list.getElementAt(1), list.getElementAt(2)},
+            {list.getElementAt(3), list.getElementAt(4), list.getElementAt(5)},
+            {list.getElementAt(6), list.getElementAt(7), list.getElementAt(8)}
+        };
+        return new DefaultTableModel(data, null) {
+            @Override public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+            @Override public int getColumnCount() {
+                return 3;
+            }
+        };
     }
     public static void main(String... args) {
         EventQueue.invokeLater(new Runnable() {
@@ -59,50 +74,32 @@ public final class MainPanel extends JPanel {
     }
 }
 
-class MyIconModel extends DefaultTableModel {
-    public MyIconModel(DefaultListModel list) {
-        super();
-        addRow(new Object[] {list.elementAt(0), list.elementAt(1), list.elementAt(2) });
-        addRow(new Object[] {list.elementAt(3), list.elementAt(4), list.elementAt(5) });
-        addRow(new Object[] {list.elementAt(6), list.elementAt(7), list.elementAt(8) });
-    }
-    @Override public boolean isCellEditable(int row, int column) {
-        return false;
-    }
-    @Override public int getColumnCount() {
-        return 3;
-    }
-    @Override public String getColumnName(int col) {
-        return "";
-    }
-}
-
-class MyIcon {
+class IconItem {
     public final ImageIcon large;
     public final ImageIcon small;
-    public MyIcon(String str) {
+    protected IconItem(String str) {
         large = new ImageIcon(getClass().getResource(str + "-48.png"));
         small = new ImageIcon(getClass().getResource(str + "-24.png"));
     }
 }
 
-class MyIconRenderer extends DefaultTableCellRenderer {
-    public MyIconRenderer() {
-        super();
-        setHorizontalAlignment(JLabel.CENTER);
+class IconTableCellRenderer extends DefaultTableCellRenderer {
+    @Override public void updateUI() {
+        super.updateUI();
+        setHorizontalAlignment(SwingConstants.CENTER);
         //setOpaque(true);
         //setBorder(BorderFactory.createEmptyBorder());
     }
     @Override public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-        setIcon(((MyIcon) value).large);
+        setIcon(((IconItem) value).large);
         return this;
     }
 }
 
-class MyIconTable extends JTable {
+class IconTable extends JTable {
     private static final int XOFF = 4;
-    private final MyGlassPane panel = new MyGlassPane() {
-        @Override public void paintComponent(Graphics g) {
+    private final JPanel panel = new TableGlassPane() {
+        @Override protected void paintComponent(Graphics g) {
             g.setColor(new Color(0x64FFFFFF, true));
             g.fillRect(0, 0, getWidth(), getHeight());
             BufferedImage bufimg = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
@@ -120,13 +117,13 @@ class MyIconTable extends JTable {
     private final EditorFromList editor;
     private Rectangle rect;
 
-    public MyIconTable(TableModel model, DefaultListModel<MyIcon> list) {
+    protected IconTable(TableModel model, ListModel<IconItem> list) {
         super(model);
-        setDefaultRenderer(Object.class, new MyIconRenderer());
+        setDefaultRenderer(Object.class, new IconTableCellRenderer());
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         initCellSize(50);
         addMouseListener(new MouseAdapter() {
-            @Override public void mouseClicked(MouseEvent me) {
+            @Override public void mouseClicked(MouseEvent e) {
                 startEditing();
             }
         });
@@ -140,17 +137,17 @@ class MyIconTable extends JTable {
             }
         });
         editor.addMouseListener(new MouseAdapter() {
-            @Override public void mouseClicked(MouseEvent me) {
-                setEditorSelectedIconAt(me.getPoint());
+            @Override public void mouseClicked(MouseEvent e) {
+                setEditorSelectedIconAt(e.getPoint());
             }
         });
 
         panel.addMouseListener(new MouseAdapter() {
-            @Override public void mouseClicked(MouseEvent me) {
-                if (rect == null || rect.contains(me.getPoint())) {
+            @Override public void mouseClicked(MouseEvent e) {
+                if (Objects.isNull(rect) || rect.contains(e.getPoint())) {
                     return;
                 }
-                setEditorSelectedIconAt(me.getPoint());
+                setEditorSelectedIconAt(e.getPoint());
             }
         });
         panel.setFocusTraversalPolicy(new DefaultFocusTraversalPolicy() {
@@ -193,34 +190,50 @@ class MyIconTable extends JTable {
     }
     private void setEditorSelectedIconAt(Point p) {
         Object o = editor.getModel().getElementAt(editor.locationToIndex(p));
-        if (o != null) {
+        if (Objects.nonNull(o)) {
             setValueAt(o, getSelectedRow(), getSelectedColumn());
         }
         panel.setVisible(false);
     }
 }
 
-class EditorFromList extends JList<MyIcon> {
+class EditorFromList extends JList<IconItem> {
     private static final int INS = 2;
+    private transient RollOverListener handler;
     private int rollOverRowIndex = -1;
+    private final Dimension dim;
 
-    public EditorFromList(DefaultListModel<MyIcon> list) {
-        super(list);
-        ImageIcon icon = ((MyIcon) list.elementAt(0)).small;
+    protected EditorFromList(ListModel<IconItem> model) {
+        super(model);
+        ImageIcon icon = model.getElementAt(0).small;
         int iw = INS + icon.getIconWidth();
         int ih = INS + icon.getIconHeight();
-        setLayoutOrientation(JList.HORIZONTAL_WRAP);
-        setVisibleRowCount(0);
+
+        dim = new Dimension(iw * 3 + INS, ih * 3 + INS);
         setFixedCellWidth(iw);
         setFixedCellHeight(ih);
+    }
+
+    @Override public Dimension getPreferredSize() {
+        return dim;
+    }
+
+    @Override public void updateUI() {
+        removeMouseMotionListener(handler);
+        removeMouseListener(handler);
+        super.updateUI();
+        handler = new RollOverListener();
+        addMouseMotionListener(handler);
+        addMouseListener(handler);
         setBorder(BorderFactory.createLineBorder(Color.BLACK));
-        setPreferredSize(new Dimension(iw * 3 + INS, ih * 3 + INS));
-        setCellRenderer(new ListCellRenderer<MyIcon>() {
+        setLayoutOrientation(JList.HORIZONTAL_WRAP);
+        setVisibleRowCount(0);
+        setCellRenderer(new ListCellRenderer<IconItem>() {
             private final JLabel label = new JLabel();
-            private final Color selctedColor = new Color(200, 200, 255);
-            @Override public Component getListCellRendererComponent(JList list, MyIcon value, int index, boolean isSelected, boolean cellHasFocus) {
+            private final Color selctedColor = new Color(0xC8C8FF);
+            @Override public Component getListCellRendererComponent(JList<? extends IconItem> list, IconItem value, int index, boolean isSelected, boolean cellHasFocus) {
                 label.setOpaque(true);
-                label.setHorizontalAlignment(JLabel.CENTER);
+                label.setHorizontalAlignment(SwingConstants.CENTER);
                 if (index == rollOverRowIndex) {
                     label.setBackground(getSelectionBackground());
                 } else if (isSelected) {
@@ -232,11 +245,9 @@ class EditorFromList extends JList<MyIcon> {
                 return label;
             }
         });
-        RollOverListener lst = new RollOverListener();
-        addMouseMotionListener(lst);
-        addMouseListener(lst);
     }
-    private class RollOverListener extends MouseInputAdapter {
+
+    private class RollOverListener extends MouseAdapter {
         @Override public void mouseExited(MouseEvent e) {
             rollOverRowIndex = -1;
             repaint();
@@ -251,8 +262,8 @@ class EditorFromList extends JList<MyIcon> {
     }
 }
 
-class MyGlassPane extends JPanel {
-    public MyGlassPane() {
+class TableGlassPane extends JPanel {
+    protected TableGlassPane() {
         super((LayoutManager) null);
         setOpaque(false);
     }

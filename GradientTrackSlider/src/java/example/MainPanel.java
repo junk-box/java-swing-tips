@@ -55,12 +55,10 @@ public final class MainPanel extends JPanel {
         JSlider slider = new JSlider(SwingConstants.HORIZONTAL, 0, 100, 50);
         slider.setBackground(Color.GRAY);
         slider.setOpaque(false);
-        slider.addMouseMotionListener(new MouseAdapter() {
+        MouseAdapter ma = new MouseAdapter() {
             @Override public void mouseDragged(MouseEvent e) {
                 e.getComponent().repaint();
             }
-        });
-        slider.addMouseWheelListener(new MouseWheelListener() {
             @Override public void mouseWheelMoved(MouseWheelEvent e) {
                 JSlider source = (JSlider) e.getComponent();
                 int intValue = (int) source.getValue() - e.getWheelRotation();
@@ -69,7 +67,9 @@ public final class MainPanel extends JPanel {
                     source.setValue(intValue);
                 }
             }
-        });
+        };
+        slider.addMouseMotionListener(ma);
+        slider.addMouseWheelListener(ma);
         return slider;
     }
     private static JComponent createPanel(JComponent cmp, String str) {
@@ -117,7 +117,7 @@ class GradientPalletSliderUI extends MetalSliderUI {
         int trackTop = 0;
         int trackRight = 0;
         int trackBottom = 0;
-        if (slider.getOrientation() == JSlider.HORIZONTAL) {
+        if (slider.getOrientation() == SwingConstants.HORIZONTAL) {
             trackBottom = trackRect.height - 1 - getThumbOverhang();
             trackTop = trackBottom - getTrackWidth() + 1;
             trackRight = trackRect.width - 1;
@@ -169,7 +169,7 @@ class GradientPalletSliderUI extends MetalSliderUI {
         int fillBottom = 0;
         int fillRight  = 0;
 
-        if (slider.getOrientation() == JSlider.HORIZONTAL) {
+        if (slider.getOrientation() == SwingConstants.HORIZONTAL) {
             middleOfThumb = thumbRect.x + thumbRect.width / 2;
             middleOfThumb -= trackRect.x; // To compensate for the g.translate()
             fillTop    = trackTop + 1;
@@ -185,7 +185,7 @@ class GradientPalletSliderUI extends MetalSliderUI {
             fillBottom = trackBottom - 1;
         }
 
-//         if (slider.getOrientation() == JSlider.HORIZONTAL) {
+//         if (slider.getOrientation() == SwingConstants.HORIZONTAL) {
 //             middleOfThumb = thumbRect.x + thumbRect.width / 2;
 //             middleOfThumb -= trackRect.x; // To compensate for the g.translate()
 //             fillTop = slider.isEnabled() ? trackTop + 1 : trackTop;
@@ -242,8 +242,8 @@ final class GradientPalletFactory {
     public static int[] makeGradientPallet() {
         BufferedImage image = new BufferedImage(100, 1, BufferedImage.TYPE_INT_RGB);
         Graphics2D g2  = image.createGraphics();
-        Point2D start  = new Point2D.Float(0f, 0f);
-        Point2D end    = new Point2D.Float(99f, 0f);
+        Point2D start  = new Point2D.Float();
+        Point2D end    = new Point2D.Float(99, 0);
         float[] dist   = {.0f, .5f, 1f};
         Color[] colors = {Color.RED, Color.YELLOW, Color.GREEN};
         g2.setPaint(new LinearGradientPaint(start, end, dist, colors));
@@ -261,13 +261,13 @@ final class GradientPalletFactory {
         return pallet;
     }
     public static Color getColorFromPallet(int[] pallet, float x) {
-//         if (x < 0.0 || x > 1.0) {
+//         if (x < 0f || x > 1f) {
 //             throw new IllegalArgumentException("Parameter outside of expected range");
 //         }
         int i = (int) (pallet.length * x);
         int max = pallet.length - 1;
-        int index = i < 0 ? 0 : i > max ? max : i;
-        int pix = pallet[index] & 0x00ffffff | (0x64 << 24);
+        int index = Math.min(Math.max(i, 0), max);
+        int pix = pallet[index] & 0x00FFFFFF | (0x64 << 24);
         return new Color(pix, true);
     }
 }
@@ -288,6 +288,6 @@ final class TextureFactory {
             }
         }
         g2.dispose();
-        return new TexturePaint(img, new Rectangle(0, 0, size, size));
+        return new TexturePaint(img, new Rectangle(size, size));
     }
 }

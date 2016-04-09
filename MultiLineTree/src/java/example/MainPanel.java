@@ -111,27 +111,13 @@ public final class MainPanel extends JPanel {
     }
 }
 
-class LeafTreeCellEditor extends DefaultTreeCellEditor {
-    public LeafTreeCellEditor(JTree tree, DefaultTreeCellRenderer renderer) {
-        super(tree, renderer);
-    }
-    @Override public boolean isCellEditable(EventObject e) {
-        boolean b = super.isCellEditable(e);
-        Object o = tree.getLastSelectedPathComponent();
-        if (b && o instanceof TreeNode) {
-            b = ((TreeNode) o).isLeaf();
-        }
-        return b;
-    }
-}
-
 class MultiLineCellRenderer extends JPanel implements TreeCellRenderer {
     private DefaultTreeCellRenderer renderer = new DefaultTreeCellRenderer();
     private final JLabel icon = new JLabel();
     private final JTextArea text = new CellTextArea2();
 
-    public MultiLineCellRenderer() {
-        super(new BorderLayout(0, 0));
+    protected MultiLineCellRenderer() {
+        super(new BorderLayout());
         //text.setLineWrap(true);
         //text.setWrapStyleWord(true);
         text.setOpaque(true);
@@ -139,29 +125,29 @@ class MultiLineCellRenderer extends JPanel implements TreeCellRenderer {
         text.setBorder(BorderFactory.createEmptyBorder());
         icon.setOpaque(true);
         icon.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 2));
-        icon.setVerticalAlignment(JLabel.TOP);
+        icon.setVerticalAlignment(SwingConstants.TOP);
         setOpaque(false);
         setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
         add(icon, BorderLayout.WEST);
         add(text);
     }
-    @Override public Component getTreeCellRendererComponent(JTree tree, Object value, boolean isSelected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-        //String stringValue = tree.convertValueToText(value, isSelected, expanded, leaf, row, hasFocus);
+    @Override public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+        //String stringValue = tree.convertValueToText(value, selected, expanded, leaf, row, hasFocus);
         //setText(stringValue);
-        JLabel l = (JLabel) renderer.getTreeCellRendererComponent(tree, value, isSelected, expanded, leaf, row, hasFocus);
+        JLabel l = (JLabel) renderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
         //setEnabled(tree.isEnabled());
         Color bColor;
         Color fColor;
-        if (isSelected) {
+        if (selected) {
             bColor = renderer.getBackgroundSelectionColor();
             fColor = renderer.getTextSelectionColor();
         } else {
             bColor = renderer.getBackgroundNonSelectionColor();
             fColor = renderer.getTextNonSelectionColor();
-            if (bColor == null) {
+            if (Objects.isNull(bColor)) {
                 bColor = renderer.getBackground();
             }
-            if (fColor == null) {
+            if (Objects.isNull(fColor)) {
                 fColor = renderer.getForeground();
             }
         }
@@ -184,7 +170,7 @@ class MultiLineCellRenderer extends JPanel implements TreeCellRenderer {
 class CellTextArea extends JTextArea {
     private Dimension preferredSize;
     @Override public void setPreferredSize(Dimension d) {
-        if (d != null) {
+        if (Objects.nonNull(d)) {
             preferredSize = d;
         }
     }
@@ -197,34 +183,15 @@ class CellTextArea extends JTextArea {
         FontMetrics fm = getFontMetrics(getFont());
         int maxWidth = 0;
         int lineCounter = 0;
-        try (BufferedReader br = new BufferedReader(new StringReader(str));
-             Scanner sc = new Scanner(br)) {
+        try (Scanner sc = new Scanner(new BufferedReader(new StringReader(str)))) {
             while (sc.hasNextLine()) {
                 int w = SwingUtilities.computeStringWidth(fm, sc.nextLine());
                 maxWidth = Math.max(maxWidth, w);
                 lineCounter++;
             }
-        } catch (IOException ex) {
-            ex.printStackTrace();
         }
         lineCounter = Math.max(lineCounter, 1);
         int height = fm.getHeight() * lineCounter;
-//         int lines = 0;
-//         try (BufferedReader br = new BufferedReader(new StringReader(str))) {
-//             String line;
-//             while ((line = br.readLine()) != null) {
-//                 int width = SwingUtilities.computeStringWidth(fm, line);
-//                 if (maxWidth < width) {
-//                     maxWidth = width;
-//                 }
-//                 lines++;
-//                 line = br.readLine();
-//             }
-//         } catch (IOException ex) {
-//             ex.printStackTrace();
-//         }
-//         lines = lines < 1 ? 1 : lines;
-//         int height = fm.getHeight() * lines;
         Insets i = getInsets();
         setPreferredSize(new Dimension(maxWidth + i.left + i.right, height + i.top + i.bottom));
         super.setText(str);
@@ -234,7 +201,6 @@ class CellTextArea extends JTextArea {
 class CellTextArea2 extends JTextArea {
     @Override public Dimension getPreferredSize() {
         Dimension d = new Dimension(10, 10);
-        //d = (d == null) ? new Dimension(400, 400) : d;
         Insets i = getInsets();
         d.width  = Math.max(d.width,  getColumns() * getColumnWidth() + i.left + i.right);
         d.height = Math.max(d.height, getRows() * getRowHeight() + i.top + i.bottom);

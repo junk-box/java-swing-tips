@@ -15,7 +15,7 @@ public final class MainPanel extends JPanel {
     + "    if (e.getButton() == MouseEvent.BUTTON1 && e.getClickCount() == 2) {\n"
     + "      frame.setVisible(true);\n"
     + "    } else if (frame.isVisible()) {\n"
-    + "      frame.setExtendedState(JFrame.NORMAL);\n"
+    + "      frame.setExtendedState(Frame.NORMAL);\n"
     + "      frame.toFront();\n"
     + "    }\n"
     + "  }\n"
@@ -25,36 +25,42 @@ public final class MainPanel extends JPanel {
         add(new JScrollPane(new JTextArea(TEXT)));
         setPreferredSize(new Dimension(320, 240));
     }
-    private static TrayIcon makeTrayIcon(final JFrame frame, final SystemTray tray, Image image) {
+    private static TrayIcon makeTrayIcon(final JFrame frame) {
+        MenuItem open = new MenuItem("Option");
+        open.addActionListener(e -> frame.setVisible(true));
+
+        MenuItem exit = new MenuItem("Exit");
+        exit.addActionListener(e -> {
+            SystemTray tray = SystemTray.getSystemTray();
+            for (TrayIcon icon: tray.getTrayIcons()) {
+                tray.remove(icon);
+            }
+            //frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+            //frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
+            frame.dispose();
+        });
+
         PopupMenu popup = new PopupMenu();
-        final TrayIcon icon = new TrayIcon(image, "Click Test", popup);
+        popup.add(open);
+        popup.add(exit);
+
+        Image image = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+        Graphics g = image.getGraphics();
+        new StarIcon().paintIcon(null, g, 0, 0);
+        g.dispose();
+
+        TrayIcon icon = new TrayIcon(image, "Click Test", popup);
         icon.addMouseListener(new MouseAdapter() {
             @Override public void mouseClicked(MouseEvent e) {
                 if (e.getButton() == MouseEvent.BUTTON1 && e.getClickCount() == 2) {
                     frame.setVisible(true);
                 } else if (frame.isVisible()) {
-                    frame.setExtendedState(JFrame.NORMAL);
+                    frame.setExtendedState(Frame.NORMAL);
                     frame.toFront();
                 }
             }
         });
-        MenuItem open = new MenuItem("Option");
-        MenuItem exit = new MenuItem("Exit");
-        popup.add(open);
-        popup.add(exit);
-        open.addActionListener(new ActionListener() {
-            @Override public void actionPerformed(ActionEvent e) {
-                frame.setVisible(true);
-            }
-        });
-        exit.addActionListener(new ActionListener() {
-            @Override public void actionPerformed(ActionEvent e) {
-                tray.remove(icon);
-                frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-                //frame.dispose();
-                frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
-            }
-        });
+
         return icon;
     }
     public static void main(String... args) {
@@ -71,44 +77,32 @@ public final class MainPanel extends JPanel {
                | IllegalAccessException | UnsupportedLookAndFeelException ex) {
             ex.printStackTrace();
         }
-        final JFrame frame = new JFrame("@title@");
-        //frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        frame.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
+        JFrame frame = new JFrame("@title@");
+        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.getContentPane().add(new MainPanel());
         frame.pack();
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
 
-        if (!SystemTray.isSupported()) {
-            frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-            return;
-        }
-        Image image = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
-        Graphics g = image.getGraphics();
-        new StarIcon().paintIcon(null, g, 0, 0);
-        g.dispose();
-
-        SystemTray tray = SystemTray.getSystemTray();
-        TrayIcon icon = makeTrayIcon(frame, tray, image);
-        try {
-            tray.add(icon);
-        } catch (AWTException e) {
-            e.printStackTrace();
+        if (SystemTray.isSupported()) {
+            frame.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
+            try {
+                SystemTray.getSystemTray().add(makeTrayIcon(frame));
+            } catch (AWTException ex) {
+                ex.printStackTrace();
+            }
         }
     }
 }
 
 class StarIcon implements Icon {
-    private final Shape star;
-    public StarIcon() {
-        star = makeStar(8, 4, 5);
-    }
-    private Path2D.Double makeStar(int r1, int r2, int vc) {
+    private final Shape star = makeStar(8, 4, 5);
+    private Path2D makeStar(int r1, int r2, int vc) {
         int or = Math.max(r1, r2);
         int ir = Math.min(r1, r2);
         double agl = 0d;
         double add = 2 * Math.PI / (vc * 2);
-        Path2D.Double p = new Path2D.Double();
+        Path2D p = new Path2D.Double();
         p.moveTo(or * 1, or * 0);
         for (int i = 0; i < vc * 2 - 1; i++) {
             agl += add;
@@ -131,10 +125,6 @@ class StarIcon implements Icon {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setPaint(Color.PINK);
         g2.fill(star);
-        //g2.setPaint(Color.BLACK);
-        //g2.draw(star);
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-        g2.translate(-x, -y);
         g2.dispose();
     }
 }

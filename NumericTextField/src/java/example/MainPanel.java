@@ -4,6 +4,7 @@ package example;
 //@homepage@
 import java.awt.*;
 import java.text.*;
+import java.util.Objects;
 import javax.swing.*;
 import javax.swing.text.*;
 
@@ -12,7 +13,7 @@ public final class MainPanel extends JPanel {
         super(new BorderLayout());
 
         JTextField textField1 = new JTextField("1000");
-        textField1.setHorizontalAlignment(JTextField.RIGHT);
+        textField1.setHorizontalAlignment(SwingConstants.RIGHT);
         textField1.setInputVerifier(new IntegerInputVerifier());
 
         JTextField textField2 = new JTextField();
@@ -25,7 +26,7 @@ public final class MainPanel extends JPanel {
 
         JFormattedTextField textField4 = new JFormattedTextField();
         textField4.setFormatterFactory(new NumberFormatterFactory());
-        textField4.setHorizontalAlignment(JTextField.RIGHT);
+        textField4.setHorizontalAlignment(SwingConstants.RIGHT);
         textField4.setValue(4000);
 
         JSpinner spinner = new JSpinner(new SpinnerNumberModel(0, 0, Integer.MAX_VALUE, 1));
@@ -94,7 +95,7 @@ class IntegerInputVerifier extends InputVerifier {
             try {
                 Integer.parseInt(textField.getText());
                 verified = true;
-            } catch (NumberFormatException e) {
+            } catch (NumberFormatException ex) {
                 UIManager.getLookAndFeel().provideErrorFeedback(c);
                 //Toolkit.getDefaultToolkit().beep();
             }
@@ -112,9 +113,7 @@ class IntegerDocument extends PlainDocument {
         return currentValue;
     }
     @Override public void insertString(int offset, String str, AttributeSet attributes) throws BadLocationException {
-        if (str == null) {
-            return;
-        } else {
+        if (Objects.nonNull(str)) {
             String newValue;
             int length = getLength();
             if (length == 0) {
@@ -144,10 +143,8 @@ class IntegerDocument extends PlainDocument {
         } else {
             try {
                 return Integer.parseInt(proposedValue);
-            } catch (NumberFormatException e) {
-                BadLocationException ex = new BadLocationException(proposedValue, offset);
-                ex.initCause(e);
-                throw ex;
+            } catch (NumberFormatException ex) {
+                throw (BadLocationException) new BadLocationException(proposedValue, offset).initCause(ex);
             }
         }
     }
@@ -159,9 +156,7 @@ class IntegerDocument extends PlainDocument {
 class IntegerDocumentFilter extends DocumentFilter {
     //int currentValue = 0;
     @Override public void insertString(DocumentFilter.FilterBypass fb, int offset, String string, AttributeSet attr) throws BadLocationException {
-        if (string == null) {
-            return;
-        } else {
+        if (Objects.nonNull(string)) {
             replace(fb, offset, 0, string, attr);
         }
     }
@@ -174,8 +169,7 @@ class IntegerDocumentFilter extends DocumentFilter {
         String currentContent = doc.getText(0, currentLength);
         String before = currentContent.substring(0, offset);
         String after = currentContent.substring(length + offset, currentLength);
-        String str = text == null ? "" : text;
-        String newValue = before + str + after;
+        String newValue = before + Objects.toString(text, "") + after;
         checkInput(newValue, offset);
         fb.replace(offset, length, text, attrs);
     }
@@ -185,10 +179,8 @@ class IntegerDocumentFilter extends DocumentFilter {
         } else {
             try {
                 return Integer.parseInt(proposedValue);
-            } catch (NumberFormatException e) {
-                BadLocationException ex = new BadLocationException(proposedValue, offset);
-                ex.initCause(e);
-                throw ex;
+            } catch (NumberFormatException ex) {
+                throw (BadLocationException) new BadLocationException(proposedValue, offset).initCause(ex);
             }
         }
     }
@@ -204,7 +196,9 @@ class NumberFormatterFactory extends DefaultFormatterFactory {
     static {
         //amountDisplayFormat.setMinimumFractionDigits(0);
         //amountEditFormat.setGroupingUsed(false);
-        //try { mf = new MaskFormatter("#######"); } catch (ParseException e) {}
+        //try {
+        //    mf = new MaskFormatter("#######");
+        //} catch (ParseException ex) {}
         numberFormatter.setValueClass(Integer.class);
         ((NumberFormat) numberFormatter.getFormat()).setGroupingUsed(false);
     }

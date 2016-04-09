@@ -17,7 +17,7 @@ public final class MainPanel extends JPanel {
         @Override public Class<?> getColumnClass(int column) {
             // ArrayIndexOutOfBoundsException: 0 >= 0
             // Bug ID: JDK-6967479 JTable sorter fires even if the model is empty
-            // http://bugs.sun.com/view_bug.do?bug_id=6967479
+            // http://bugs.java.com/view_bug.do?bug_id=6967479
             //return getValueAt(0, column).getClass();
             switch (column) {
               case 0:
@@ -48,12 +48,12 @@ public final class MainPanel extends JPanel {
         table.setComponentPopupMenu(new TablePopupMenu());
 
         add(new JButton(new AbstractAction("remove all rows") {
-            @Override public void actionPerformed(ActionEvent ae) {
+            @Override public void actionPerformed(ActionEvent e) {
                 //model.clear();
                 if (DEBUG) {
                     // ArrayIndexOutOfBoundsException: 0 >= 0
                     // Bug ID: JDK-6967479 JTable sorter fires even if the model is empty
-                    // http://bugs.sun.com/view_bug.do?bug_id=6967479
+                    // http://bugs.java.com/view_bug.do?bug_id=6967479
                     table.setRowSorter(null);
                     table.getTableHeader().repaint();
                 }
@@ -66,53 +66,40 @@ public final class MainPanel extends JPanel {
         setPreferredSize(new Dimension(320, 240));
     }
 
-    private class TestCreateAction extends AbstractAction {
-        public TestCreateAction(String label, Icon icon) {
-            super(label, icon);
-        }
-        @Override public void actionPerformed(ActionEvent evt) {
-            if (DEBUG && model.getRowCount() == 0) {
-                //table.setRowSorter(new TableRowSorter<TableModel>(model));
-                table.setRowSorter(sorter);
-                model.fireTableDataChanged();
-            }
-            model.addRow(new Object[] {"", model.getRowCount(), false});
-            Rectangle r = table.getCellRect(model.getRowCount() - 1, 0, true);
-            table.scrollRectToVisible(r);
-        }
-    }
-
-    private class DeleteAction extends AbstractAction {
-        public DeleteAction(String label, Icon icon) {
-            super(label, icon);
-        }
-        @Override public void actionPerformed(ActionEvent evt) {
-            int[] selection = table.getSelectedRows();
-            if (selection.length == 0) {
-                return;
-            }
-            for (int i = selection.length - 1; i >= 0; i--) {
-                model.removeRow(table.convertRowIndexToModel(selection[i]));
-            }
-            if (DEBUG && model.getRowCount() == 0) {
-                table.setRowSorter(null);
-                table.getTableHeader().repaint();
-            }
-        }
-    }
-
     private class TablePopupMenu extends JPopupMenu {
-        private final Action deleteAction = new DeleteAction("delete", null);
-        public TablePopupMenu() {
+        private final Action addAction = new AbstractAction("add") {
+            @Override public void actionPerformed(ActionEvent e) {
+                if (DEBUG && model.getRowCount() == 0) {
+                    //table.setRowSorter(new TableRowSorter<TableModel>(model));
+                    table.setRowSorter(sorter);
+                    model.fireTableDataChanged();
+                }
+                model.addRow(new Object[] {"", model.getRowCount(), false});
+                Rectangle r = table.getCellRect(model.getRowCount() - 1, 0, true);
+                table.scrollRectToVisible(r);
+            }
+        };
+        private final Action deleteAction = new AbstractAction("delete") {
+            @Override public void actionPerformed(ActionEvent e) {
+                int[] selection = table.getSelectedRows();
+                for (int i = selection.length - 1; i >= 0; i--) {
+                    model.removeRow(table.convertRowIndexToModel(selection[i]));
+                }
+                if (DEBUG && model.getRowCount() == 0) {
+                    table.setRowSorter(null);
+                    table.getTableHeader().repaint();
+                }
+            }
+        };
+        protected TablePopupMenu() {
             super();
-            add(new TestCreateAction("add", null));
-            //add(new ClearAction("clearSelection", null));
+            add(addAction);
+            //add(new ClearAction("clearSelection"));
             addSeparator();
             add(deleteAction);
         }
         @Override public void show(Component c, int x, int y) {
-            int[] l = table.getSelectedRows();
-            deleteAction.setEnabled(l.length > 0);
+            deleteAction.setEnabled(table.getSelectedRowCount() > 0);
             super.show(c, x, y);
         }
     }

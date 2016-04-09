@@ -6,6 +6,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 import javax.swing.*;
+import javax.swing.event.*;
 
 public class MainPanel extends JPanel {
     private final JPanel panel = new JPanel(new GridLayout(1, 2, 5, 5));
@@ -32,8 +33,8 @@ public class MainPanel extends JPanel {
             panel.add(c);
         }
 
-        spinner.addChangeListener(new javax.swing.event.ChangeListener() {
-            @Override public void stateChanged(javax.swing.event.ChangeEvent e) {
+        spinner.addChangeListener(new ChangeListener() {
+            @Override public void stateChanged(ChangeEvent e) {
                 JSpinner s = (JSpinner) e.getSource();
                 value = (Integer) s.getValue();
                 p1.revalidate();
@@ -63,7 +64,7 @@ public class MainPanel extends JPanel {
             }
             @Override public Dimension getMinimumSize() {
                 Dimension d = super.getMinimumSize();
-                if (d != null) {
+                if (Objects.nonNull(d)) {
                     d.width = value;
                     d.height = value;
                 }
@@ -106,7 +107,7 @@ public class MainPanel extends JPanel {
 }
 
 class TestPanel extends JPanel {
-    @Override public void paintComponent(Graphics g) {
+    @Override protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         g.drawLine(0, getHeight() / 2, getWidth(), getHeight() / 2);
         g.drawLine(getWidth() / 2, 0, getWidth() / 2, getHeight());

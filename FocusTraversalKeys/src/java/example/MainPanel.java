@@ -25,7 +25,7 @@ public final class MainPanel extends JPanel {
             }
         }
     });
-    public MainPanel(JFrame frame) {
+    public MainPanel() {
         super(new BorderLayout());
         Box box = Box.createHorizontalBox();
         box.add(box.createHorizontalGlue());
@@ -49,9 +49,11 @@ public final class MainPanel extends JPanel {
         //frame.setFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, backwardKeys);
         focusManager.setDefaultFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, backwardKeys);
 
-        frame.setFocusTraversalPolicy(new LayoutFocusTraversalPolicy() {
+        setFocusCycleRoot(true);
+        setFocusTraversalPolicy(new LayoutFocusTraversalPolicy() {
+        //frame.setFocusTraversalPolicy(new LayoutFocusTraversalPolicy() {
             @Override protected boolean accept(Component c) {
-                return Objects.equals(c, textarea) ? false : super.accept(c);
+                return !Objects.equals(c, textarea) && super.accept(c);
             }
             @Override public Component getDefaultComponent(Container aContainer) {
                 return button;
@@ -67,7 +69,7 @@ public final class MainPanel extends JPanel {
 //     public static int showOptionDialog(Component parentComponent, Object message, String title, int optionType, int messageType, Icon icon, Object[] options, Object initialValue) throws HeadlessException {
 //         JOptionPane pane = new JOptionPane(message, messageType, optionType, icon, options, initialValue);
 //         pane.setInitialValue(initialValue);
-//         pane.setComponentOrientation(((parentComponent == null) ? JOptionPane.getRootFrame() : parentComponent).getComponentOrientation());
+//         pane.setComponentOrientation((parentComponent == null ? JOptionPane.getRootFrame() : parentComponent).getComponentOrientation());
 //
 //         //int style = JOptionPane.styleFromMessageType(messageType);
 //         //JDialog dialog = pane.createDialog(parentComponent, title, style);
@@ -120,7 +122,7 @@ public final class MainPanel extends JPanel {
         }
         JFrame frame = new JFrame("@title@");
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        frame.getContentPane().add(new MainPanel(frame));
+        frame.getContentPane().add(new MainPanel());
         frame.pack();
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);

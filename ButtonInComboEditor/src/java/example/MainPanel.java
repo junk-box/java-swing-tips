@@ -5,7 +5,7 @@ package example;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.*;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
 import javax.swing.*;
 
@@ -30,9 +30,9 @@ public final class MainPanel extends JPanel {
     }
     private DefaultComboBoxModel<URLItem> makeTestModel() {
         DefaultComboBoxModel<URLItem> model = new DefaultComboBoxModel<>();
-        model.addElement(new URLItem("http://terai.xrea.jp/", image1, true));
-        model.addElement(new URLItem("http://terai.xrea.jp/Swing.html", image1, true));
-        model.addElement(new URLItem("http://terai.xrea.jp/JavaWebStart.html", image1, true));
+        model.addElement(new URLItem("http://ateraimemo.com/", image1, true));
+        model.addElement(new URLItem("http://ateraimemo.com/Swing.html", image1, true));
+        model.addElement(new URLItem("http://ateraimemo.com/JavaWebStart.html", image1, true));
         model.addElement(new URLItem("http://d.hatena.ne.jp/aterai/", image2, true));
         model.addElement(new URLItem("http://java-swing-tips.blogspot.com/", image2, true));
         model.addElement(new URLItem("http://www.example.com/", image2, false));
@@ -84,7 +84,7 @@ public final class MainPanel extends JPanel {
 }
 
 class URLItemComboBox extends JComboBox<URLItem> {
-    public URLItemComboBox(DefaultComboBoxModel<URLItem> model, ImageIcon rss) {
+    protected URLItemComboBox(DefaultComboBoxModel<URLItem> model, ImageIcon rss) {
         super(model);
 
         final JTextField field = (JTextField) getEditor().getEditorComponent();
@@ -106,11 +106,9 @@ class URLItemComboBox extends JComboBox<URLItem> {
                 setSelectedIndex(0);
             }
         });
-        addItemListener(new ItemListener() {
-            @Override public void itemStateChanged(ItemEvent e) {
-                if (e.getStateChange() == ItemEvent.SELECTED) {
-                    updateFavicon(label);
-                }
+        addItemListener(e -> {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                updateFavicon(label);
             }
         });
         updateFavicon(label);
@@ -168,21 +166,21 @@ class URLItemComboBox extends JComboBox<URLItem> {
                 break;
             }
         }
-        if (item != null) {
+        if (Objects.nonNull(item)) {
             model.removeElement(item);
             model.insertElementAt(item, 0);
         }
         return item;
     }
 //     private ImageIcon getFavicon(String url) {
-//         if (url.startsWith("http://terai.xrea.jp/")) {
+//         if (url.startsWith("http://ateraimemo.com/")) {
 //             return image1;
 //         } else {
 //             return image2;
 //         }
 //     }
 //     private boolean hasRSS(String url) {
-//         return url.startsWith("http://terai.xrea.jp/");
+//         return url.startsWith("http://ateraimemo.com/");
 //     }
 //     public static ImageIcon makeFilteredImage(ImageIcon srcIcon) {
 //         ImageProducer ip = new FilteredImageSource(srcIcon.getImage().getSource(), new SelectedImageFilter());
@@ -205,7 +203,7 @@ class URLItemComboBox extends JComboBox<URLItem> {
 class ComboBoxLayout implements LayoutManager {
     private final JLabel label;
     private final JButton button;
-    public ComboBoxLayout(JLabel label, JButton button) {
+    protected ComboBoxLayout(JLabel label, JButton button) {
         this.label = label;
         this.button = button;
     }
@@ -231,12 +229,12 @@ class ComboBoxLayout implements LayoutManager {
         int loupeWidth; //   = buttonHeight;
 
         JButton arrowButton = (JButton) cb.getComponent(0);
-        if (arrowButton != null) {
+        if (Objects.nonNull(arrowButton)) {
             Insets arrowInsets = arrowButton.getInsets();
             buttonWidth = arrowButton.getPreferredSize().width + arrowInsets.left + arrowInsets.right;
             arrowButton.setBounds(width - insets.right - buttonWidth, insets.top, buttonWidth, buttonHeight);
         }
-        if (label != null) {
+        if (Objects.nonNull(label)) {
             Insets labelInsets = label.getInsets();
             labelWidth = label.getPreferredSize().width + labelInsets.left + labelInsets.right;
             label.setBounds(insets.left, insets.top, labelWidth, buttonHeight);
@@ -248,7 +246,7 @@ class ComboBoxLayout implements LayoutManager {
         //        break;
         //    }
         //}
-        if (rssButton != null && rssButton.isVisible()) {
+        if (Objects.nonNull(rssButton) && rssButton.isVisible()) {
             Insets loupeInsets = rssButton.getInsets();
             loupeWidth = rssButton.getPreferredSize().width + loupeInsets.left + loupeInsets.right;
             rssButton.setBounds(width - insets.right - loupeWidth - buttonWidth, insets.top, loupeWidth, buttonHeight);
@@ -257,7 +255,7 @@ class ComboBoxLayout implements LayoutManager {
         }
 
         Component editor = cb.getEditor().getEditorComponent();
-        if (editor != null) {
+        if (Objects.nonNull(editor)) {
             editor.setBounds(insets.left + labelWidth, insets.top,
                              width  - insets.left - insets.right - buttonWidth - labelWidth - loupeWidth,
                              height - insets.top  - insets.bottom);
@@ -269,7 +267,7 @@ class URLItem {
     public final String url;
     public final ImageIcon favicon;
     public final boolean hasRSS;
-    public URLItem(String url, ImageIcon icon, boolean hasRSS) {
+    protected URLItem(String url, ImageIcon icon, boolean hasRSS) {
         this.url = url;
         this.favicon = icon;
         this.hasRSS = hasRSS;
@@ -285,10 +283,10 @@ class SelectedImageFilter extends RGBImageFilter {
     //}
     private static final float SCALE = 1.2f;
     @Override public int filterRGB(int x, int y, int argb) {
-        //int a = (argb >> 24) & 0xff;
-        int r = (int) Math.min(0xff, ((argb >> 16) & 0xff) * SCALE);
-        int g = (int) Math.min(0xff, ((argb >>  8) & 0xff) * SCALE);
-        int b = (int) Math.min(0xff, ((argb)       & 0xff) * SCALE);
-        return (argb & 0xff000000) | (r << 16) | (g << 8) | (b);
+        //int a = (argb >> 24) & 0xFF;
+        int r = (int) Math.min(0xFF, ((argb >> 16) & 0xFF) * SCALE);
+        int g = (int) Math.min(0xFF, ((argb >>  8) & 0xFF) * SCALE);
+        int b = (int) Math.min(0xFF, ((argb)       & 0xFF) * SCALE);
+        return (argb & 0xFF000000) | (r << 16) | (g << 8) | (b);
     }
 }

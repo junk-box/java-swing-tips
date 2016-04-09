@@ -7,6 +7,7 @@ import java.awt.datatransfer.*;
 import java.awt.event.*;
 import java.io.IOException;
 import java.net.*;
+import java.util.Objects;
 import javax.swing.*;
 // import javax.swing.border.*;
 // import javax.swing.event.*;
@@ -15,7 +16,7 @@ import javax.swing.plaf.basic.*;
 import javax.swing.text.*;
 
 public final class MainPanel extends JPanel {
-    private static final String MYSITE = "http://terai.xrea.jp/";
+    private static final String MYSITE = "http://ateraimemo.com/";
     private final JTextArea textArea = new JTextArea();
     public MainPanel() {
         super(new BorderLayout());
@@ -32,19 +33,10 @@ public final class MainPanel extends JPanel {
         });
         label.setUI(LinkViewButtonUI.createUI(label, MYSITE));
 
-        JPanel p = new JPanel(new GridBagLayout());
+        JPanel p = new JPanel(new FlowLayout(FlowLayout.LEADING, 5, 5));
         p.setBorder(BorderFactory.createTitledBorder("Draggable Hyperlink"));
-        GridBagConstraints c = new GridBagConstraints();
-        c.gridheight = 1;
-
-        c.gridx   = 0;
-        c.insets  = new Insets(5, 5, 5, 0);
-        c.anchor  = GridBagConstraints.EAST;
-        c.gridy   = 0; p.add(new JLabel("D&D->Brouser: "), c);
-        c.gridx   = 1;
-        c.weightx = 1d;
-        c.anchor  = GridBagConstraints.WEST;
-        c.gridy   = 0; p.add(label, c);
+        p.add(new JLabel("D&D->Brouser:"));
+        p.add(label);
 
         add(p, BorderLayout.NORTH);
         add(new JScrollPane(textArea));
@@ -54,16 +46,16 @@ public final class MainPanel extends JPanel {
 //         final DataFlavor uriflavor = new DataFlavor(String.class, "text/uri-list");
 //         final JLabel label = new JLabel(MYSITE);
 //         label.setTransferHandler(new TransferHandler("text") {
-//             @Override public boolean canImport(JComponent c, DataFlavor[] flavors) {
+//             @Override public boolean canImport(JComponent c, DataFlavor... flavors) {
 //                 return (flavors.length > 0 && flavors[0].equals(uriflavor));
 //             }
-//             @Override public Transferable createTransferable(JComponent c) {
+//             @Override protected Transferable createTransferable(JComponent c) {
 //                 return new Transferable() {
 //                     @Override public Object getTransferData(DataFlavor flavor) {
 //                         return MYSITE;
 //                     }
 //                     @Override public DataFlavor[] getTransferDataFlavors() {
-//                         return new DataFlavor[] { uriflavor };
+//                         return new DataFlavor[] {uriflavor};
 //                     }
 //                     @Override public boolean isDataFlavorSupported(DataFlavor flavor) {
 //                         return flavor.equals(uriflavor);
@@ -86,7 +78,7 @@ public final class MainPanel extends JPanel {
 //                         return MYSITE;
 //                     }
 //                     @Override public DataFlavor[] getTransferDataFlavors() {
-//                         return new DataFlavor[] { uriflavor };
+//                         return new DataFlavor[] {uriflavor};
 //                     }
 //                     @Override public boolean isDataFlavorSupported(DataFlavor flavor) {
 //                         return flavor.equals(uriflavor);
@@ -136,7 +128,7 @@ class LinkViewButtonUI extends BasicButtonUI {
             @Override public boolean canImport(JComponent c, DataFlavor... flavors) {
                 return flavors.length > 0 && flavors[0].equals(URI_FLAVOR);
             }
-            public Transferable createTransferable(JComponent c) {
+            @Override protected Transferable createTransferable(JComponent c) {
                 return new Transferable() {
                     @Override public Object getTransferData(DataFlavor flavor) {
                         //System.out.println(flavor.getMimeType());
@@ -161,7 +153,7 @@ class LinkViewButtonUI extends BasicButtonUI {
         });
         return LINK_VIEW_BUTTON_UI;
     }
-    public LinkViewButtonUI() {
+    protected LinkViewButtonUI() {
         super();
         size = new Dimension();
         viewRect = new Rectangle();
@@ -201,14 +193,14 @@ class LinkViewButtonUI extends BasicButtonUI {
         ButtonModel model = b.getModel();
         if (!model.isSelected() && !model.isPressed() && !model.isArmed() && b.isRolloverEnabled() && model.isRollover()) {
             g.setColor(Color.BLUE);
-            g.drawLine(viewRect.x,                viewRect.y + viewRect.height,
+            g.drawLine(viewRect.x,                  viewRect.y + viewRect.height,
                        viewRect.x + viewRect.width, viewRect.y + viewRect.height);
         }
         View v = (View) c.getClientProperty(BasicHTML.propertyKey);
-        if (v == null) {
-            paintText(g, b, textRect, text);
-        } else {
+        if (Objects.nonNull(v)) {
             v.paint(g, textRect);
+        } else {
+            paintText(g, b, textRect, text);
         }
     }
 }

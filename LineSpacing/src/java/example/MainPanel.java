@@ -3,6 +3,7 @@ package example;
 // vim:set fileencoding=utf-8:
 //@homepage@
 import java.awt.*;
+import java.util.Objects;
 import javax.swing.*;
 import javax.swing.text.*;
 
@@ -46,8 +47,8 @@ public final class MainPanel extends JPanel {
         try {
             StyledDocument doc = textPane.getStyledDocument();
             doc.insertString(doc.getLength(), "134500698\n", attr);
-        } catch (BadLocationException e) {
-            e.printStackTrace();
+        } catch (BadLocationException ex) {
+            ex.printStackTrace();
         }
 //         StyledDocument doc = new DefaultStyledDocument();
 //         SimpleAttributeSet a = new SimpleAttributeSet();
@@ -87,7 +88,7 @@ class BottomInsetEditorKit extends StyledEditorKit {
 class BottomInsetViewFactory implements ViewFactory {
     @Override public View create(Element elem) {
         String kind = elem.getName();
-        if (kind != null) {
+        if (Objects.nonNull(kind)) {
             if (kind.equals(AbstractDocument.ContentElementName)) {
                 return new LabelView(elem);
             } else if (kind.equals(AbstractDocument.ParagraphElementName)) {

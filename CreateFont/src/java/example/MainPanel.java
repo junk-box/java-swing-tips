@@ -5,6 +5,8 @@ package example;
 import java.awt.*;
 import java.io.*;
 import java.net.*;
+import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 import javax.swing.*;
 import javax.swing.text.*;
 
@@ -13,16 +15,16 @@ public final class MainPanel extends JPanel {
     public MainPanel() {
         super(new BorderLayout());
 
-        Font font    = makeFont(getClass().getResource("mona.ttf"));
+        Font font = makeFont(getClass().getResource("mona.ttf"));
         //Document doc = makeDocument(getClass().getResource("bar.utf8.txt"), "UTF-8");
-        if (font != null) {
+        if (Objects.nonNull(font)) {
             System.out.println(font.toString());
             textpane.setFont(font.deriveFont(10f));
             //textpane.setDocument(doc);
         }
 
         URL url = getClass().getResource("bar.utf8.txt");
-        try (Reader reader = new InputStreamReader(url.openStream(), "UTF-8")) {
+        try (Reader reader = new InputStreamReader(url.openStream(), StandardCharsets.UTF_8)) {
              textpane.read(reader, "text");
         } catch (IOException ex) {
             ex.printStackTrace();

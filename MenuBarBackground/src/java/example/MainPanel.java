@@ -7,12 +7,16 @@ import java.awt.image.*;
 import javax.swing.*;
 
 public final class MainPanel extends JPanel {
-    public MainPanel(JFrame frame) {
+    public MainPanel() {
         super();
-        frame.setJMenuBar(createMenubar());
-        setPreferredSize(new Dimension(320, 200));
+        EventQueue.invokeLater(new Runnable() {
+            @Override public void run() {
+                getRootPane().setJMenuBar(createMenuBar());
+            }
+        });
+        setPreferredSize(new Dimension(320, 240));
     }
-    private JMenuBar createMenubar() {
+    private JMenuBar createMenuBar() {
         JMenuBar mb = new JMenuBar() {
             private final TexturePaint texture = makeCheckerTexture();
             @Override protected void paintComponent(Graphics g) {
@@ -55,9 +59,11 @@ public final class MainPanel extends JPanel {
         //System.out.println(System.getProperty("os.name"));
         //System.out.println(System.getProperty("os.version"));
         if ("Windows XP".equals(System.getProperty("os.name"))) {
-            menu.setBackground(new Color(0, 0, 0, 0)); //XXX Windows XP lnf?
+            menu.setBackground(new Color(0x0, true)); //XXX Windows XP lnf?
         }
-        menu.add("dummy1"); menu.add("dummy2"); menu.add("dummy3");
+        menu.add("dummy1");
+        menu.add("dummy2");
+        menu.add("dummy3");
         return menu;
     }
     private TexturePaint makeCheckerTexture() {
@@ -75,7 +81,7 @@ public final class MainPanel extends JPanel {
             }
         }
         g2.dispose();
-        return new TexturePaint(img, new Rectangle(0, 0, sz, sz));
+        return new TexturePaint(img, new Rectangle(sz, sz));
     }
     public static void main(String... args) {
         EventQueue.invokeLater(new Runnable() {
@@ -95,7 +101,7 @@ public final class MainPanel extends JPanel {
         //TEST: UIManager.put("Menu.useMenuBarBackgroundForTopLevel", Boolean.FALSE);
         JFrame frame = new JFrame("@title@");
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        frame.getContentPane().add(new MainPanel(frame));
+        frame.getContentPane().add(new MainPanel());
         frame.pack();
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);

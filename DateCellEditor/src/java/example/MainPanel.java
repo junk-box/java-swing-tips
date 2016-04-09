@@ -26,7 +26,7 @@ public final class MainPanel extends JPanel {
     public MainPanel() {
         super(new BorderLayout());
         JLabel r = (JLabel) table.getDefaultRenderer(Date.class);
-        r.setHorizontalAlignment(JLabel.LEFT);
+        r.setHorizontalAlignment(SwingConstants.LEFT);
         table.setDefaultEditor(Date.class, new SpinnerCellEditor());
         //table.setShowGrid(false);
         //table.setAutoCreateRowSorter(true);
@@ -62,12 +62,12 @@ class SpinnerCellEditor extends JSpinner implements TableCellEditor {
     protected transient ChangeEvent changeEvent;
     private final JSpinner.DateEditor editor;
 
-    public SpinnerCellEditor() {
+    protected SpinnerCellEditor() {
         super(new SpinnerDateModel());
         editor = new JSpinner.DateEditor(this, "yyyy/MM/dd");
         setEditor(editor);
         setArrowButtonEnabled(false);
-        editor.getTextField().setHorizontalAlignment(JFormattedTextField.LEFT);
+        editor.getTextField().setHorizontalAlignment(SwingConstants.LEFT);
 
 //         addFocusListener(new FocusAdapter() {
 //             @Override public void focusGained(FocusEvent e) {
@@ -91,7 +91,7 @@ class SpinnerCellEditor extends JSpinner implements TableCellEditor {
                 });
             }
         });
-        setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+        setBorder(BorderFactory.createEmptyBorder());
     }
     private void setArrowButtonEnabled(boolean flag) {
         for (Component c: getComponents()) {
@@ -150,7 +150,7 @@ class SpinnerCellEditor extends JSpinner implements TableCellEditor {
         for (int i = listeners.length - 2; i >= 0; i -= 2) {
             if (listeners[i] == CellEditorListener.class) {
                 // Lazily create the event:
-                if (changeEvent == null) {
+                if (Objects.isNull(changeEvent)) {
                     changeEvent = new ChangeEvent(this);
                 }
                 ((CellEditorListener) listeners[i + 1]).editingStopped(changeEvent);
@@ -165,7 +165,7 @@ class SpinnerCellEditor extends JSpinner implements TableCellEditor {
         for (int i = listeners.length - 2; i >= 0; i -= 2) {
             if (listeners[i] == CellEditorListener.class) {
                 // Lazily create the event:
-                if (changeEvent == null) {
+                if (Objects.isNull(changeEvent)) {
                     changeEvent = new ChangeEvent(this);
                 }
                 ((CellEditorListener) listeners[i + 1]).editingCanceled(changeEvent);

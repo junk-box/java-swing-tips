@@ -23,9 +23,9 @@ public final class MainPanel extends JPanel {
         JPanel p = new JPanel();
         p.add(scrollPane);
         add(p);
-        add(new JButton(new ScrollAction("right",  scrollPane, new Point(1, 0))),  BorderLayout.EAST);
+        add(new JButton(new ScrollAction("right",  scrollPane, new Point(1,  0))), BorderLayout.EAST);
         add(new JButton(new ScrollAction("left",   scrollPane, new Point(-1, 0))), BorderLayout.WEST);
-        add(new JButton(new ScrollAction("bottom", scrollPane, new Point(0, 1))),  BorderLayout.SOUTH);
+        add(new JButton(new ScrollAction("bottom", scrollPane, new Point(0,  1))), BorderLayout.SOUTH);
         add(new JButton(new ScrollAction("top",    scrollPane, new Point(0, -1))), BorderLayout.NORTH);
     }
     public static void main(String... args) {
@@ -52,9 +52,10 @@ public final class MainPanel extends JPanel {
 }
 
 class GridPanel extends JPanel implements Scrollable {
-    public static int cols = 3, rows = 4;
+    public static int cols = 3;
+    public static int rows = 4;
     public static Dimension size = new Dimension(160 * cols, 120 * rows);
-    public GridPanel() {
+    protected GridPanel() {
         super(new GridLayout(rows, cols, 0, 0));
         //putClientProperty("JScrollBar.fastWheelScrolling", Boolean.FALSE);
     }
@@ -68,10 +69,10 @@ class GridPanel extends JPanel implements Scrollable {
     @Override public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
         return orientation == SwingConstants.HORIZONTAL ? visibleRect.width : visibleRect.height;
     }
-    @Override public boolean getScrollableTracksViewportWidth() { //NOPMD
+    @Override public boolean getScrollableTracksViewportWidth() { //NOPMD A getX() method which returns a boolean should be named isX()
         return false;
     }
-    @Override public boolean getScrollableTracksViewportHeight() { //NOPMD
+    @Override public boolean getScrollableTracksViewportHeight() { //NOPMD A getX() method which returns a boolean should be named isX()
         return false;
     }
     @Override public Dimension getPreferredSize() {
@@ -83,14 +84,15 @@ class ScrollAction extends AbstractAction {
     private static final double SIZE = 100d;
     private final Point vec;
     private final JScrollPane scrollPane;
-    private Timer scroller;
-    public ScrollAction(String name, JScrollPane scrollPane, Point vec) {
+    private final Timer scroller = new Timer(5, null);
+    private transient ActionListener listener;
+    protected ScrollAction(String name, JScrollPane scrollPane, Point vec) {
         super(name);
         this.scrollPane = scrollPane;
         this.vec = vec;
     }
     @Override public void actionPerformed(ActionEvent e) {
-        if (scroller != null && scroller.isRunning()) {
+        if (scroller.isRunning()) {
             return;
         }
         final JViewport vport = scrollPane.getViewport();
@@ -100,7 +102,8 @@ class ScrollAction extends AbstractAction {
         final int sx = vport.getViewPosition().x;
         final int sy = vport.getViewPosition().y;
         final Rectangle rect = new Rectangle(w, h);
-        scroller = new Timer(5, new ActionListener() {
+        scroller.removeActionListener(listener);
+        listener = new ActionListener() {
             int count = (int) SIZE;
             @Override public void actionPerformed(ActionEvent e) {
                 double a = easeInOut(--count / SIZE);
@@ -114,7 +117,8 @@ class ScrollAction extends AbstractAction {
                 rect.setLocation(sx + vec.x * dx, sy + vec.y * dy);
                 v.scrollRectToVisible(rect);
             }
-        });
+        };
+        scroller.addActionListener(listener);
         scroller.start();
     }
     private static double easeInOut(double t) {

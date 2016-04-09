@@ -5,9 +5,10 @@ package example;
 import java.awt.*;
 import java.awt.event.*;
 //import java.net.*;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
 import javax.swing.*;
+import javax.swing.Timer;
 //import javax.swing.event.*;
 
 public final class MainPanel extends JPanel {
@@ -46,7 +47,7 @@ public final class MainPanel extends JPanel {
 class PressAndHoldButton extends JButton {
     private static final Icon ARROW_ICON = new MenuArrowIcon();
     private PressAndHoldHandler handler;
-    public PressAndHoldButton(Icon icon) {
+    protected PressAndHoldButton(Icon icon) {
         super(icon);
         //getAction().putValue(Action.NAME, text);
         getAction().putValue(Action.SMALL_ICON, icon);
@@ -54,16 +55,14 @@ class PressAndHoldButton extends JButton {
     @Override public void updateUI() {
         removeMouseListener(handler);
         super.updateUI();
-        if (handler == null) {
-            handler = new PressAndHoldHandler();
-        }
+        handler = new PressAndHoldHandler();
         SwingUtilities.updateComponentTreeUI(handler.pop);
         setAction(handler);
         addMouseListener(handler);
         setFocusable(false);
         setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4 + ARROW_ICON.getIconWidth()));
     }
-    @Override public void paintComponent(Graphics g) {
+    @Override protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         Dimension dim = getSize();
         Insets ins = getInsets();
@@ -87,7 +86,7 @@ class PressAndHoldHandler extends AbstractAction implements MouseListener {
             }
         }
     });
-    public PressAndHoldHandler() {
+    protected PressAndHoldHandler() {
         super();
         holdTimer.setInitialDelay(1000);
         pop.setLayout(new GridLayout(0, 3, 5, 5));
@@ -158,7 +157,7 @@ class MenuContext {
     public final Color color;
 //     public final Icon small;
 //     public final Icon rollover;
-    public MenuContext(String cmd, Color c) {
+    protected MenuContext(String cmd, Color c) {
         command = cmd;
         color = c;
 //         small = new DummyIcon(c);
@@ -169,12 +168,11 @@ class MenuContext {
 class MenuArrowIcon implements Icon {
     @Override public void paintIcon(Component c, Graphics g, int x, int y) {
         Graphics2D g2 = (Graphics2D) g.create();
-        g2.setPaint(Color.BLACK);
         g2.translate(x, y);
+        g2.setPaint(Color.BLACK);
         g2.drawLine(2, 3, 6, 3);
         g2.drawLine(3, 4, 5, 4);
         g2.drawLine(4, 5, 4, 5);
-        //g2.translate(-x, -y);
         g2.dispose();
     }
     @Override public int getIconWidth() {
@@ -195,7 +193,6 @@ class MenuArrowIcon implements Icon {
 //         g2.setPaint(color);
 //         g2.translate(x, y);
 //         g2.fillOval(4, 4, 16, 16);
-//         //g2.translate(-x, -y);
 //         g2.dispose();
 //     }
 //     @Override public int getIconWidth() {
@@ -216,7 +213,6 @@ class MenuArrowIcon implements Icon {
 //         g2.setPaint(Color.BLACK);
 //         g2.translate(x, y);
 //         g2.drawOval(4, 4, 16, 16);
-//         //g2.translate(-x, -y);
 //         g2.dispose();
 //     }
 // }

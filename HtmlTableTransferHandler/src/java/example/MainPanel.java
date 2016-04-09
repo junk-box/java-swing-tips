@@ -3,13 +3,11 @@ package example;
 // vim:set fileencoding=utf-8:
 //@homepage@
 import java.awt.*;
-import java.awt.datatransfer.*;
 import java.awt.event.*;
-import java.io.*;
 import java.text.ParseException;
-import java.util.*;
+import java.util.Date;
 import javax.swing.*;
-import javax.swing.event.*;
+import javax.swing.plaf.*;
 import javax.swing.table.*;
 
 public class MainPanel extends JPanel {
@@ -29,16 +27,13 @@ public class MainPanel extends JPanel {
     };
     public MainPanel() {
         super(new BorderLayout());
-        JPanel p = new JPanel(new GridLayout(3, 1));
         JTable table1 = new PropertyTable(model);
         JTable table2 = new PropertyTable(model);
-        for (JTable t: Arrays.asList(table1, table2)) {
-            t.setDefaultRenderer(Color.class, new ColorRenderer());
-            t.setDefaultEditor(Color.class,   new ColorEditor());
-            t.setDefaultEditor(Date.class,    new DateEditor());
-            p.add(new JScrollPane(t));
-        }
         table2.setTransferHandler(new HtmlTableTransferHandler());
+
+        JPanel p = new JPanel(new GridLayout(3, 1));
+        p.add(new JScrollPane(table1));
+        p.add(new JScrollPane(table2));
         p.add(new JScrollPane(new JEditorPane("text/html", "")));
         add(p);
         setPreferredSize(new Dimension(320, 240));
@@ -69,7 +64,7 @@ public class MainPanel extends JPanel {
 
 class PropertyTable extends JTable {
     private Class<?> editingClass;
-    public PropertyTable(TableModel model) {
+    protected PropertyTable(TableModel model) {
         super(model);
     }
     //public PropertyTable(Object[][] data, String[] columnNames) {
@@ -79,6 +74,17 @@ class PropertyTable extends JTable {
         int mc = convertColumnIndexToModel(column);
         int mr = convertRowIndexToModel(row);
         return getModel().getValueAt(mr, mc).getClass();
+    }
+    @Override public void updateUI() {
+        // Bug ID: 6788475 Changing to Nimbus LAF and back doesn't reset look and feel of JTable completely
+        // http://bugs.java.com/view_bug.do?bug_id=6788475
+        // XXX: set dummy ColorUIResource
+        setSelectionForeground(new ColorUIResource(Color.RED));
+        setSelectionBackground(new ColorUIResource(Color.RED));
+        super.updateUI();
+        setDefaultRenderer(Color.class, new ColorRenderer());
+        setDefaultEditor(Color.class,   new ColorEditor());
+        setDefaultEditor(Date.class,    new DateEditor());
     }
     @Override public TableCellRenderer getCellRenderer(int row, int column) {
         if (convertColumnIndexToModel(column) == 1) {
@@ -104,15 +110,17 @@ class PropertyTable extends JTable {
         }
     }
 }
-
-class DateEditor extends JSpinner implements TableCellEditor {
-    protected transient ChangeEvent changeEvent;
+//*
+//delegation pattern
+class DateEditor extends AbstractCellEditor implements TableCellEditor {
+    private final JSpinner spinner;
     private final JSpinner.DateEditor editor;
 
-    public DateEditor() {
-        super(new SpinnerDateModel());
-        editor = new JSpinner.DateEditor(this, "yyyy/MM/dd");
-        setEditor(editor);
+    protected DateEditor() {
+        super();
+        spinner = new JSpinner(new SpinnerDateModel());
+        editor = new JSpinner.DateEditor(spinner, "yyyy/MM/dd");
+        spinner.setEditor(editor);
         setArrowButtonEnabled(false);
         editor.getTextField().setHorizontalAlignment(JFormattedTextField.LEFT);
 
@@ -132,7 +140,77 @@ class DateEditor extends JSpinner implements TableCellEditor {
                 });
             }
         });
-        setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+        spinner.setBorder(BorderFactory.createEmptyBorder());
+    }
+    private void setArrowButtonEnabled(boolean flag) {
+        for (Component c: spinner.getComponents()) {
+            if (c instanceof JButton) {
+                ((JButton) c).setEnabled(flag);
+            }
+        }
+    }
+    @Override public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+        spinner.setValue(value);
+        return spinner;
+    }
+    @Override public Object getCellEditorValue() {
+        return spinner.getValue();
+    }
+//     //AbstractCellEditor
+//     @Override public boolean isCellEditable(EventObject e) {
+//         return true;
+//     }
+//     @Override public boolean shouldSelectCell(EventObject anEvent) {
+//         return true;
+//     }
+    @Override public boolean stopCellEditing() {
+        try {
+            spinner.commitEdit();
+        } catch (ParseException pe) {
+            Toolkit.getDefaultToolkit().beep();
+            return false;
+//             // Edited value is invalid, spinner.getValue() will return
+//             // the last valid value, you could revert the spinner to show that:
+//             editor.getTextField().setValue(getValue());
+        }
+        return super.stopCellEditing();
+        //fireEditingStopped();
+        //return true;
+    }
+//     @Override public void cancelCellEditing() {
+//         fireEditingCanceled();
+//     }
+}
+/*/
+//inheritence to extend a class
+class DateEditor extends JSpinner implements TableCellEditor {
+    protected transient ChangeEvent changeEvent;
+    private final JSpinner.DateEditor editor;
+
+    public DateEditor() {
+        super(new SpinnerDateModel());
+        editor = new JSpinner.DateEditor(this, "yyyy/MM/dd");
+        setEditor(editor);
+        setArrowButtonEnabled(false);
+        editor.getTextField().setHorizontalAlignment(SwingConstants.LEFT);
+
+        editor.getTextField().addFocusListener(new FocusAdapter() {
+            @Override public void focusLost(FocusEvent e) {
+                setArrowButtonEnabled(false);
+            }
+            @Override public void focusGained(FocusEvent e) {
+                //System.out.println("getTextField");
+                setArrowButtonEnabled(true);
+                EventQueue.invokeLater(new Runnable() {
+                    @Override public void run() {
+                        editor.getTextField().setCaretPosition(8);
+                        editor.getTextField().setSelectionStart(8);
+                        editor.getTextField().setSelectionEnd(10);
+                    }
+                });
+            }
+        });
+        setBorder(BorderFactory.createEmptyBorder());
     }
     private void setArrowButtonEnabled(boolean flag) {
         for (Component c: getComponents()) {
@@ -191,7 +269,7 @@ class DateEditor extends JSpinner implements TableCellEditor {
         for (int i = listeners.length - 2; i >= 0; i -= 2) {
             if (listeners[i] == CellEditorListener.class) {
                 // Lazily create the event:
-                if (changeEvent == null) {
+                if (Objects.isNull(changeEvent)) {
                     changeEvent = new ChangeEvent(this);
                 }
                 ((CellEditorListener) listeners[i + 1]).editingStopped(changeEvent);
@@ -206,7 +284,7 @@ class DateEditor extends JSpinner implements TableCellEditor {
         for (int i = listeners.length - 2; i >= 0; i -= 2) {
             if (listeners[i] == CellEditorListener.class) {
                 // Lazily create the event:
-                if (changeEvent == null) {
+                if (Objects.isNull(changeEvent)) {
                     changeEvent = new ChangeEvent(this);
                 }
                 ((CellEditorListener) listeners[i + 1]).editingCanceled(changeEvent);
@@ -214,6 +292,7 @@ class DateEditor extends JSpinner implements TableCellEditor {
         }
     }
 }
+//*/
 
 class ColorRenderer extends DefaultTableCellRenderer {
     @Override public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -235,7 +314,7 @@ class ColorEditor extends AbstractCellEditor implements TableCellEditor, ActionL
     private final JDialog dialog;
     private Color currentColor;
 
-    public ColorEditor() {
+    protected ColorEditor() {
         super();
         //Set up the editor (from the table's point of view),
         //which is a button.
@@ -289,345 +368,20 @@ class ColorEditor extends AbstractCellEditor implements TableCellEditor, ActionL
 
 class ColorIcon implements Icon {
     private final Color color;
-    public ColorIcon(Color color) {
+    protected ColorIcon(Color color) {
         this.color = color;
     }
     @Override public void paintIcon(Component c, Graphics g, int x, int y) {
-        g.setColor(color);
-        g.fillRect(x, y, getIconWidth(), getIconHeight());
+        Graphics2D g2 = (Graphics2D) g.create();
+        g2.translate(x, y);
+        g2.setPaint(color);
+        g2.fillRect(0, 0, getIconWidth(), getIconHeight());
+        g2.dispose();
     }
     @Override public int getIconWidth() {
         return 10;
     }
     @Override public int getIconHeight() {
         return 10;
-    }
-}
-
-class HtmlTableTransferHandler extends TransferHandler {
-    //@see javax/swing/plaf/basic/BasicTableUI.TableTransferHandler#createTransferable(JComponent)
-    @Override protected Transferable createTransferable(JComponent c) {
-        if (c instanceof JTable) {
-            JTable table = (JTable) c;
-
-            if (!table.getRowSelectionAllowed() && !table.getColumnSelectionAllowed()) {
-                return null;
-            }
-
-            int[] rows;
-            if (table.getRowSelectionAllowed()) {
-                rows = table.getSelectedRows();
-            } else {
-                int rowCount = table.getRowCount();
-
-                rows = new int[rowCount];
-                for (int counter = 0; counter < rowCount; counter++) {
-                    rows[counter] = counter;
-                }
-            }
-
-            int[] cols;
-            if (table.getColumnSelectionAllowed()) {
-                cols = table.getSelectedColumns();
-            } else {
-                int colCount = table.getColumnCount();
-
-                cols = new int[colCount];
-                for (int counter = 0; counter < colCount; counter++) {
-                    cols[counter] = counter;
-                }
-            }
-
-            //if (rows == null || cols == null || rows.length == 0 || cols.length == 0) {
-            if (cols == null || rows.length == 0 || cols.length == 0) {
-                return null;
-            }
-
-            StringBuffer plainBuf = new StringBuffer();
-            StringBuffer htmlBuf = new StringBuffer(64);
-
-            htmlBuf.append("<html>\n<body>\n<table border='1'>\n");
-
-            for (int row = 0; row < rows.length; row++) {
-                htmlBuf.append("<tr>\n");
-                for (int col = 0; col < cols.length; col++) {
-                    Object obj = table.getValueAt(rows[row], cols[col]);
-                    String val = Objects.toString(obj, "") + "\t"; //.toString().replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
-                    plainBuf.append(val);
-
-                    if (obj instanceof Date) {
-                        String v = Objects.toString((Date) obj, "");
-                        htmlBuf.append("  <td><time>" + v + "</time></td>\n");
-                    } else if (obj instanceof Color) {
-                        htmlBuf.append(String.format("  <td style='background-color:#%06x'>&nbsp;</td>%n", ((Color) obj).getRGB() & 0xffffff));
-                    } else {
-                        htmlBuf.append("  <td>" + Objects.toString(obj, "") + "</td>\n");
-                    }
-                }
-                // we want a newline at the end of each line and not a tab
-                plainBuf.deleteCharAt(plainBuf.length() - 1).append("\n");
-                htmlBuf.append("</tr>\n");
-            }
-
-            // remove the last newline
-            plainBuf.deleteCharAt(plainBuf.length() - 1);
-            htmlBuf.append("</table>\n</body>\n</html>");
-
-            return new BasicTransferable(plainBuf.toString(), htmlBuf.toString());
-        }
-
-        return null;
-    }
-    @Override public int getSourceActions(JComponent c) {
-        return COPY;
-    }
-}
-
-//Copied from javax/swing/plaf/basic/BasicTextUI.BasicTransferable
-class BasicTransferable implements Transferable {
-
-    protected String plainData;
-    protected String htmlData;
-
-    private static DataFlavor[] htmlFlavors;
-    private static DataFlavor[] stringFlavors;
-    private static DataFlavor[] plainFlavors;
-
-    static {
-        try {
-            htmlFlavors = new DataFlavor[3];
-            htmlFlavors[0] = new DataFlavor("text/html;class=java.lang.String");
-            htmlFlavors[1] = new DataFlavor("text/html;class=java.io.Reader");
-            htmlFlavors[2] = new DataFlavor("text/html;charset=unicode;class=java.io.InputStream");
-
-            plainFlavors = new DataFlavor[3];
-            plainFlavors[0] = new DataFlavor("text/plain;class=java.lang.String");
-            plainFlavors[1] = new DataFlavor("text/plain;class=java.io.Reader");
-            plainFlavors[2] = new DataFlavor("text/plain;charset=unicode;class=java.io.InputStream");
-
-            stringFlavors = new DataFlavor[2];
-            stringFlavors[0] = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + ";class=java.lang.String");
-            stringFlavors[1] = DataFlavor.stringFlavor;
-
-        } catch (ClassNotFoundException cle) {
-            System.err.println("error initializing javax.swing.plaf.basic.BasicTranserable");
-        }
-    }
-
-    public BasicTransferable(String plainData, String htmlData) {
-        this.plainData = plainData;
-        this.htmlData = htmlData;
-    }
-
-    /**
-     * Returns an array of DataFlavor objects indicating the flavors the data
-     * can be provided in.  The array should be ordered according to preference
-     * for providing the data (from most richly descriptive to least descriptive).
-     * @return an array of data flavors in which this data can be transferred
-     */
-    public DataFlavor[] getTransferDataFlavors() {
-        DataFlavor[] richerFlavors = getRicherFlavors();
-        int nRicher = richerFlavors.length; //(richerFlavors != null) ? richerFlavors.length : 0;
-        int nHTML = isHTMLSupported() ? htmlFlavors.length : 0;
-        int nPlain = isPlainSupported() ? plainFlavors.length : 0;
-        int nString = isPlainSupported() ? stringFlavors.length : 0;
-        int nFlavors = nRicher + nHTML + nPlain + nString;
-        DataFlavor[] flavors = new DataFlavor[nFlavors];
-
-        // fill in the array
-        int nDone = 0;
-        if (nRicher > 0) {
-            System.arraycopy(richerFlavors, 0, flavors, nDone, nRicher);
-            nDone += nRicher;
-        }
-        if (nHTML > 0) {
-            System.arraycopy(htmlFlavors, 0, flavors, nDone, nHTML);
-            nDone += nHTML;
-        }
-        if (nPlain > 0) {
-            System.arraycopy(plainFlavors, 0, flavors, nDone, nPlain);
-            nDone += nPlain;
-        }
-        if (nString > 0) {
-            System.arraycopy(stringFlavors, 0, flavors, nDone, nString);
-            //nDone += nString;
-        }
-        return flavors;
-    }
-
-    /**
-     * Returns whether or not the specified data flavor is supported for
-     * this object.
-     * @param flavor the requested flavor for the data
-     * @return boolean indicating whether or not the data flavor is supported
-     */
-    public boolean isDataFlavorSupported(DataFlavor flavor) {
-        DataFlavor[] flavors = getTransferDataFlavors();
-        for (int i = 0; i < flavors.length; i++) {
-            if (flavors[i].equals(flavor)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Returns an object which represents the data to be transferred.  The class
-     * of the object returned is defined by the representation class of the flavor.
-     *
-     * @param flavor the requested flavor for the data
-     * @see DataFlavor#getRepresentationClass
-     * @exception IOException                if the data is no longer available
-     *              in the requested flavor.
-     * @exception UnsupportedFlavorException if the requested data flavor is
-     *              not supported.
-     */
-    @SuppressWarnings("deprecation")
-    public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
-        //???: DataFlavor[] richerFlavors = getRicherFlavors();
-        if (isRicherFlavor(flavor)) {
-            return getRicherData(flavor);
-        } else if (isHTMLFlavor(flavor)) {
-            //String data = getHTMLData();
-            //data = (data == null) ? "" : data;
-            String data = Objects.toString(getHTMLData(), "");
-            if (String.class.equals(flavor.getRepresentationClass())) {
-                return data;
-            } else if (Reader.class.equals(flavor.getRepresentationClass())) {
-                return new StringReader(data);
-            } else if (InputStream.class.equals(flavor.getRepresentationClass())) {
-                return new StringBufferInputStream(data);
-            }
-            // fall through to unsupported
-        } else if (isPlainFlavor(flavor)) {
-            //String data = getPlainData();
-            //data = (data == null) ? "" : data;
-            String data = Objects.toString(getPlainData(), "");
-            if (String.class.equals(flavor.getRepresentationClass())) {
-                return data;
-            } else if (Reader.class.equals(flavor.getRepresentationClass())) {
-                return new StringReader(data);
-            } else if (InputStream.class.equals(flavor.getRepresentationClass())) {
-                return new StringBufferInputStream(data);
-            }
-            // fall through to unsupported
-
-        } else if (isStringFlavor(flavor)) {
-            //String data = getPlainData();
-            //data = (data == null) ? "" : data;
-            //return data;
-            return Objects.toString(getPlainData(), "");
-        }
-        throw new UnsupportedFlavorException(flavor);
-    }
-
-    // --- richer subclass flavors ----------------------------------------------
-
-    protected boolean isRicherFlavor(DataFlavor flavor) {
-        DataFlavor[] richerFlavors = getRicherFlavors();
-        int nFlavors = richerFlavors.length; //(richerFlavors != null) ? richerFlavors.length : 0;
-        for (int i = 0; i < nFlavors; i++) {
-            if (richerFlavors[i].equals(flavor)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Some subclasses will have flavors that are more descriptive than HTML
-     * or plain text.  If this method returns a non-null value, it will be
-     * placed at the start of the array of supported flavors.
-     */
-    protected DataFlavor[] getRicherFlavors() {
-        return new DataFlavor[0]; //null;
-    }
-
-    protected Object getRicherData(DataFlavor flavor) throws UnsupportedFlavorException {
-        return null;
-    }
-
-    // --- html flavors ----------------------------------------------------------
-
-    /**
-     * Returns whether or not the specified data flavor is an HTML flavor that
-     * is supported.
-     * @param flavor the requested flavor for the data
-     * @return boolean indicating whether or not the data flavor is supported
-     */
-    protected boolean isHTMLFlavor(DataFlavor flavor) {
-        DataFlavor[] flavors = htmlFlavors;
-        for (int i = 0; i < flavors.length; i++) {
-            if (flavors[i].equals(flavor)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Should the HTML flavors be offered?  If so, the method
-     * getHTMLData should be implemented to provide something reasonable.
-     */
-    protected boolean isHTMLSupported() {
-        return htmlData != null;
-    }
-
-    /**
-     * Fetch the data in a text/html format
-     */
-    protected String getHTMLData() {
-        return htmlData;
-    }
-
-    // --- plain text flavors ----------------------------------------------------
-
-    /**
-     * Returns whether or not the specified data flavor is an plain flavor that
-     * is supported.
-     * @param flavor the requested flavor for the data
-     * @return boolean indicating whether or not the data flavor is supported
-     */
-    protected boolean isPlainFlavor(DataFlavor flavor) {
-        DataFlavor[] flavors = plainFlavors;
-        for (int i = 0; i < flavors.length; i++) {
-            if (flavors[i].equals(flavor)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Should the plain text flavors be offered?  If so, the method
-     * getPlainData should be implemented to provide something reasonable.
-     */
-    protected boolean isPlainSupported() {
-        return plainData != null;
-    }
-
-    /**
-     * Fetch the data in a text/plain format.
-     */
-    protected String getPlainData() {
-        return plainData;
-    }
-
-    // --- string flavorss --------------------------------------------------------
-
-    /**
-     * Returns whether or not the specified data flavor is a String flavor that
-     * is supported.
-     * @param flavor the requested flavor for the data
-     * @return boolean indicating whether or not the data flavor is supported
-     */
-    protected boolean isStringFlavor(DataFlavor flavor) {
-        DataFlavor[] flavors = stringFlavors;
-        for (int i = 0; i < flavors.length; i++) {
-            if (flavors[i].equals(flavor)) {
-                return true;
-            }
-        }
-        return false;
     }
 }

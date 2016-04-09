@@ -17,13 +17,13 @@ public final class MainPanel extends JPanel {
         @Override public Class<?> getColumnClass(int column) {
             // ArrayIndexOutOfBoundsException: 0 >= 0
             // Bug ID: JDK-6967479 JTable sorter fires even if the model is empty
-            // http://bugs.sun.com/view_bug.do?bug_id=6967479
+            // http://bugs.java.com/view_bug.do?bug_id=6967479
             //return getValueAt(0, column).getClass();
             switch (column) {
               case 0:
                 return String.class;
               case 1:
-                return Number.class;
+                return Integer.class;
               case 2:
                 return Boolean.class;
               default:
@@ -43,7 +43,7 @@ public final class MainPanel extends JPanel {
 //                     c.setBackground(getSelectionBackground());
 //                 } else {
 //                     c.setForeground(getForeground());
-//                     c.setBackground((row % 2 == 0) ? EVEN_COLOR : getBackground());
+//                     c.setBackground(row % 2 == 0 ? EVEN_COLOR : getBackground());
 //                 }
 //                 return c;
 //             }
@@ -53,7 +53,7 @@ public final class MainPanel extends JPanel {
                     JCheckBox b = (JCheckBox) c;
                     b.setBorderPainted(true);
                     b.setBackground(getSelectionBackground());
-                } else if (convertColumnIndexToModel(column) == 1) {
+                } else if (c instanceof JComponent && convertColumnIndexToModel(column) == 1) {
                     ((JComponent) c).setBorder(BorderFactory.createLineBorder(Color.GREEN, 2));
                 }
                 return c;
@@ -65,19 +65,18 @@ public final class MainPanel extends JPanel {
         table.setDefaultEditor(Object.class, new DefaultCellEditor(field));
 
 //         JTextField tf2 = new JTextField();
-//         tf2.setHorizontalAlignment(JTextField.RIGHT);
+//         tf2.setHorizontalAlignment(SwingConstants.RIGHT);
 //         tf2.setBorder(BorderFactory.createLineBorder(Color.GREEN, 2));
 //         table.setDefaultEditor(Integer.class, new DefaultCellEditor(tf2) {
 //             @Override public boolean stopCellEditing() {
-//                 Object o = getCellEditorValue();
-//                 return (o == null) ? false : super.stopCellEditing();
+//                 return Objects.nonNull(getCellEditorValue()) && super.stopCellEditing();
 //             }
 //             @Override public Object getCellEditorValue() {
 //                 Object o = super.getCellEditorValue();
 //                 Integer iv;
 //                 try {
 //                     iv = Integer.valueOf(o.toString());
-//                 } catch (NumberFormatException nfe) {
+//                 } catch (NumberFormatException ex) {
 //                     iv = null;
 //                 }
 //                 return iv;
@@ -88,12 +87,12 @@ public final class MainPanel extends JPanel {
         table.setFillsViewportHeight(true);
         table.setComponentPopupMenu(new TablePopupMenu());
         add(new JScrollPane(table));
-        setPreferredSize(new Dimension(320, 200));
+        setPreferredSize(new Dimension(320, 240));
     }
 
     class TestCreateAction extends AbstractAction {
-        public TestCreateAction(String label, Icon icon) {
-            super(label, icon);
+        protected TestCreateAction(String label) {
+            super(label);
         }
         @Override public void actionPerformed(ActionEvent e) {
             model.addRow(new Object[] {"New row", 0, true});
@@ -102,30 +101,26 @@ public final class MainPanel extends JPanel {
         }
     }
     class DeleteAction extends AbstractAction {
-        public DeleteAction(String label, Icon icon) {
-            super(label, icon);
+        protected DeleteAction(String label) {
+            super(label);
         }
         @Override public void actionPerformed(ActionEvent e) {
             int[] selection = table.getSelectedRows();
-            if (selection.length == 0) {
-                return;
-            }
             for (int i = selection.length - 1; i >= 0; i--) {
                 model.removeRow(table.convertRowIndexToModel(selection[i]));
             }
         }
     }
     private class TablePopupMenu extends JPopupMenu {
-        private final Action deleteAction = new DeleteAction("delete", null);
-        public TablePopupMenu() {
+        private final Action deleteAction = new DeleteAction("delete");
+        protected TablePopupMenu() {
             super();
-            add(new TestCreateAction("add", null));
+            add(new TestCreateAction("add"));
             addSeparator();
             add(deleteAction);
         }
         @Override public void show(Component c, int x, int y) {
-            int[] l = table.getSelectedRows();
-            deleteAction.setEnabled(l.length > 0);
+            deleteAction.setEnabled(table.getSelectedRowCount() > 0);
             super.show(c, x, y);
         }
     }

@@ -69,10 +69,10 @@ class RowHeaderRenderer extends JLabel implements TableCellRenderer {
         table.addMouseListener(rol);
         table.addMouseMotionListener(rol);
     }
-    @Override public Component getTableCellRendererComponent(JTable tbl, Object val, boolean isS, boolean hasF, int row, int col) {
-        TableCellRenderer tcr = tbl.getTableHeader().getDefaultRenderer();
+    @Override public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+        TableCellRenderer tcr = table.getTableHeader().getDefaultRenderer();
         boolean f = row == rollOverRowIndex;
-        JLabel l = (JLabel) tcr.getTableCellRendererComponent(tbl, val, isS, f ? f : hasF, -1, -1);
+        JLabel l = (JLabel) tcr.getTableCellRendererComponent(table, value, isSelected, f ? f : hasFocus, -1, -1);
         if (tcr.getClass().getName().indexOf("XPDefaultRenderer") >= 0) {
             l.setOpaque(!f);
             this.setIcon(new ComponentIcon(l));
@@ -86,7 +86,7 @@ class RowHeaderRenderer extends JLabel implements TableCellRenderer {
 //             JTable table = (JTable) e.getSource();
 //             Point pt = e.getPoint();
 //             int column = table.convertColumnIndexToModel(table.columnAtPoint(pt));
-//             rollOverRowIndex = (column == 0) ? table.rowAtPoint(pt) : -1;
+//             rollOverRowIndex = column == 0 ? table.rowAtPoint(pt) : -1;
 //             table.repaint();
 //         }
 //         @Override public void mouseExited(MouseEvent e) {

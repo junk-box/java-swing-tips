@@ -16,11 +16,13 @@ public final class MainPanel extends JPanel {
 /*
         toolbar.setUI(new BasicToolBarUI() {
             @Override public boolean canDock(Component c, Point p) {
-                return super.canDock(c, p) ? isHorizontalDockingConstraint(c, p) : false;
+                return super.canDock(c, p) && isHorizontalDockingConstraint(c, p);
             }
             private boolean isHorizontalDockingConstraint(Component c, Point p) {
-                if (!c.contains(p)) { return false; }
-                int iv = (toolBar.getOrientation() == JToolBar.HORIZONTAL) ? toolBar.getSize().height : toolBar.getSize().width;
+                if (!c.contains(p)) {
+                    return false;
+                }
+                int iv = toolBar.getOrientation() == JToolBar.HORIZONTAL ? toolBar.getSize().height : toolBar.getSize().width;
                 return p.x < c.getWidth() - iv && p.x >= iv;
             }
         });

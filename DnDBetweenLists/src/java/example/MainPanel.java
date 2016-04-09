@@ -46,7 +46,7 @@ public final class MainPanel extends JPanel {
 
         //Disable row Cut, Copy, Paste
         ActionMap map = list.getActionMap();
-        AbstractAction dummy = new AbstractAction() {
+        Action dummy = new AbstractAction() {
             @Override public void actionPerformed(ActionEvent e) { /* Dummy action */ }
         };
         map.put(TransferHandler.getCutAction().getValue(Action.NAME),   dummy);
@@ -82,29 +82,29 @@ public final class MainPanel extends JPanel {
 //Demo - BasicDnD (Drag and Drop and Data Transfer)>http://docs.oracle.com/javase/tutorial/uiswing/dnd/basicdemo.html
 class ListItemTransferHandler extends TransferHandler {
     private final DataFlavor localObjectFlavor;
-    private JList source;
+    private JList<?> source;
     private int[] indices;
     private int addIndex = -1; //Location where items were added
     private int addCount; //Number of items added.
 
-    public ListItemTransferHandler() {
+    protected ListItemTransferHandler() {
         super();
         localObjectFlavor = new ActivationDataFlavor(Object[].class, DataFlavor.javaJVMLocalObjectMimeType, "Array of items");
     }
     @Override protected Transferable createTransferable(JComponent c) {
-        source = (JList) c;
+        source = (JList<?>) c;
         indices = source.getSelectedIndices();
-        @SuppressWarnings("deprecation") Object[] transferedObjects = source.getSelectedValues();
+        Object[] transferedObjects = source.getSelectedValuesList().toArray(new Object[0]);
         return new DataHandler(transferedObjects, localObjectFlavor.getMimeType());
     }
-    @Override public boolean canImport(TransferSupport info) {
+    @Override public boolean canImport(TransferHandler.TransferSupport info) {
         return info.isDrop() && info.isDataFlavorSupported(localObjectFlavor);
     }
     @Override public int getSourceActions(JComponent c) {
-        return MOVE; //TransferHandler.COPY_OR_MOVE;
+        return TransferHandler.MOVE; //TransferHandler.COPY_OR_MOVE;
     }
     @SuppressWarnings("unchecked")
-    @Override public boolean importData(TransferSupport info) {
+    @Override public boolean importData(TransferHandler.TransferSupport info) {
         if (!canImport(info)) {
             return false;
         }
@@ -138,7 +138,7 @@ class ListItemTransferHandler extends TransferHandler {
         return false;
     }
     @Override protected void exportDone(JComponent c, Transferable data, int action) {
-        cleanup(c, action == MOVE);
+        cleanup(c, action == TransferHandler.MOVE);
     }
     private void cleanup(JComponent c, boolean remove) {
         if (remove && indices != null) {

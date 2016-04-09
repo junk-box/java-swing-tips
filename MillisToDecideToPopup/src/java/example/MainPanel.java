@@ -27,17 +27,16 @@ public final class MainPanel extends JPanel {
 
         JPanel p = new JPanel(new GridBagLayout());
         GridBagConstraints c = new GridBagConstraints();
-        c.gridheight = 1;
         c.gridx   = 0;
         c.insets  = new Insets(5, 5, 5, 0);
-        c.anchor  = GridBagConstraints.EAST;
-        c.gridy   = 0; p.add(new JLabel("MillisToDecideToPopup:"), c);
-        c.gridy   = 1; p.add(new JLabel("MillisToPopup:"), c);
+        c.anchor  = GridBagConstraints.LINE_END;
+        p.add(new JLabel("MillisToDecideToPopup:"), c);
+        p.add(new JLabel("MillisToPopup:"), c);
         c.gridx   = 1;
         c.weightx = 1d;
         c.fill    = GridBagConstraints.HORIZONTAL;
-        c.gridy   = 0; p.add(millisToDecideToPopup, c);
-        c.gridy   = 1; p.add(millisToPopup, c);
+        p.add(millisToDecideToPopup, c);
+        p.add(millisToPopup, c);
 
         Box box = Box.createHorizontalBox();
         box.add(Box.createHorizontalGlue());
@@ -50,7 +49,7 @@ public final class MainPanel extends JPanel {
         setPreferredSize(new Dimension(320, 240));
     }
     class RunAction extends AbstractAction {
-        public RunAction() {
+        protected RunAction() {
             super("run");
         }
         @Override public void actionPerformed(ActionEvent e) {
@@ -68,6 +67,9 @@ public final class MainPanel extends JPanel {
             runButton.setEnabled(false);
             worker = new Task(lengthOfTask) {
                 @Override protected void process(List<String> chunks) {
+                    if (isCancelled()) {
+                        return;
+                    }
                     if (!isDisplayable()) {
                         System.out.println("process: DISPOSE_ON_CLOSE");
                         cancel(true);
@@ -133,7 +135,7 @@ public final class MainPanel extends JPanel {
 
 class Task extends SwingWorker<String, String> {
     private final int lengthOfTask;
-    public Task(int lengthOfTask) {
+    protected Task(int lengthOfTask) {
         super();
         this.lengthOfTask = lengthOfTask;
     }
@@ -158,16 +160,18 @@ class Task extends SwingWorker<String, String> {
 
 class ProgressListener implements PropertyChangeListener {
     private final ProgressMonitor monitor;
-    public ProgressListener(ProgressMonitor monitor) {
+    protected ProgressListener(ProgressMonitor monitor) {
         this.monitor = monitor;
         this.monitor.setProgress(0);
     }
     @Override public void propertyChange(PropertyChangeEvent e) {
+        Object o = e.getSource();
         String strPropertyName = e.getPropertyName();
-        if ("progress".equals(strPropertyName)) {
+        if ("progress".equals(strPropertyName) && o instanceof SwingWorker) {
+            SwingWorker task = (SwingWorker) o;
             monitor.setProgress((Integer) e.getNewValue());
-            if (monitor.isCanceled()) {
-                ((SwingWorker) e.getSource()).cancel(true);
+            if (monitor.isCanceled() || task.isDone()) {
+                task.cancel(true);
             }
         }
     }

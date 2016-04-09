@@ -38,20 +38,23 @@ public final class MainPanel extends JPanel {
 
         final ActionListener al = new ActionListener() {
             @Override public void actionPerformed(ActionEvent e) {
-                TableRowSorter<?> sorter = (TableRowSorter<?>) table.getRowSorter();
-                Object source = e.getSource();
-                if (source.equals(check2)) {
-                    sorter.setComparator(0, new FileComparator(0));
-                    sorter.setComparator(1, new FileComparator(1));
-                    sorter.setComparator(2, new FileComparator(2));
-                } else if (source.equals(check3)) {
-                    sorter.setComparator(0, new FileGroupComparator(table, 0));
-                    sorter.setComparator(1, new FileGroupComparator(table, 1));
-                    sorter.setComparator(2, new FileGroupComparator(table, 2));
-                } else {
-                    sorter.setComparator(0, new DefaultFileComparator(0));
-                    sorter.setComparator(1, new DefaultFileComparator(1));
-                    sorter.setComparator(2, new DefaultFileComparator(2));
+                RowSorter<? extends TableModel> rs = table.getRowSorter();
+                if (rs instanceof TableRowSorter) {
+                    TableRowSorter<? extends TableModel> sorter = (TableRowSorter<? extends TableModel>) rs;
+                    Object source = e.getSource();
+                    if (source.equals(check2)) {
+                        sorter.setComparator(0, new FileComparator(0));
+                        sorter.setComparator(1, new FileComparator(1));
+                        sorter.setComparator(2, new FileComparator(2));
+                    } else if (source.equals(check3)) {
+                        sorter.setComparator(0, new FileGroupComparator(table, 0));
+                        sorter.setComparator(1, new FileGroupComparator(table, 1));
+                        sorter.setComparator(2, new FileGroupComparator(table, 2));
+                    } else {
+                        sorter.setComparator(0, new DefaultFileComparator(0));
+                        sorter.setComparator(1, new DefaultFileComparator(1));
+                        sorter.setComparator(2, new DefaultFileComparator(2));
+                    }
                 }
             }
         };
@@ -67,10 +70,13 @@ public final class MainPanel extends JPanel {
         table.setShowGrid(false);
         table.setFillsViewportHeight(true);
         table.setAutoCreateRowSorter(true);
-        ((TableRowSorter<?>) table.getRowSorter()).setComparator(0, new DefaultFileComparator(0));
-        ((TableRowSorter<?>) table.getRowSorter()).setComparator(1, new DefaultFileComparator(1));
-        ((TableRowSorter<?>) table.getRowSorter()).setComparator(2, new DefaultFileComparator(2));
-
+        RowSorter<? extends TableModel> rs = table.getRowSorter();
+        if (rs instanceof TableRowSorter) {
+            TableRowSorter<? extends TableModel> sorter = (TableRowSorter<? extends TableModel>) rs;
+            sorter.setComparator(0, new DefaultFileComparator(0));
+            sorter.setComparator(1, new DefaultFileComparator(1));
+            sorter.setComparator(2, new DefaultFileComparator(2));
+        }
         FileSystemView fileSystemView = FileSystemView.getFileSystemView();
         table.setDefaultRenderer(Object.class, new FileIconTableCellRenderer(fileSystemView));
 
@@ -81,29 +87,21 @@ public final class MainPanel extends JPanel {
         add(new JScrollPane(table));
         setPreferredSize(new Dimension(320, 240));
     }
-    class DeleteAction extends AbstractAction {
-        public DeleteAction(String label, Icon icon) {
-            super(label, icon);
-        }
-        @Override public void actionPerformed(ActionEvent evt) {
-            int[] selection = table.getSelectedRows();
-            if (selection.length == 0) {
-                return;
-            }
-            for (int i = selection.length - 1; i >= 0; i--) {
-                model.removeRow(table.convertRowIndexToModel(selection[i]));
-            }
-        }
-    }
     private class TablePopupMenu extends JPopupMenu {
-        private final Action deleteAction = new DeleteAction("delete", null);
-        public TablePopupMenu() {
+        private final Action deleteAction = new AbstractAction("delete") {
+            @Override public void actionPerformed(ActionEvent e) {
+                int[] selection = table.getSelectedRows();
+                for (int i = selection.length - 1; i >= 0; i--) {
+                    model.removeRow(table.convertRowIndexToModel(selection[i]));
+                }
+            }
+        };
+        protected TablePopupMenu() {
             super();
             add(deleteAction);
         }
         @Override public void show(Component c, int x, int y) {
-            int[] l = table.getSelectedRows();
-            deleteAction.setEnabled(l.length > 0);
+            deleteAction.setEnabled(table.getSelectedRowCount() > 0);
             super.show(c, x, y);
         }
     }
@@ -133,13 +131,13 @@ public final class MainPanel extends JPanel {
 
 class FileIconTableCellRenderer extends DefaultTableCellRenderer {
     private final FileSystemView fileSystemView;
-    public FileIconTableCellRenderer(FileSystemView fileSystemView) {
+    protected FileIconTableCellRenderer(FileSystemView fileSystemView) {
         super();
         this.fileSystemView = fileSystemView;
     }
     @Override public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
         JLabel l = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-        l.setHorizontalAlignment(JLabel.LEFT);
+        l.setHorizontalAlignment(SwingConstants.LEFT);
         l.setIcon(null);
         File file = (File) value;
         int c = table.convertColumnIndexToModel(column);
@@ -156,7 +154,7 @@ class FileIconTableCellRenderer extends DefaultTableCellRenderer {
             //l.setText(file.getName());
             break;
           case 1:
-            l.setHorizontalAlignment(JLabel.RIGHT);
+            l.setHorizontalAlignment(SwingConstants.RIGHT);
             l.setText(file.isDirectory() ? null : Long.toString(file.length()));
             break;
           case 2:
@@ -170,10 +168,10 @@ class FileIconTableCellRenderer extends DefaultTableCellRenderer {
 }
 
 class FileTransferHandler extends TransferHandler {
-    @Override public boolean importData(TransferSupport support) {
+    @Override public boolean importData(TransferHandler.TransferSupport support) {
         try {
             if (canImport(support)) {
-                //FileTableModel model = (FileTableModel)((JTable) support.getComponent()).getModel();
+                //FileTableModel model = (FileTableModel) ((JTable) support.getComponent()).getModel();
                 //List<?> list = (List<?>) support.getTransferable().getTransferData(DataFlavor.javaFileListFlavor);
                 //model.setFiles((File[]) list.toArray(new File[list.size()]));
                 DefaultTableModel model = (DefaultTableModel) ((JTable) support.getComponent()).getModel();
@@ -191,13 +189,13 @@ class FileTransferHandler extends TransferHandler {
         }
         return false;
     }
-    @Override public boolean canImport(TransferSupport support) {
+    @Override public boolean canImport(TransferHandler.TransferSupport support) {
         return support.isDataFlavorSupported(DataFlavor.javaFileListFlavor);
     }
 //     @Override public boolean importData(JComponent component, Transferable transferable) {
 //         try {
 //             if (canImport(component, transferable.getTransferDataFlavors())) {
-//                 DefaultTableModel model = (DefaultTableModel)((JTable) component).getModel();
+//                 DefaultTableModel model = (DefaultTableModel) ((JTable) component).getModel();
 //                 for (Object o: (List) transferable.getTransferData(DataFlavor.javaFileListFlavor)) {
 //                     if (o instanceof File) {
 //                         File file = (File) o;
@@ -211,7 +209,7 @@ class FileTransferHandler extends TransferHandler {
 //         }
 //         return false;
 //     }
-//     @Override public boolean canImport(JComponent component, DataFlavor[] flavors) {
+//     @Override public boolean canImport(JComponent component, DataFlavor... flavors) {
 //         for (DataFlavor f: flavors) {
 //             if (DataFlavor.javaFileListFlavor.equals(f)) {
 //                 return true;
@@ -220,14 +218,14 @@ class FileTransferHandler extends TransferHandler {
 //         return false;
 //     }
     @Override public int getSourceActions(JComponent component) {
-        return COPY;
+        return TransferHandler.COPY;
     }
 }
 
 class DefaultFileComparator implements Comparator<File>, Serializable {
     private static final long serialVersionUID = 1L;
     protected final int column;
-    public DefaultFileComparator(int column) {
+    protected DefaultFileComparator(int column) {
         this.column = column;
     }
     @Override public int compare(File a, File b) {
@@ -241,7 +239,7 @@ class DefaultFileComparator implements Comparator<File>, Serializable {
 
 class FileComparator extends DefaultFileComparator {
     private static final long serialVersionUID = 1L;
-    public FileComparator(int column) {
+    protected FileComparator(int column) {
         super(column);
     }
     @Override public int compare(File a, File b) {
@@ -260,7 +258,7 @@ class FileComparator extends DefaultFileComparator {
 class FileGroupComparator extends DefaultFileComparator {
     private static final long serialVersionUID = 1L;
     private final JTable table;
-    public FileGroupComparator(JTable table, int column) {
+    protected FileGroupComparator(JTable table, int column) {
         super(column);
         this.table = table;
     }
@@ -286,7 +284,7 @@ class FileGroupComparator extends DefaultFileComparator {
 // class FileTableModel extends AbstractTableModel {
 //     private final String[] columnNames = {"Name", "Size", "Full Path"};
 //     private File[] files;
-//     public FileTableModel() {
+//     protected FileTableModel() {
 //         this(new File[0]);
 //     }
 //     public FileTableModel(File[] files) {

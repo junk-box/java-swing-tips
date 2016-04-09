@@ -21,7 +21,7 @@ public final class MainPanel extends JPanel {
         @Override public void actionPerformed(ActionEvent e) {
             label.setText(df.format(new Date()));
             Container parent = SwingUtilities.getUnwrappedParent(label);
-            if (parent != null && parent.isOpaque()) {
+            if (Objects.nonNull(parent) && parent.isOpaque()) {
                 repaintWindowAncestor(label);
             }
         }
@@ -30,7 +30,7 @@ public final class MainPanel extends JPanel {
 
     private void repaintWindowAncestor(JComponent c) {
         JRootPane root = c.getRootPane();
-        if (root == null) {
+        if (Objects.isNull(root)) {
             return;
         }
         Rectangle r = SwingUtilities.convertRectangle(c, c.getBounds(), root);
@@ -55,24 +55,22 @@ public final class MainPanel extends JPanel {
     public MainPanel() {
         super(new BorderLayout());
         tp = TextureUtil.makeTexturePanel(label, getClass().getResource("YournameS7ScientificHalf.ttf"));
-        combo.addItemListener(new ItemListener() {
-            @Override public void itemStateChanged(ItemEvent e) {
-                if (e.getStateChange() == ItemEvent.SELECTED) {
-                    TexturePaints t = (TexturePaints) e.getItem();
-                    tp.setTexturePaint(t.getTexturePaint());
-                    repaintWindowAncestor(tp);
-                }
+        combo.addItemListener(e -> {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                TexturePaints t = (TexturePaints) e.getItem();
+                tp.setTexturePaint(t.getTexturePaint());
+                repaintWindowAncestor(tp);
             }
         });
         JToggleButton button = new JToggleButton(new AbstractAction("timer") {
             private JFrame digitalClock;
             @Override public void actionPerformed(ActionEvent e) {
-                if (digitalClock == null) {
+                if (Objects.isNull(digitalClock)) {
                     digitalClock = new JFrame();
                     digitalClock.setUndecorated(true);
                     //digitalClock.setAlwaysOnTop(true);
-                    //com.sun.awt.AWTUtilities.setWindowOpaque(digitalClock, false); //JDK 1.6.0
-                    digitalClock.setBackground(new Color(0, 0, 0, 0)); //JDK 1.7.0
+                    //AWTUtilities.setWindowOpaque(digitalClock, false); //JDK 1.6.0
+                    digitalClock.setBackground(new Color(0x0, true)); //JDK 1.7.0
                     digitalClock.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
                     digitalClock.getContentPane().add(tp);
                     digitalClock.pack();
@@ -121,19 +119,19 @@ public final class MainPanel extends JPanel {
 
 class TexturePanel extends JPanel {
     protected transient TexturePaint texture;
-    public TexturePanel() {
+    protected TexturePanel() {
         super();
     }
-    public TexturePanel(LayoutManager lm) {
+    protected TexturePanel(LayoutManager lm) {
         super(lm);
     }
     public void setTexturePaint(TexturePaint texture) {
         this.texture = texture;
         //setOpaque(false);
-        setOpaque(texture == null);
+        setOpaque(Objects.isNull(texture));
     }
-    @Override public void paintComponent(Graphics g) {
-        if (texture != null) {
+    @Override protected void paintComponent(Graphics g) {
+        if (Objects.nonNull(texture)) {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setPaint(texture);
             g2.fillRect(0, 0, getWidth(), getHeight());
@@ -144,12 +142,12 @@ class TexturePanel extends JPanel {
 }
 
 enum TexturePaints {
-    Null    (null, "Color(.5f, .8f, .5f, .5f)"),
-    Image   (TextureUtil.makeImageTexture(), "Image TexturePaint"),
-    Checker (TextureUtil.makeCheckerTexture(), "Checker TexturePaint");
+    Null(null,                                "Color(.5f, .8f, .5f, .5f)"),
+    Image(TextureUtil.makeImageTexture(),     "Image TexturePaint"),
+    Checker(TextureUtil.makeCheckerTexture(), "Checker TexturePaint");
     private final String description;
     private final TexturePaint texture;
-    private TexturePaints(TexturePaint texture, String description) {
+    TexturePaints(TexturePaint texture, String description) {
         this.texture = texture;
         this.description = description;
     }
@@ -190,7 +188,7 @@ final class TextureUtil {
             }
         }
         g2.dispose();
-        return new TexturePaint(bi, new Rectangle(0, 0, sz, sz));
+        return new TexturePaint(bi, new Rectangle(sz, sz));
     }
 
     public static TexturePanel makeTexturePanel(JLabel label, URL url) {
@@ -198,7 +196,7 @@ final class TextureUtil {
         //Digital display font: Copyright (c) Yourname, Inc.
         Font font = makeFont(url);
         label.setFont(font.deriveFont(80f));
-        label.setBackground(new Color(0, 0, 0, 0));
+        label.setBackground(new Color(0x0, true));
         label.setOpaque(false);
         TexturePanel p = new TexturePanel(new BorderLayout(8, 8));
         p.add(label);
@@ -223,24 +221,18 @@ final class TextureUtil {
 }
 
 class DragWindowListener extends MouseAdapter {
-    private final transient Point startPt = new Point();
-    private transient Window window;
-    @Override public void mousePressed(MouseEvent me) {
-        if (window == null) {
-            Object o = me.getSource();
-            if (o instanceof Window) {
-                window = (Window) o;
-            } else if (o instanceof JComponent) {
-                window = SwingUtilities.windowForComponent(me.getComponent());
-            }
+    private final Point startPt = new Point();
+    @Override public void mousePressed(MouseEvent e) {
+        if (SwingUtilities.isLeftMouseButton(e)) {
+            startPt.setLocation(e.getPoint());
         }
-        startPt.setLocation(me.getPoint());
     }
-    @Override public void mouseDragged(MouseEvent me) {
-        if (window != null) {
-            Point eventLocationOnScreen = me.getLocationOnScreen();
-            window.setLocation(eventLocationOnScreen.x - startPt.x,
-                               eventLocationOnScreen.y - startPt.y);
+    @Override public void mouseDragged(MouseEvent e) {
+        Component c = SwingUtilities.getRoot(e.getComponent());
+        if (c instanceof Window && SwingUtilities.isLeftMouseButton(e)) {
+            Window window = (Window) c;
+            Point pt = window.getLocation();
+            window.setLocation(pt.x - startPt.x + e.getX(), pt.y - startPt.y + e.getY());
         }
     }
 }

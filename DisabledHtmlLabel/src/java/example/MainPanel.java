@@ -6,54 +6,51 @@ import java.awt.*;
 import java.awt.color.*;
 import java.awt.event.*;
 import java.awt.image.*;
+import java.util.Objects;
 import javax.swing.*;
 
 public final class MainPanel extends JPanel {
     private static final String HTML_TEXT = "<html>Html <font color='red'>label</font><br/> Test";
+
     public MainPanel() {
         super(new BorderLayout());
-        final JLabel label0 = new JLabel("JLabel JLabel");
-        final JLabel label1 = new JLabel(HTML_TEXT);
-        final JLabel label2 = new JLabel(HTML_TEXT) {
-            // https://forums.oracle.com/thread/1377943 JLabel with html tag can not be disabled or setForegroud?!
+
+        JLabel label0 = new JLabel("Default JLabel");
+        JLabel label1 = new JLabel(HTML_TEXT);
+        JLabel label2 = new JLabel(HTML_TEXT) {
+            // JLabel with html tag can not be disabled or setForegroud?!
+            // https://community.oracle.com/thread/1377943
             @Override public void setEnabled(boolean b) {
                 super.setEnabled(b);
                 setForeground(b ? UIManager.getColor("Label.foreground")
                                 : UIManager.getColor("Label.disabledForeground"));
             }
         };
-        final JLabel label3 = new DisabledHtmlLabel(HTML_TEXT);
+        JLabel label3 = new DisabledHtmlLabel(HTML_TEXT);
 
-        final JEditorPane editor1 = new JEditorPane("text/html", HTML_TEXT);
+        JEditorPane editor1 = new JEditorPane("text/html", HTML_TEXT);
         editor1.setOpaque(false);
         editor1.setEditable(false);
 
-        final JEditorPane editor2 = new JEditorPane("text/html", HTML_TEXT);
+        JEditorPane editor2 = new JEditorPane("text/html", HTML_TEXT);
         editor2.setOpaque(false);
         editor2.setEditable(false);
         editor2.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
         editor2.setFont(UIManager.getFont("Label.font"));
 
         JPanel box = new JPanel(new GridLayout(2, 3));
-        box.add(makePanel("JLabel",        label0));
-        box.add(makePanel("JLabel+Html",   label1));
-        box.add(makePanel("JLabel+Html+",  label2));
-        box.add(makePanel("JLabel+Html++", label3));
-        box.add(makePanel("JEditorPane",   editor1));
-        box.add(makePanel("JEditorPane+",  editor2));
+        box.add(initTitledBorder("JLabel",        label0));
+        box.add(initTitledBorder("JLabel+Html",   label1));
+        box.add(initTitledBorder("JLabel+Html+",  label2));
+        box.add(initTitledBorder("JLabel+Html++", label3));
+        box.add(initTitledBorder("JEditorPane",   editor1));
+        box.add(initTitledBorder("JEditorPane+",  editor2));
 
         JCheckBox check = new JCheckBox("setEnabled", true);
-        check.setAction(new AbstractAction("setEnabled") {
-            @Override public void actionPerformed(ActionEvent e) {
-                boolean flag = ((JCheckBox) e.getSource()).isSelected();
-                setVisible(false);
-                label0.setEnabled(flag);
-                label1.setEnabled(flag);
-                label2.setEnabled(flag);
-                label3.setEnabled(flag);
-                editor1.setEnabled(flag);
-                editor2.setEnabled(flag);
-                setVisible(true);
+        check.addActionListener(e -> {
+            boolean f = ((JCheckBox) e.getSource()).isSelected();
+            for (Component c: box.getComponents()) {
+                c.setEnabled(f);
             }
         });
 
@@ -61,11 +58,9 @@ public final class MainPanel extends JPanel {
         add(box);
         setPreferredSize(new Dimension(320, 240));
     }
-    private JPanel makePanel(String title, JComponent label) {
-        JPanel p = new JPanel(new GridLayout(1, 1));
-        p.setBorder(BorderFactory.createTitledBorder(title));
-        p.add(label);
-        return p;
+    private JComponent initTitledBorder(String title, JComponent c) {
+        c.setBorder(BorderFactory.createTitledBorder(title));
+        return c;
     }
 
     public static void main(String... args) {
@@ -95,7 +90,7 @@ class DisabledHtmlLabel extends JLabel {
     private static final ColorConvertOp COLOR_CONVERT = new ColorConvertOp(ColorSpace.getInstance(ColorSpace.CS_GRAY), null);
     private transient BufferedImage shadow;
 
-    public DisabledHtmlLabel(String text) {
+    protected DisabledHtmlLabel(String text) {
         super(text);
     }
     @Override public void setEnabled(boolean b) {
@@ -104,7 +99,7 @@ class DisabledHtmlLabel extends JLabel {
         if (!b) {
             BufferedImage source = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
             Graphics2D g2 = source.createGraphics();
-            g2.setPaint(new Color(0, true));
+            g2.setPaint(new Color(0x0, true));
             g2.fillRect(0, 0, getWidth(), getHeight());
             //print(g2);
             paint(g2);
@@ -113,13 +108,11 @@ class DisabledHtmlLabel extends JLabel {
         }
         super.setEnabled(b);
     }
-    @Override public void paintComponent(Graphics g) {
-        if (isEnabled()) {
-            super.paintComponent(g);
+    @Override protected void paintComponent(Graphics g) {
+        if (!isEnabled() && Objects.nonNull(shadow)) {
+            g.drawImage(shadow, 0, 0, this);
         } else {
-            if (shadow != null) {
-                g.drawImage(shadow, 0, 0, this);
-            }
+            super.paintComponent(g);
         }
     }
 }

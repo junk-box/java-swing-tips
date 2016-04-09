@@ -13,8 +13,8 @@ public class MainPanel extends JPanel {
     private static final String TEXT = "javascript:(function(){var l=location,m=l.href.match('^(https?://)(.+)(api[^+]+|technotes[^+]+)');if(m)l.href=m[1]+'docs.oracle.com/javase/8/docs/'+decodeURIComponent(m[3]).replace(/\\+.*$/,'').replace(/\\[\\]/g,':A').replace(/, |\\(|\\)/g,'-');}());";
     private final JTextField textField1 = new JTextField(TEXT);
     private final JTextField textField2 = new JTextField(TEXT);
-    private final JScrollBar scroller1 = new JScrollBar(JScrollBar.HORIZONTAL);
-    private final JScrollBar scroller2 = new JScrollBar(JScrollBar.HORIZONTAL) {
+    private final JScrollBar scroller1 = new JScrollBar(Adjustable.HORIZONTAL);
+    private final JScrollBar scroller2 = new JScrollBar(Adjustable.HORIZONTAL) {
         @Override public void updateUI() {
             super.updateUI();
             setUI(new ArrowButtonlessScrollBarUI());
@@ -33,8 +33,9 @@ public class MainPanel extends JPanel {
         scroller2.setModel(textField2.getHorizontalVisibility());
 
         Box p = Box.createVerticalBox();
-        JScrollPane scroll = new JScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
-        scroll.setViewportView(new JTextField(TEXT));
+        JScrollPane scroll = new JScrollPane(new JTextField(TEXT));
+        scroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+        scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
         p.add(new JLabel("JScrollPane + VERTICAL_SCROLLBAR_NEVER"));
         p.add(scroll);
         p.add(Box.createVerticalStrut(5));

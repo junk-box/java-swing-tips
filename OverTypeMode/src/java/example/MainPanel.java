@@ -4,6 +4,7 @@ package example;
 //@homepage@
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Objects;
 import javax.swing.*;
 import javax.swing.plaf.*;
 import javax.swing.text.*;
@@ -41,20 +42,25 @@ public final class MainPanel extends JPanel {
     }
 }
 
-// https://forums.oracle.com/thread/1385467 JTextPane edit mode (insert or overwrite)???
+// https://community.oracle.com/thread/1385467 JTextPane edit mode (insert or overwrite)???
 class OvertypeTextArea extends JTextArea {
-    //private static Toolkit toolkit = Toolkit.getDefaultToolkit();
-    private boolean overtypeMode;
-    private final Caret defaultCaret;
-    private final Caret overtypeCaret;
-    public OvertypeTextArea() {
-        super();
-        //setCaretColor(Color.RED);
-        defaultCaret = getCaret();
-        overtypeCaret = new OvertypeCaret();
-        overtypeCaret.setBlinkRate(defaultCaret.getBlinkRate());
-        setOvertypeMode(true);
+    private boolean overtypeMode = true;
+    private Caret defaultCaret;
+    private Caret overtypeCaret;
+
+    @Override public void updateUI() {
+        super.updateUI();
+        EventQueue.invokeLater(new Runnable() {
+            @Override public void run() {
+                //setCaretColor(Color.RED);
+                defaultCaret = getCaret();
+                overtypeCaret = new OvertypeCaret();
+                overtypeCaret.setBlinkRate(defaultCaret.getBlinkRate());
+                setOvertypeMode(overtypeMode);
+            }
+        });
     }
+
     public boolean isOvertypeMode() {
         return overtypeMode;
     }
@@ -81,7 +87,7 @@ class OvertypeTextArea extends JTextArea {
         // caret position
         if (isOvertypeMode()) {
             int pos = getCaretPosition();
-            if (getSelectedText() == null && pos < getDocument().getLength()) {
+            if (getSelectionStart() == getSelectionEnd() && pos < getDocument().getLength()) {
                 moveCaretPosition(pos + 1);
             }
         }
@@ -118,11 +124,11 @@ class OvertypeTextArea extends JTextArea {
                     Rectangle r = mapper.modelToView(component, getDot());
                     g.setColor(component.getCaretColor());
                     int width = g.getFontMetrics().charWidth('w');
-                    // A patch for double-width CJK character >>>>
+                    // A patch for full width characters >>>>
                     if (isOvertypeMode()) {
                         int pos = getCaretPosition();
                         if (pos < getDocument().getLength()) {
-                            if (getSelectedText() == null) {
+                            if (getSelectionStart() == getSelectionEnd()) {
                                 String str = getText(pos, 1);
                                 width = g.getFontMetrics().stringWidth(str);
                             } else {
@@ -132,8 +138,8 @@ class OvertypeTextArea extends JTextArea {
                     } // <<<<
                     int y = r.y + r.height - 2;
                     g.drawLine(r.x, y, r.x + width - 2, y);
-                } catch (BadLocationException e) {
-                    e.printStackTrace();
+                } catch (BadLocationException ex) {
+                    ex.printStackTrace();
                 }
             }
         }
@@ -144,7 +150,7 @@ class OvertypeTextArea extends JTextArea {
          * consider the area for the default caret and this caret)
          */
         @Override protected synchronized void damage(Rectangle r) {
-            if (r != null) {
+            if (Objects.nonNull(r)) {
                 JTextComponent component = getComponent();
                 x = r.x;
                 y = r.y;

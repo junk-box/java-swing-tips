@@ -5,8 +5,8 @@ package example;
 import java.awt.*;
 import java.awt.event.*;
 //import java.beans.*;
+import java.util.*;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import javax.swing.*;
 
@@ -47,10 +47,10 @@ public final class MainPanel extends JPanel {
         statusPanel.revalidate();
     }
     class RunAction extends AbstractAction {
-        public RunAction() {
+        protected RunAction() {
             super("run");
         }
-        @Override public void actionPerformed(ActionEvent evt) {
+        @Override public void actionPerformed(ActionEvent e) {
             initStatusPanel(true);
             worker = new ProgressTask();
             worker.execute();
@@ -58,16 +58,26 @@ public final class MainPanel extends JPanel {
     }
     class ProgressTask extends Task {
         @Override protected void process(List<Progress> chunks) {
+            if (isCancelled()) {
+                return;
+            }
             if (!isDisplayable()) {
                 cancel(true);
                 return;
             }
             for (Progress s: chunks) {
                 switch (s.component) {
-                  case TOTAL: bar1.setValue((Integer) s.value); break;
-                  case FILE:  bar2.setValue((Integer) s.value); break;
-                  case LOG:   area.append((String) s.value);    break;
-                  default:    throw new AssertionError("Unknown Progress");
+                  case TOTAL:
+                    bar1.setValue((Integer) s.value);
+                    break;
+                  case FILE:
+                    bar2.setValue((Integer) s.value);
+                    break;
+                  case LOG:
+                    area.append((String) s.value);
+                    break;
+                  default:
+                    throw new AssertionError("Unknown Progress");
                 }
             }
         }
@@ -86,11 +96,11 @@ public final class MainPanel extends JPanel {
         }
     }
     class CancelAction extends AbstractAction {
-        public CancelAction() {
+        protected CancelAction() {
             super("cancel");
         }
-        @Override public void actionPerformed(ActionEvent evt) {
-            if (worker != null && !worker.isDone()) {
+        @Override public void actionPerformed(ActionEvent e) {
+            if (Objects.nonNull(worker) && !worker.isDone()) {
                 worker.cancel(true);
             }
             worker = null;
@@ -131,13 +141,14 @@ enum Component { TOTAL, FILE, LOG }
 class Progress {
     public final Object value;
     public final Component component;
-    public Progress(Component component, Object value) {
+    protected Progress(Component component, Object value) {
         this.component = component;
         this.value = value;
     }
 }
 
 class Task extends SwingWorker<String, Progress> {
+    private final Random r = new Random();
     @Override public String doInBackground() {
         //System.out.println("doInBackground() is EDT?: " + EventQueue.isDispatchThread());
         int current = 0;
@@ -157,7 +168,6 @@ class Task extends SwingWorker<String, Progress> {
         publish(new Progress(Component.LOG, "\n"));
         return "Done";
     }
-    private final Random r = new Random();
     private void convertFileToSomething() throws InterruptedException {
         int current = 0;
         int lengthOfTask = 10 + r.nextInt(50); //long lengthOfTask = file.length();
@@ -193,10 +203,10 @@ class Task extends SwingWorker<String, Progress> {
 //     }
 //
 //     class RunAction extends AbstractAction {
-//         public RunAction() {
+//         protected RunAction() {
 //             super("run");
 //         }
-//         @Override public void actionPerformed(ActionEvent evt) {
+//         @Override public void actionPerformed(ActionEvent e) {
 //             //System.out.println("actionPerformed() is EDT?: " + EventQueue.isDispatchThread());
 //             final JProgressBar bar1 = new JProgressBar(0, 100);
 //             final JProgressBar bar2 = new JProgressBar(0, 100);
@@ -277,11 +287,11 @@ class Task extends SwingWorker<String, Progress> {
 //         }
 //     }
 //     class CancelAction extends AbstractAction {
-//         public CancelAction() {
+//         protected CancelAction() {
 //             super("cancel");
 //         }
-//         @Override public void actionPerformed(ActionEvent evt) {
-//             if (worker != null && !worker.isDone()) {
+//         @Override public void actionPerformed(ActionEvent e) {
+//             if (Objects.nonNull(worker) && !worker.isDone()) {
 //                 worker.cancel(true);
 //             }
 //             worker = null;
@@ -302,8 +312,9 @@ class Task extends SwingWorker<String, Progress> {
 //     public static void createAndShowGUI() {
 //         try {
 //             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-//         } catch (Exception e) {
-//             e.printStackTrace();
+//         } catch (ClassNotFoundException | InstantiationException
+//                | IllegalAccessException | UnsupportedLookAndFeelException ex) {
+//             ex.printStackTrace();
 //         }
 //         JFrame frame = new JFrame("@title@");
 //         //frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
@@ -317,7 +328,7 @@ class Task extends SwingWorker<String, Progress> {
 //
 // class MainProgressListener implements PropertyChangeListener {
 //     protected final JProgressBar progressBar;
-//     public MainProgressListener(JProgressBar progressBar) {
+//     protected MainProgressListener(JProgressBar progressBar) {
 //         this.progressBar = progressBar;
 //         this.progressBar.setValue(0);
 //     }
@@ -332,7 +343,7 @@ class Task extends SwingWorker<String, Progress> {
 // }
 // class SubProgressListener implements PropertyChangeListener {
 //     private final JProgressBar progressBar;
-//     public SubProgressListener(JProgressBar progressBar) {
+//     protected SubProgressListener(JProgressBar progressBar) {
 //         this.progressBar = progressBar;
 //         this.progressBar.setValue(0);
 //     }

@@ -11,9 +11,9 @@ import javax.swing.event.EventListenerList;
 public final class MainPanel extends JPanel {
     private static final Font FONT12 = new Font(Font.SANS_SERIF, Font.PLAIN, 12);
     private static final Font FONT32 = new Font(Font.SANS_SERIF, Font.PLAIN, 32);
-    private final MyButton   button = new MyButton("dummy");
-    private final MyLabel    label  = new MyLabel("test");
-    private final MyComboBox combo  = new MyComboBox();
+    private final MyButton button  = new MyButton("dummy");
+    private final MyLabel label    = new MyLabel("test");
+    private final MyComboBox combo = new MyComboBox();
 
 //*
     //http://docs.oracle.com/javase/jp/6/api/javax/swing/event/EventListenerList.html
@@ -32,7 +32,7 @@ public final class MainPanel extends JPanel {
     protected void fireFontChangeEvent(String cmd, Font font) {
         // Guaranteed to return a non-null array
         Object[] listeners = listenerList.getListenerList();
-        FontChangeEvent evt = new FontChangeEvent(this, cmd, font);
+        FontChangeEvent e = new FontChangeEvent(this, cmd, font);
         // Process the listeners last to first, notifying
         // those that are interested in this event
         for (int i = listeners.length - 2; i >= 0; i -= 2) {
@@ -40,7 +40,7 @@ public final class MainPanel extends JPanel {
                 // Lazily create the event:
 //                 if (fontChangeEvent == null)
 //                   fontChangeEvent = new FontChangeEvent(this);
-                ((FontChangeListener) listeners[i + 1]).fontStateChanged(evt);
+                ((FontChangeListener) listeners[i + 1]).fontStateChanged(e);
             }
         }
     }
@@ -101,7 +101,7 @@ public final class MainPanel extends JPanel {
         panel.add(button);
         add(menubar, BorderLayout.NORTH);
         add(panel);
-        setPreferredSize(new Dimension(320, 200));
+        setPreferredSize(new Dimension(320, 240));
     }
 
     public static void main(String... args) {
@@ -141,7 +141,7 @@ class FontChangeEvent extends EventObject {
     public Font getFont() {
         return font;
     }
-    public FontChangeEvent(Object source, String cmd, Font font) {
+    protected FontChangeEvent(Object source, String cmd, Font font) {
         super(source);
         this.command = cmd;
         this.font = font;
@@ -149,7 +149,7 @@ class FontChangeEvent extends EventObject {
 }
 
 class MyComboBox extends JComboBox<String> implements FontChangeListener {
-    public MyComboBox() {
+    protected MyComboBox() {
         super(new DefaultComboBoxModel<String>(new String[] {"test test"}));
     }
     @Override public void fontStateChanged(FontChangeEvent e) {
@@ -158,7 +158,7 @@ class MyComboBox extends JComboBox<String> implements FontChangeListener {
 }
 
 class MyLabel extends JLabel implements FontChangeListener {
-    public MyLabel(String str) {
+    protected MyLabel(String str) {
         super(str);
     }
     @Override public void fontStateChanged(FontChangeEvent e) {
@@ -167,7 +167,7 @@ class MyLabel extends JLabel implements FontChangeListener {
 }
 
 class MyButton extends JButton implements FontChangeListener {
-    public MyButton(String str) {
+    protected MyButton(String str) {
         super(str);
     }
     @Override public void fontStateChanged(FontChangeEvent e) {

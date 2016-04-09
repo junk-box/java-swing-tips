@@ -7,15 +7,17 @@ import java.awt.event.*;
 import javax.swing.*;
 
 public final class MainPanel extends JPanel {
-    private MainPanel(final JFrame frame) {
+    private MainPanel() {
         super(new BorderLayout());
         JCheckBox checkbox = new JCheckBox(new AbstractAction("Always On Top") {
             @Override public void actionPerformed(ActionEvent e) {
                 JCheckBox c = (JCheckBox) e.getSource();
-                frame.setAlwaysOnTop(c.isSelected());
+                Container w = c.getTopLevelAncestor();
+                if (w instanceof Window) {
+                    ((Window) w).setAlwaysOnTop(c.isSelected());
+                }
             }
         });
-        frame.setAlwaysOnTop(true);
         checkbox.setSelected(true);
 
         JPanel p = new JPanel();
@@ -42,7 +44,8 @@ public final class MainPanel extends JPanel {
         }
         JFrame frame = new JFrame("@title@");
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        frame.getContentPane().add(new MainPanel(frame));
+        frame.setAlwaysOnTop(true);
+        frame.getContentPane().add(new MainPanel());
         frame.pack();
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);

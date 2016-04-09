@@ -30,7 +30,9 @@ public final class MainPanel extends JPanel {
 //         TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model) {
 //             @Override public void toggleSortOrder(int column) {
 //                 super.toggleSortOrder(column);
-//                 if (check2.isSelected()) { table.clearSelection(); }
+//                 if (check2.isSelected()) {
+//                     table.clearSelection();
+//                 }
 //             }
 //         };
 //         table.setRowSorter(sorter);
@@ -55,7 +57,8 @@ public final class MainPanel extends JPanel {
         });
 
         JPanel p = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        p.add(check1); p.add(check2);
+        p.add(check1);
+        p.add(check2);
 
         add(p, BorderLayout.NORTH);
         add(new JScrollPane(table));

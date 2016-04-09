@@ -4,7 +4,7 @@ package example;
 //@homepage@
 import java.awt.*;
 import java.awt.event.*;
-import java.util.EventObject;
+import java.util.*;
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.table.*;
@@ -65,8 +65,8 @@ public final class MainPanel extends JPanel {
 }
 
 class RadioButtonsRenderer extends JRadioButton implements TableCellRenderer {
-    public RadioButtonsRenderer() {
-        super();
+    @Override public void updateUI() {
+        super.updateUI();
         setName("Table.cellRenderer");
         setHorizontalAlignment(SwingConstants.CENTER);
     }
@@ -80,7 +80,7 @@ class RadioButtonsRenderer extends JRadioButton implements TableCellRenderer {
 
 class RadioButtonsEditor extends JRadioButton implements TableCellEditor {
     //public RadioButtonsEditor(final DefaultTableModel model) {
-    public RadioButtonsEditor() {
+    protected RadioButtonsEditor() {
         super();
         setHorizontalAlignment(SwingConstants.CENTER);
         addActionListener(new ActionListener() {
@@ -137,7 +137,7 @@ class RadioButtonsEditor extends JRadioButton implements TableCellEditor {
         for (int i = listeners.length - 2; i >= 0; i -= 2) {
             if (listeners[i] == CellEditorListener.class) {
                 // Lazily create the event:
-                if (changeEvent == null) {
+                if (Objects.isNull(changeEvent)) {
                     changeEvent = new ChangeEvent(this);
                 }
                 ((CellEditorListener) listeners[i + 1]).editingStopped(changeEvent);
@@ -152,7 +152,7 @@ class RadioButtonsEditor extends JRadioButton implements TableCellEditor {
         for (int i = listeners.length - 2; i >= 0; i -= 2) {
             if (listeners[i] == CellEditorListener.class) {
                 // Lazily create the event:
-                if (changeEvent == null) {
+                if (Objects.isNull(changeEvent)) {
                     changeEvent = new ChangeEvent(this);
                 }
                 ((CellEditorListener) listeners[i + 1]).editingCanceled(changeEvent);

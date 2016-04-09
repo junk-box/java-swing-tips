@@ -20,7 +20,7 @@ public final class MainPanel extends JPanel {
         @Override public Class<?> getColumnClass(int column) {
             // ArrayIndexOutOfBoundsException: 0 >= 0
             // Bug ID: JDK-6967479 JTable sorter fires even if the model is empty
-            // http://bugs.sun.com/view_bug.do?bug_id=6967479
+            // http://bugs.java.com/view_bug.do?bug_id=6967479
             //return getValueAt(0, column).getClass();
             switch (column) {
               case 0:
@@ -45,7 +45,7 @@ public final class MainPanel extends JPanel {
     public MainPanel() {
         super(new BorderLayout());
         for (int i = 0; i < 100; i++) {
-            model.addRow(new Object[] {"Name " + i, Integer.valueOf(i), Boolean.FALSE});
+            model.addRow(new Object[] {"Name " + i, i, Boolean.FALSE});
         }
 
         JScrollPane scroll = new JScrollPane(table);
@@ -60,11 +60,7 @@ public final class MainPanel extends JPanel {
         table.setAutoCreateRowSorter(true);
 
         final DisableInputLayerUI layerUI = new DisableInputLayerUI();
-        check.addItemListener(new ItemListener() {
-            @Override public void itemStateChanged(ItemEvent ie) {
-                layerUI.setLocked(((JCheckBox) ie.getItemSelectable()).isSelected());
-            }
-        });
+        check.addItemListener(e -> layerUI.setLocked(((JCheckBox) e.getItemSelectable()).isSelected()));
 
         JLayer<JComponent> layer = new JLayer<>(scroll, layerUI);
         add(layer);
@@ -73,25 +69,22 @@ public final class MainPanel extends JPanel {
     }
 
     class TestCreateAction extends AbstractAction {
-        public TestCreateAction(String label, Icon icon) {
-            super(label, icon);
+        protected TestCreateAction(String label) {
+            super(label);
         }
         @Override public void actionPerformed(ActionEvent e) {
-            model.addRow(new Object[] {"New Name", Integer.valueOf(0), Boolean.FALSE});
+            model.addRow(new Object[] {"New Name", 0, Boolean.FALSE});
             Rectangle rect = table.getCellRect(model.getRowCount() - 1, 0, true);
             table.scrollRectToVisible(rect);
         }
     }
 
     class DeleteAction extends AbstractAction {
-        public DeleteAction(String label, Icon icon) {
-            super(label, icon);
+        protected DeleteAction(String label) {
+            super(label);
         }
         @Override public void actionPerformed(ActionEvent e) {
             int[] selection = table.getSelectedRows();
-            if (selection.length == 0) {
-                return;
-            }
             for (int i = selection.length - 1; i >= 0; i--) {
                 model.removeRow(table.convertRowIndexToModel(selection[i]));
             }
@@ -99,9 +92,9 @@ public final class MainPanel extends JPanel {
     }
 
     private class TablePopupMenu extends JPopupMenu {
-        private final Action createAction = new TestCreateAction("add", null);
-        private final Action deleteAction = new DeleteAction("delete", null);
-        public TablePopupMenu() {
+        private final Action createAction = new TestCreateAction("add");
+        private final Action deleteAction = new DeleteAction("delete");
+        protected TablePopupMenu() {
             super();
             add(createAction);
             addSeparator();
@@ -109,8 +102,7 @@ public final class MainPanel extends JPanel {
         }
         @Override public void show(Component c, int x, int y) {
             createAction.setEnabled(!check.isSelected());
-            int[] l = table.getSelectedRows();
-            deleteAction.setEnabled(l.length > 0);
+            deleteAction.setEnabled(table.getSelectedRowCount() > 0);
             super.show(c, x, y);
         }
     }
@@ -138,8 +130,13 @@ public final class MainPanel extends JPanel {
     }
 }
 class DisableInputLayerUI extends LayerUI<JComponent> {
+    private static final String CMD_REPAINT = "lock";
     private final transient MouseAdapter dummyMouseListener = new MouseAdapter() { /* Dummy listener */ };
     private boolean isBlocking;
+    public void setLocked(boolean flag) {
+        firePropertyChange(CMD_REPAINT, isBlocking, flag);
+        isBlocking = flag;
+    }
     @Override public void installUI(JComponent c) {
         super.installUI(c);
         if (c instanceof JLayer) {
@@ -157,17 +154,12 @@ class DisableInputLayerUI extends LayerUI<JComponent> {
         }
         super.uninstallUI(c);
     }
-    @Override public void eventDispatched(AWTEvent e, JLayer l) {
+    @Override public void eventDispatched(AWTEvent e, JLayer<? extends JComponent> l) {
         if (isBlocking && e instanceof InputEvent) {
             ((InputEvent) e).consume();
         }
     }
-    private static final String CMD_REPAINT = "lock";
-    public void setLocked(boolean flag) {
-        firePropertyChange(CMD_REPAINT, isBlocking, flag);
-        isBlocking = flag;
-    }
-    @Override public void applyPropertyChange(PropertyChangeEvent pce, JLayer l) {
+    @Override public void applyPropertyChange(PropertyChangeEvent pce, JLayer<? extends JComponent> l) {
         String cmd = pce.getPropertyName();
         if (CMD_REPAINT.equals(cmd)) {
             l.getGlassPane().setVisible((Boolean) pce.getNewValue());

@@ -62,23 +62,21 @@ public final class MainPanel extends JPanel {
 //@see javax/swing/plaf/basic/BasicTreeUI.Handler
 class TableNextMatchKeyHandler extends KeyAdapter {
     private static final int TARGET_COLUMN = 0;
-    private String prefix;
+    private static final long TIME_FACTOR = 500L;
+    private String prefix = "";
     private String typedString;
     private long lastTime;
-    private final long timeFactor;
-    public TableNextMatchKeyHandler() {
-        super();
-        //Long l = (Long) UIManager.get("List.timeFactor");
-        timeFactor = 500L; //(l != null) ? l.longValue() : 1000L;
-    }
+//     private final long timeFactor;
+//     protected TableNextMatchKeyHandler() {
+//         super();
+//         Long l = (Long) UIManager.get("List.timeFactor");
+//         timeFactor = Objects.nonNull(l) ? l.longValue() : 1000L;
+//     }
     private boolean isNavigationKey(KeyEvent event) {
         JTable table = (JTable) event.getComponent();
         InputMap inputMap = table.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
         KeyStroke key = KeyStroke.getKeyStrokeForEvent(event);
-        if (inputMap != null && inputMap.get(key) != null) {
-            return true;
-        }
-        return false;
+        return Objects.nonNull(inputMap) && Objects.nonNull(inputMap.get(key));
     }
     @Override public void keyPressed(KeyEvent e) {
         if (isNavigationKey(e)) {
@@ -99,9 +97,9 @@ class TableNextMatchKeyHandler extends KeyAdapter {
         int increment = e.isShiftDown() ? -1 : 1;
         long time = e.getWhen();
         int startIndex = src.getSelectedRow();
-        if (time - lastTime < timeFactor) {
+        if (time - lastTime < TIME_FACTOR) {
             typedString += c;
-            if (prefix != null && prefix.length() == 1 && c == prefix.charAt(0)) {
+            if (prefix.length() == 1 && c == prefix.charAt(0)) {
                 // Subsequent same key presses move the keyboard focus to the next
                 // object that starts with the same letter.
                 startIndex += increment;
@@ -145,7 +143,7 @@ class TableNextMatchKeyHandler extends KeyAdapter {
     //@see javax/swing/JTree#getNextMatch(String prefix, int startIndex, Position.Bias bias)
     public static int getNextMatch(JTable table, String prefix, int startingRow, Position.Bias bias) {
         int max = table.getRowCount();
-        if (prefix == null || startingRow < 0 || startingRow >= max) {
+        if (Objects.isNull(prefix) || startingRow < 0 || startingRow >= max) {
             throw new IllegalArgumentException();
         }
         String uprefix = prefix.toUpperCase(Locale.ENGLISH);

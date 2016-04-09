@@ -5,13 +5,13 @@ package example;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.*;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
 import javax.swing.*;
 import javax.swing.event.*;
 
 public final class MainPanel extends JPanel implements HierarchyListener {
-    private static BoundedRangeModel model = new DefaultBoundedRangeModel(0, 0, 0, 100);
+    private static BoundedRangeModel model = new DefaultBoundedRangeModel();
     private final JProgressBar progressBar1 = new StringAlignmentProgressBar(model, SwingConstants.RIGHT);
     private final JProgressBar progressBar2 = new StringAlignmentProgressBar(model, SwingConstants.LEFT);
     private final List<JProgressBar> list = Arrays.asList(progressBar1, progressBar2);
@@ -40,7 +40,7 @@ public final class MainPanel extends JPanel implements HierarchyListener {
         box.add(Box.createHorizontalStrut(5));
         box.add(new JButton(new AbstractAction("Test") {
             @Override public void actionPerformed(ActionEvent e) {
-                if (worker != null && !worker.isDone()) {
+                if (Objects.nonNull(worker) && !worker.isDone()) {
                     worker.cancel(true);
                 }
                 worker = new Task();
@@ -56,7 +56,7 @@ public final class MainPanel extends JPanel implements HierarchyListener {
         setPreferredSize(new Dimension(320, 240));
     }
     @Override public void hierarchyChanged(HierarchyEvent e) {
-        if ((e.getChangeFlags() & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0 && !e.getComponent().isDisplayable() && worker != null) {
+        if ((e.getChangeFlags() & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0 && !e.getComponent().isDisplayable() && Objects.nonNull(worker)) {
             System.out.println("DISPOSE_ON_CLOSE");
             worker.cancel(true);
             worker = null;
@@ -93,28 +93,26 @@ public final class MainPanel extends JPanel implements HierarchyListener {
 
 class StringAlignmentProgressBar extends JProgressBar {
     private final JLabel label;
-    private ChangeListener changeListener;
+    private transient ChangeListener changeListener;
 
-    public StringAlignmentProgressBar(BoundedRangeModel model, int halign) {
+    protected StringAlignmentProgressBar(BoundedRangeModel model, int halign) {
         super(model);
         label = new JLabel(getString(), halign);
     }
     @Override public void updateUI() {
         removeAll();
-        if (changeListener != null) {
-            removeChangeListener(changeListener);
-        }
+        removeChangeListener(changeListener);
         super.updateUI();
+        setLayout(new BorderLayout());
+        changeListener = new ChangeListener() {
+            @Override public void stateChanged(ChangeEvent e) {
+                //BoundedRangeModel m = (BoundedRangeModel) e.getSource(); //label.setText(m.getValue() + "%");
+                label.setText(getString());
+            }
+        };
+        addChangeListener(changeListener);
         EventQueue.invokeLater(new Runnable() {
             @Override public void run() {
-                setLayout(new BorderLayout());
-                changeListener = new ChangeListener() {
-                    @Override public void stateChanged(ChangeEvent e) {
-                        //BoundedRangeModel m = (BoundedRangeModel) e.getSource(); //label.setText(m.getValue() + "%");
-                        label.setText(getString());
-                    }
-                };
-                addChangeListener(changeListener);
                 add(label);
                 label.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 4));
             }
@@ -141,15 +139,15 @@ class Task extends SwingWorker<String, Void> {
 
 class ProgressListener implements PropertyChangeListener {
     private final JProgressBar progressBar;
-    ProgressListener(JProgressBar progressBar) {
+    protected ProgressListener(JProgressBar progressBar) {
         this.progressBar = progressBar;
         this.progressBar.setValue(0);
     }
-    @Override public void propertyChange(PropertyChangeEvent evt) {
-        String strPropertyName = evt.getPropertyName();
+    @Override public void propertyChange(PropertyChangeEvent e) {
+        String strPropertyName = e.getPropertyName();
         if ("progress".equals(strPropertyName)) {
             progressBar.setIndeterminate(false);
-            int progress = (Integer) evt.getNewValue();
+            int progress = (Integer) e.getNewValue();
             progressBar.setValue(progress);
         }
     }

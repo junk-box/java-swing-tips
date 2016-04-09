@@ -62,28 +62,24 @@ public final class MainPanel extends JPanel {
         table.setFillsViewportHeight(true);
         table.setComponentPopupMenu(new TablePopupMenu());
         add(new JScrollPane(table));
-        setPreferredSize(new Dimension(320, 200));
+        setPreferredSize(new Dimension(320, 240));
     }
 
     private class TablePopupMenu extends JPopupMenu {
         private final Action deleteAction = new AbstractAction("delete") {
             @Override public void actionPerformed(ActionEvent e) {
                 int[] selection = table.getSelectedRows();
-                if (selection.length == 0) {
-                    return;
-                }
                 for (int i = selection.length - 1; i >= 0; i--) {
                     model.removeRow(table.convertRowIndexToModel(selection[i]));
                 }
             }
         };
-        public TablePopupMenu() {
+        protected TablePopupMenu() {
             super();
             add(deleteAction);
         }
         @Override public void show(Component c, int x, int y) {
-            int[] l = table.getSelectedRows();
-            deleteAction.setEnabled(l.length > 0);
+            deleteAction.setEnabled(table.getSelectedRowCount() > 0);
             super.show(c, x, y);
         }
     }
@@ -117,8 +113,8 @@ public final class MainPanel extends JPanel {
 //     @Override public boolean importData(JComponent component, Transferable transferable) {
 //         try {
 //             if (canImport(component, transferable.getTransferDataFlavors())) {
-//                 //DefaultTableModel model = (DefaultTableModel)((JTable) component).getModel();
-//                 FileModel model = (FileModel)((JTable) component).getModel();
+//                 //DefaultTableModel model = (DefaultTableModel) ((JTable) component).getModel();
+//                 FileModel model = (FileModel) ((JTable) component).getModel();
 //                 for (Object o: (List) transferable.getTransferData(DataFlavor.javaFileListFlavor)) {
 //                     if (o instanceof File) {
 //                         File file = (File) o;
@@ -133,7 +129,7 @@ public final class MainPanel extends JPanel {
 //         }
 //         return false;
 //     }
-//     @Override public boolean canImport(JComponent component, DataFlavor[] flavors) {
+//     @Override public boolean canImport(JComponent component, DataFlavor... flavors) {
 //         for (DataFlavor f: flavors) {
 //             if (DataFlavor.javaFileListFlavor.equals(f)) {
 //                 return true;
@@ -142,7 +138,7 @@ public final class MainPanel extends JPanel {
 //         return false;
 //     }
 //     @Override public int getSourceActions(JComponent component) {
-//         return COPY;
+//         return TransferHandler.COPY;
 //     }
 // }
 
@@ -161,20 +157,20 @@ class FileModel extends DefaultTableModel {
     @Override public boolean isCellEditable(int row, int col) {
         return COLUMN_ARRAY[col].isEditable;
     }
-    @Override public Class<?> getColumnClass(int modelIndex) {
-        return COLUMN_ARRAY[modelIndex].columnClass;
+    @Override public Class<?> getColumnClass(int column) {
+        return COLUMN_ARRAY[column].columnClass;
     }
     @Override public int getColumnCount() {
         return COLUMN_ARRAY.length;
     }
-    @Override public String getColumnName(int modelIndex) {
-        return COLUMN_ARRAY[modelIndex].columnName;
+    @Override public String getColumnName(int column) {
+        return COLUMN_ARRAY[column].columnName;
     }
     private static class ColumnContext {
         public final String  columnName;
         public final Class   columnClass;
         public final boolean isEditable;
-        public ColumnContext(String columnName, Class columnClass, boolean isEditable) {
+        protected ColumnContext(String columnName, Class columnClass, boolean isEditable) {
             this.columnName = columnName;
             this.columnClass = columnClass;
             this.isEditable = isEditable;
@@ -183,7 +179,7 @@ class FileModel extends DefaultTableModel {
 }
 class FileName {
     private String name, absolutePath;
-    public FileName(String name, String absolutePath) {
+    protected FileName(String name, String absolutePath) {
         this.name = name;
         this.absolutePath = absolutePath;
     }

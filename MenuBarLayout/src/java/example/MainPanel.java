@@ -8,7 +8,7 @@ import javax.swing.*;
 public final class MainPanel extends JPanel {
     public MainPanel() {
         super(new BorderLayout());
-//         frame.setJMenuBar(createMenubar());
+//         frame.setJMenuBar(createMenuBar());
 //         addComponentListener(new ComponentAdapter() {
 //             @Override public void componentResized(ComponentEvent e) {
 //                 System.out.println("componentResized");
@@ -26,11 +26,11 @@ public final class MainPanel extends JPanel {
 //                 });
 //             }
 //         });
-        add(createMenubar(), BorderLayout.NORTH);
+        add(createMenuBar(), BorderLayout.NORTH);
         add(new JScrollPane(new JTextArea()));
         setPreferredSize(new Dimension(320, 240));
     }
-    private JMenuBar createMenubar() {
+    private JMenuBar createMenuBar() {
         JMenuBar menuBar = new JMenuBar();
         menuBar.setLayout(new FlowLayout(FlowLayout.LEFT, 2, 2) {
             @Override public Dimension preferredLayoutSize(Container target) {
@@ -38,13 +38,13 @@ public final class MainPanel extends JPanel {
                     int targetWidth = target.getSize().width;
                     targetWidth = targetWidth == 0 ? Integer.MAX_VALUE : targetWidth;
                     Insets insets = target.getInsets();
-                    int hgap = getHgap();
-                    int vgap = getVgap();
-                    int maxWidth = targetWidth - insets.left - insets.right;
-                    int height   = vgap;
-                    int rowWidth = hgap;
+                    int hgap      = getHgap();
+                    int vgap      = getVgap();
+                    int maxWidth  = targetWidth - insets.left - insets.right;
+                    int height    = vgap;
+                    int rowWidth  = hgap;
                     int rowHeight = 0;
-                    int nmembers = target.getComponentCount();
+                    int nmembers  = target.getComponentCount();
                     for (int i = 0; i < nmembers; i++) {
                         Component m = target.getComponent(i);
                         if (m.isVisible()) {
@@ -87,7 +87,9 @@ public final class MainPanel extends JPanel {
     }
     private JMenu createMenu(String key) {
         JMenu menu = new JMenu(key);
-        menu.add("dummy1"); menu.add("dummy2"); menu.add("dummy3");
+        menu.add("dummy1");
+        menu.add("dummy2");
+        menu.add("dummy3");
         return menu;
     }
     public static void main(String... args) {

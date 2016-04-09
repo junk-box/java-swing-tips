@@ -42,13 +42,16 @@ public final class MainPanel extends JPanel {
     }
 
     class ProgressValueCreateAction extends AbstractAction {
-        public ProgressValueCreateAction(String label) {
+        protected ProgressValueCreateAction(String label) {
             super(label);
         }
         @Override public void actionPerformed(ActionEvent e) {
             final int key = model.getRowCount();
             SwingWorker<Integer, Integer> worker = new Task() {
                 @Override protected void process(List<Integer> c) {
+                    if (isCancelled()) {
+                        return;
+                    }
                     if (!isDisplayable()) {
                         System.out.println("process: DISPOSE_ON_CLOSE");
                         cancel(true);
@@ -88,18 +91,15 @@ public final class MainPanel extends JPanel {
     }
 
     class CancelAction extends AbstractAction {
-        public CancelAction(String label, Icon icon) {
-            super(label, icon);
+        protected CancelAction(String label) {
+            super(label);
         }
         @Override public void actionPerformed(ActionEvent e) {
             int[] selection = table.getSelectedRows();
-            if (selection.length == 0) {
-                return;
-            }
             for (int i = 0; i < selection.length; i++) {
                 int midx = table.convertRowIndexToModel(selection[i]);
                 SwingWorker worker = model.getSwingWorker(midx);
-                if (worker != null && !worker.isDone()) {
+                if (Objects.nonNull(worker) && !worker.isDone()) {
                     worker.cancel(true);
                 }
                 worker = null;
@@ -110,10 +110,10 @@ public final class MainPanel extends JPanel {
 
     class DeleteAction extends AbstractAction {
         private final Set<Integer> deleteRowSet = new TreeSet<>();
-        public DeleteAction(String label, Icon icon) {
-            super(label, icon);
+        protected DeleteAction(String label) {
+            super(label);
         }
-        @Override public void actionPerformed(ActionEvent evt) {
+        @Override public void actionPerformed(ActionEvent e) {
             int[] selection = table.getSelectedRows();
             if (selection.length == 0) {
                 return;
@@ -122,7 +122,7 @@ public final class MainPanel extends JPanel {
                 int midx = table.convertRowIndexToModel(selection[i]);
                 deleteRowSet.add(midx);
                 SwingWorker worker = model.getSwingWorker(midx);
-                if (worker != null && !worker.isDone()) {
+                if (Objects.nonNull(worker) && !worker.isDone()) {
                     worker.cancel(true);
                     //executor.remove(worker);
                 }
@@ -138,18 +138,17 @@ public final class MainPanel extends JPanel {
     }
 
     private class TablePopupMenu extends JPopupMenu {
-        private final Action cancelAction = new CancelAction("cancel", null);
-        private final Action deleteAction = new DeleteAction("delete", null);
-        public TablePopupMenu() {
+        private final Action cancelAction = new CancelAction("cancel");
+        private final Action deleteAction = new DeleteAction("delete");
+        protected TablePopupMenu() {
             super();
             add(new ProgressValueCreateAction("add"));
-            //add(new ClearAction("clearSelection", null));
+            //add(new ClearAction("clearSelection"));
             addSeparator();
             add(deleteAction);
         }
         @Override public void show(Component c, int x, int y) {
-            int[] l = table.getSelectedRows();
-            boolean flag = l.length > 0;
+            boolean flag = table.getSelectedRowCount() > 0;
             cancelAction.setEnabled(flag);
             deleteAction.setEnabled(flag);
             super.show(c, x, y);
@@ -209,7 +208,7 @@ class WorkerModel extends DefaultTableModel {
     public void addProgressValue(String name, Integer iv, SwingWorker worker) {
         Object[] obj = {number, name, iv};
         super.addRow(obj);
-        if (worker != null) {
+        if (Objects.nonNull(worker)) {
             swmap.put(number, worker);
         }
         number++;
@@ -221,20 +220,20 @@ class WorkerModel extends DefaultTableModel {
     @Override public boolean isCellEditable(int row, int col) {
         return COLUMN_ARRAY[col].isEditable;
     }
-    @Override public Class<?> getColumnClass(int modelIndex) {
-        return COLUMN_ARRAY[modelIndex].columnClass;
+    @Override public Class<?> getColumnClass(int column) {
+        return COLUMN_ARRAY[column].columnClass;
     }
     @Override public int getColumnCount() {
         return COLUMN_ARRAY.length;
     }
-    @Override public String getColumnName(int modelIndex) {
-        return COLUMN_ARRAY[modelIndex].columnName;
+    @Override public String getColumnName(int column) {
+        return COLUMN_ARRAY[column].columnName;
     }
     private static class ColumnContext {
         public final String  columnName;
         public final Class   columnClass;
         public final boolean isEditable;
-        public ColumnContext(String columnName, Class columnClass, boolean isEditable) {
+        protected ColumnContext(String columnName, Class columnClass, boolean isEditable) {
             this.columnName = columnName;
             this.columnClass = columnClass;
             this.isEditable = isEditable;
@@ -245,19 +244,16 @@ class WorkerModel extends DefaultTableModel {
 class ProgressRenderer extends DefaultTableCellRenderer {
     private final JProgressBar b = new JProgressBar();
     private final JPanel p = new JPanel(new BorderLayout());
-    public ProgressRenderer() {
-        super();
-        setOpaque(true);
-        p.add(b);
-        p.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
-    }
     @Override public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
         Integer i = (Integer) value;
         String text = "Done";
-        if (i < 0) {
+        if (i < b.getMinimum()) {
             text = "Canceled";
-        } else if (i < 100) {
+        } else if (i < b.getMaximum()) {
             b.setValue(i);
+            p.add(b);
+            p.setOpaque(false);
+            p.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
             return p;
         }
         super.getTableCellRendererComponent(table, text, isSelected, hasFocus, row, column);
@@ -265,7 +261,8 @@ class ProgressRenderer extends DefaultTableCellRenderer {
     }
     @Override public void updateUI() {
         super.updateUI();
-        if (p != null) {
+        setOpaque(false);
+        if (Objects.nonNull(p)) {
             SwingUtilities.updateComponentTreeUI(p);
         }
     }

@@ -5,13 +5,13 @@ package example;
 import java.awt.*;
 import javax.swing.*;
 
-// https://forums.oracle.com/thread/1392495 JTabbedPane with non-tabbed text
+// https://community.oracle.com/thread/1392495 JTabbedPane with non-tabbed text
 public final class MainPanel extends JPanel {
     private static final String TEXT = "<--1234567890";
     private MainPanel() {
         super(new BorderLayout());
         JTabbedPane tab = new JTabbedPane() {
-            @Override public void paintComponent(Graphics g) {
+            @Override protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 FontMetrics fm = getFontMetrics(getFont());
                 int stringWidth = fm.stringWidth(TEXT) + 10;

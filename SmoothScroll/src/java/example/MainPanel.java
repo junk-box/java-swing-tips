@@ -4,6 +4,7 @@ package example;
 //@homepage@
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Collections;
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.text.*;
@@ -13,14 +14,9 @@ public final class MainPanel extends JPanel {
     private final JTextArea textArea   = new JTextArea();
     private final JScrollPane scroll   = new JScrollPane(textArea);
 
-    public MainPanel(JFrame frame) {
+    public MainPanel() {
         super(new BorderLayout());
-        StringBuilder sb = new StringBuilder();
-        String dummyStr = "aaaaaaaaaaaaa\n";
-        for (int i = 0; i < 2000; i++) {
-            sb.append(dummyStr);
-        }
-        textArea.setText(sb.toString());
+        textArea.setText(String.join("\n", Collections.nCopies(2000, "aaaaaaaaaaaaa")));
 
         scroll.setRowHeaderView(new LineNumberView(textArea));
         textArea.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 0));
@@ -31,7 +27,11 @@ public final class MainPanel extends JPanel {
                 startScroll();
             }
         });
-        frame.getRootPane().setDefaultButton(button);
+        EventQueue.invokeLater(new Runnable() {
+            @Override public void run() {
+                getRootPane().setDefaultButton(button);
+            }
+        });
 
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(textField);
@@ -46,10 +46,6 @@ public final class MainPanel extends JPanel {
         Document doc = textArea.getDocument();
         Element root = doc.getDefaultRootElement();
         int ln = getDestLineNumber(textField, root);
-//         if (ln < 0) {
-//             Toolkit.getDefaultToolkit().beep();
-//             return;
-//         }
         try {
             final Element elem = root.getElement(ln - 1);
             final Rectangle dest = textArea.modelToView(elem.getStartOffset());
@@ -79,11 +75,6 @@ public final class MainPanel extends JPanel {
     private static int getDestLineNumber(JTextField textField, Element root) {
         int lineNumber = Integer.parseInt(textField.getText().trim());
         return Math.max(1, Math.min(root.getElementCount(), lineNumber));
-//         } catch (NumberFormatException nfe) {
-//             //nfe.printStackTrace();
-//             lineNumber = -1;
-//         }
-//         return lineNumber;
     }
 
     public static void main(String... args) {
@@ -102,7 +93,7 @@ public final class MainPanel extends JPanel {
         }
         JFrame frame = new JFrame("@title@");
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        frame.getContentPane().add(new MainPanel(frame));
+        frame.getContentPane().add(new MainPanel());
         frame.pack();
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
@@ -119,7 +110,7 @@ class LineNumberView extends JComponent {
     private final int fontDescent;
     private final int fontLeading;
 
-    public LineNumberView(JTextArea textArea) {
+    protected LineNumberView(JTextArea textArea) {
         super();
         this.textArea = textArea;
         Font font   = textArea.getFont();
@@ -170,7 +161,7 @@ class LineNumberView extends JComponent {
     @Override public Dimension getPreferredSize() {
         return new Dimension(getComponentWidth(), textArea.getHeight());
     }
-    @Override public void paintComponent(Graphics g) {
+    @Override protected void paintComponent(Graphics g) {
         g.setColor(getBackground());
         Rectangle clip = g.getClipBounds();
         g.fillRect(clip.x, clip.y, clip.width, clip.height);

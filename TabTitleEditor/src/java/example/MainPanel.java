@@ -57,7 +57,7 @@ class TabTitleEditListener extends MouseAdapter implements ChangeListener {
     private Dimension dim;
     private Component tabComponent;
 
-    public TabTitleEditListener(final JTabbedPane tabbedPane) {
+    protected TabTitleEditListener(final JTabbedPane tabbedPane) {
         super();
         this.tabbedPane = tabbedPane;
         editor.setBorder(BorderFactory.createEmptyBorder());
@@ -78,8 +78,7 @@ class TabTitleEditListener extends MouseAdapter implements ChangeListener {
                 }
             }
         });
-        tabbedPane.getInputMap(JComponent.WHEN_FOCUSED).put(
-            KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "start-editing");
+        tabbedPane.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "start-editing");
         tabbedPane.getActionMap().put("start-editing", new AbstractAction() {
             @Override public void actionPerformed(ActionEvent e) {
                 startEditing();
@@ -89,9 +88,9 @@ class TabTitleEditListener extends MouseAdapter implements ChangeListener {
     @Override public void stateChanged(ChangeEvent e) {
         renameTabTitle();
     }
-    @Override public void mouseClicked(MouseEvent me) {
+    @Override public void mouseClicked(MouseEvent e) {
         Rectangle rect = tabbedPane.getUI().getTabBounds(tabbedPane, tabbedPane.getSelectedIndex());
-        if (rect != null && rect.contains(me.getPoint()) && me.getClickCount() == 2) {
+        if (rect.contains(e.getPoint()) && e.getClickCount() == 2) {
             startEditing();
         } else {
             renameTabTitle();

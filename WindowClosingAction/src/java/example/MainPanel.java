@@ -4,7 +4,7 @@ package example;
 //@homepage@
 import java.awt.*;
 import java.awt.event.*;
-import java.util.Arrays;
+import java.util.*;
 import javax.swing.*;
 import javax.swing.plaf.basic.*;
 
@@ -31,35 +31,6 @@ public final class MainPanel extends JPanel {
         add(new JScrollPane(tree));
         add(toolBar, BorderLayout.SOUTH);
         setPreferredSize(new Dimension(320, 240));
-    }
-    private static class ExitAction extends AbstractAction {
-        public ExitAction() {
-            super("Exit");
-        }
-        @Override public void actionPerformed(ActionEvent e) {
-            JComponent c = (JComponent) e.getSource();
-            Window window = null;
-            Container parent = c.getParent();
-            if (parent instanceof JPopupMenu) {
-                JPopupMenu popup = (JPopupMenu) parent;
-                JComponent invoker = (JComponent) popup.getInvoker();
-                window = SwingUtilities.getWindowAncestor(invoker);
-            } else if (parent instanceof JToolBar) {
-                JToolBar toolbar = (JToolBar) parent;
-                if (((BasicToolBarUI) toolbar.getUI()).isFloating()) {
-                    window = SwingUtilities.getWindowAncestor(toolbar).getOwner();
-                } else {
-                    window = SwingUtilities.getWindowAncestor(toolbar);
-                }
-            } else {
-                Component invoker = c.getParent();
-                window = SwingUtilities.getWindowAncestor(invoker);
-            }
-            if (window != null) {
-                //window.dispose();
-                window.dispatchEvent(new WindowEvent(window, WindowEvent.WINDOW_CLOSING));
-            }
-        }
     }
     private static void initMenu(JComponent p) {
         for (JComponent c: Arrays.asList(
@@ -88,5 +59,32 @@ public final class MainPanel extends JPanel {
         frame.pack();
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
+    }
+}
+
+class ExitAction extends AbstractAction {
+    protected ExitAction() {
+        super("Exit");
+    }
+    @Override public void actionPerformed(ActionEvent e) {
+        Component root = null;
+        Container parent = SwingUtilities.getUnwrappedParent((Component) e.getSource());
+        if (parent instanceof JPopupMenu) {
+            JPopupMenu popup = (JPopupMenu) parent;
+            root = SwingUtilities.getRoot(popup.getInvoker());
+        } else if (parent instanceof JToolBar) {
+            JToolBar toolbar = (JToolBar) parent;
+            if (((BasicToolBarUI) toolbar.getUI()).isFloating()) {
+                root = SwingUtilities.getWindowAncestor(toolbar).getOwner();
+            } else {
+                root = SwingUtilities.getRoot(toolbar);
+            }
+        } else {
+            root = SwingUtilities.getRoot(parent);
+        }
+        if (root instanceof Window) {
+            Window window = (Window) root;
+            window.dispatchEvent(new WindowEvent(window, WindowEvent.WINDOW_CLOSING));
+        }
     }
 }

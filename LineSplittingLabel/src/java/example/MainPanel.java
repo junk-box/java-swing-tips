@@ -39,13 +39,13 @@ public final class MainPanel extends JPanel {
 
 class TricoloreLabel extends JComponent {
     private final GlyphVector gv;
-    public TricoloreLabel(String str) {
+    protected TricoloreLabel(String str) {
         super();
         Font font = new Font(Font.SERIF, Font.PLAIN, 64);
         FontRenderContext frc = new FontRenderContext(null, true, true);
         gv = font.createGlyphVector(frc, str);
     }
-    @Override public void paintComponent(Graphics g) {
+    @Override protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         int w = getWidth();
         int h = getHeight();
@@ -55,13 +55,12 @@ class TricoloreLabel extends JComponent {
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         Rectangle2D b = gv.getVisualBounds();
-        Point2D.Double p = new Point2D.Double(b.getX() + b.getWidth() / 2d, b.getY() + b.getHeight() / 2d);
-        AffineTransform toCenterAT = AffineTransform.getTranslateInstance(w / 2d - p.getX(), h / 2d - p.getY());
+        AffineTransform toCenterAT = AffineTransform.getTranslateInstance(w / 2d - b.getCenterX(), h / 2d - b.getCenterY());
 
         double d = b.getHeight() / 3d;
-        Rectangle2D.Double clip  = new Rectangle2D.Double(b.getX(), b.getY(), b.getWidth(), b.getHeight());
-        Rectangle2D.Double clip1 = new Rectangle2D.Double(b.getX(), b.getY(), b.getWidth(), d);
-        Rectangle2D.Double clip2 = new Rectangle2D.Double(b.getX(), b.getY() + 2 * d, b.getWidth(), d);
+        Rectangle2D clip  = new Rectangle2D.Double(b.getX(), b.getY(), b.getWidth(), b.getHeight());
+        Rectangle2D clip1 = new Rectangle2D.Double(b.getX(), b.getY(), b.getWidth(), d);
+        Rectangle2D clip2 = new Rectangle2D.Double(b.getX(), b.getY() + 2 * d, b.getWidth(), d);
 
         Shape s = toCenterAT.createTransformedShape(gv.getOutline());
 
@@ -82,13 +81,13 @@ class TricoloreLabel extends JComponent {
 
 class LineSplittingLabel extends JComponent {
     private final Shape shape;
-    public LineSplittingLabel(String str) {
+    protected LineSplittingLabel(String str) {
         super();
         Font font = new Font(Font.SERIF, Font.PLAIN, 64);
         FontRenderContext frc = new FontRenderContext(null, true, true);
         shape = new TextLayout(str, font, frc).getOutline(null);
     }
-    @Override public void paintComponent(Graphics g) {
+    @Override protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         int w = getWidth();
         int h = getHeight();
@@ -98,13 +97,12 @@ class LineSplittingLabel extends JComponent {
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         Rectangle2D b = shape.getBounds();
-        Point2D.Double p = new Point2D.Double(b.getX() + b.getWidth() / 2d, b.getY() + b.getHeight() / 2d);
-        AffineTransform toCenterAT = AffineTransform.getTranslateInstance(w / 2d - p.getX(), h / 2d - p.getY());
+        AffineTransform toCenterAT = AffineTransform.getTranslateInstance(w / 2d - b.getCenterX(), h / 2d - b.getCenterY());
 
         Shape s = toCenterAT.createTransformedShape(shape);
         g2.setPaint(Color.BLACK);
         g2.fill(s);
-        Rectangle2D.Double clip = new Rectangle2D.Double(b.getX(), b.getY(), b.getWidth(), b.getHeight() / 2);
+        Rectangle2D clip = new Rectangle2D.Double(b.getX(), b.getY(), b.getWidth(), b.getHeight() / 2);
         g2.setClip(toCenterAT.createTransformedShape(clip));
         g2.setPaint(Color.RED);
         g2.fill(s);

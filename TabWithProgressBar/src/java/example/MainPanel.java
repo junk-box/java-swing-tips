@@ -28,21 +28,21 @@ public final class MainPanel extends JPanel {
     }
     class NewTabAction extends AbstractAction {
         private int count;
-        public NewTabAction(String label) {
+        protected NewTabAction(String label) {
             super(label);
         }
         @Override public void actionPerformed(ActionEvent e) {
-            JComponent c = (count % 2 == 0) ? new JTree() : new JLabel("Tab" + count);
+            JComponent c = count % 2 == 0 ? new JTree() : new JLabel("Tab" + count);
             tab.addTab("Title" + count, c);
             tab.setSelectedIndex(tab.getTabCount() - 1);
             count++;
         }
     }
     class CloseAllAction extends AbstractAction {
-        public CloseAllAction(String label) {
+        protected CloseAllAction(String label) {
             super(label);
         }
-        @Override public void actionPerformed(ActionEvent evt) {
+        @Override public void actionPerformed(ActionEvent e) {
             tab.removeAll();
         }
     }
@@ -84,7 +84,7 @@ class ProgressJTabbedPane extends JTabbedPane {
         Insets tabInsets = UIManager.getInsets("TabbedPane.tabInsets");
         bar.setPreferredSize(new Dimension(w, dim.height - tabInsets.top - 1));
         //bar.setString(title);
-        //bar.setUI(new javax.swing.plaf.basic.BasicProgressBarUI());
+        //bar.setUI(new BasicProgressBarUI());
         setTabComponentAt(currentIndex, bar);
         SwingWorker<String, Integer> worker = new Task() {
             @Override protected void process(List<Integer> dummy) {
@@ -138,15 +138,15 @@ class Task extends SwingWorker<String, Integer> {
 
 class ProgressListener implements PropertyChangeListener {
     private final JProgressBar progressBar;
-    ProgressListener(JProgressBar progressBar) {
+    protected ProgressListener(JProgressBar progressBar) {
         this.progressBar = progressBar;
         this.progressBar.setValue(0);
     }
-    @Override public void propertyChange(PropertyChangeEvent evt) {
-        String strPropertyName = evt.getPropertyName();
+    @Override public void propertyChange(PropertyChangeEvent e) {
+        String strPropertyName = e.getPropertyName();
         if ("progress".equals(strPropertyName)) {
             progressBar.setIndeterminate(false);
-            int progress = (Integer) evt.getNewValue();
+            int progress = (Integer) e.getNewValue();
             progressBar.setValue(progress);
         }
     }

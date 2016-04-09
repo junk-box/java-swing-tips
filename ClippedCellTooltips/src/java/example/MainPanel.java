@@ -3,6 +3,7 @@ package example;
 // vim:set fileencoding=utf-8:
 //@homepage@
 import java.awt.*;
+import java.util.Objects;
 import javax.swing.*;
 import javax.swing.table.*;
 
@@ -20,7 +21,7 @@ public final class MainPanel extends JPanel {
         }
     };
     private final JTable table = new JTable(model) {
-        public Component prepareRenderer(TableCellRenderer tcr, int row, int column) {
+        @Override public Component prepareRenderer(TableCellRenderer tcr, int row, int column) {
             Component c = super.prepareRenderer(tcr, row, column);
             if (c instanceof JComponent) {
                 JComponent l = (JComponent) c;
@@ -48,7 +49,7 @@ public final class MainPanel extends JPanel {
 //         h.setDefaultRenderer(new ToolTipHeaderRenderer(h.getDefaultRenderer()));
 
         add(new JScrollPane(table));
-        setPreferredSize(new Dimension(320, 200));
+        setPreferredSize(new Dimension(320, 240));
     }
 
     public static void main(String... args) {
@@ -83,11 +84,11 @@ class ToolTipHeaderRenderer implements TableCellRenderer {
         Rectangle rect = table.getCellRect(row, column, false);
         rect.width -= i.left + i.right;
         RowSorter<? extends TableModel> sorter = table.getRowSorter();
-        if (sorter != null && !sorter.getSortKeys().isEmpty() && sorter.getSortKeys().get(0).getColumn() == column) {
+        if (Objects.nonNull(sorter) && !sorter.getSortKeys().isEmpty() && sorter.getSortKeys().get(0).getColumn() == column) {
             rect.width -= icon.getIconWidth() + 2; //XXX
         }
         FontMetrics fm = l.getFontMetrics(l.getFont());
-        String str = value.toString();
+        String str = Objects.toString(value, "");
         int cellTextWidth = fm.stringWidth(str);
         l.setToolTipText(cellTextWidth > rect.width ? str : null);
         return l;

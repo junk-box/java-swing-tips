@@ -5,6 +5,7 @@ package example;
 import java.awt.*;
 import java.awt.event.*;
 import java.net.*;
+import java.util.Objects;
 import javax.swing.*;
 
 public final class MainPanel extends JPanel {
@@ -17,7 +18,7 @@ public final class MainPanel extends JPanel {
     private final URL url02     = getClass().getResource("02.png");
     public MainPanel() {
         super(new BorderLayout());
-        Point pt = new Point(0, 0);
+        Point pt = new Point();
         list[0] = tk.createCustomCursor(tk.createImage(url00), pt, "00");
         list[1] = tk.createCustomCursor(tk.createImage(url01), pt, "01");
         list[2] = tk.createCustomCursor(tk.createImage(url02), pt, "02");
@@ -41,20 +42,17 @@ public final class MainPanel extends JPanel {
             }
         });
         button.setCursor(list[0]);
-        button.setPreferredSize(new Dimension(0, 100));
-        button.addHierarchyListener(new HierarchyListener() {
-            @Override public void hierarchyChanged(HierarchyEvent e) {
-                if ((e.getChangeFlags() & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0 && animator != null && !e.getComponent().isDisplayable()) {
-                    animator.stop();
-                }
+        button.addHierarchyListener(e -> {
+            if ((e.getChangeFlags() & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0 && Objects.nonNull(animator) && !e.getComponent().isDisplayable()) {
+                animator.stop();
             }
         });
 
         JPanel p = new JPanel(new BorderLayout());
-        p.setBorder(BorderFactory.createTitledBorder("delay=100ms"));
+        p.setBorder(BorderFactory.createEmptyBorder(32, 32, 32, 32));
         p.add(button);
-        add(p, BorderLayout.NORTH);
-        setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        add(p);
+        setBorder(BorderFactory.createTitledBorder("delay=100ms"));
         setPreferredSize(new Dimension(320, 240));
     }
     public static void main(String... args) {

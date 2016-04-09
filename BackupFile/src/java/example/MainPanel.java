@@ -5,6 +5,7 @@ package example;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
+import java.util.*;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import javax.swing.*;
@@ -24,6 +25,13 @@ public final class MainPanel extends JPanel {
             int i2 = ((Integer) spinner2.getValue()).intValue();
             (new Task(file, i1, i2) {
                 @Override protected void process(List<Message> chunks) {
+                    if (isCancelled()) {
+                        return;
+                    }
+                    if (!isDisplayable()) {
+                        cancel(true);
+                        return;
+                    }
                     for (Message m: chunks) {
                         append(m);
                     }
@@ -31,7 +39,7 @@ public final class MainPanel extends JPanel {
                 @Override public void done() {
                     try {
                         File nf = get();
-                        if (nf == null) {
+                        if (Objects.isNull(nf)) {
                             append(new Message("バックアップファイルの生成に失敗しました。", MessageType.ERROR));
                         } else if (nf.createNewFile()) {
                             append(new Message(nf.getName() + "を生成しました。", MessageType.REGULAR));
@@ -51,12 +59,13 @@ public final class MainPanel extends JPanel {
         super(new BorderLayout());
         jtp.setEditable(false);
         StyledDocument doc = jtp.getStyledDocument();
-        Style def = StyleContext.getDefaultStyleContext().getStyle(StyleContext.DEFAULT_STYLE);
-        Style regular = doc.addStyle(MessageType.REGULAR.toString(), def);
+        //Style def = StyleContext.getDefaultStyleContext().getStyle(StyleContext.DEFAULT_STYLE);
+        Style def = doc.getStyle(StyleContext.DEFAULT_STYLE);
+        //Style regular = doc.addStyle(MessageType.REGULAR.toString(), def);
         //StyleConstants.setForeground(error, Color.BLACK);
         //Style error = doc.addStyle(ERROR, regular);
-        StyleConstants.setForeground(doc.addStyle(MessageType.ERROR.toString(), regular), Color.RED);
-        StyleConstants.setForeground(doc.addStyle(MessageType.BLUE.toString(),  regular), Color.BLUE);
+        StyleConstants.setForeground(doc.addStyle(MessageType.ERROR.toString(), def), Color.RED);
+        StyleConstants.setForeground(doc.addStyle(MessageType.BLUE.toString(),  def), Color.BLUE);
 
         Box box = Box.createHorizontalBox();
         box.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
@@ -98,9 +107,9 @@ public final class MainPanel extends JPanel {
         nbox.add(new JLabel("合計バックアップ数:", SwingConstants.RIGHT));
         nbox.add(label);
 
-        JScrollPane scroll = new JScrollPane(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        JScrollPane scroll = new JScrollPane(jtp);
+        scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         scroll.getVerticalScrollBar().setUnitIncrement(25);
-        scroll.getViewport().add(jtp);
 
         add(nbox, BorderLayout.NORTH);
         add(scroll);
@@ -112,8 +121,8 @@ public final class MainPanel extends JPanel {
         StyledDocument doc = jtp.getStyledDocument();
         try {
             doc.insertString(doc.getLength(), m.text + "\n", doc.getStyle(m.type.toString()));
-        } catch (BadLocationException e) {
-            e.printStackTrace();
+        } catch (BadLocationException ex) {
+            ex.printStackTrace();
         }
     }
     public static void main(String... args) {
@@ -148,7 +157,7 @@ enum MessageType {
 class Message {
     public final String text;
     public final MessageType type;
-    public Message(String text, MessageType type) {
+    protected Message(String text, MessageType type) {
         this.text = text;
         this.type = type;
     }
@@ -158,7 +167,7 @@ class Task extends SwingWorker<File, Message> {
     private final File file;
     private final int intold;
     private final int intnew;
-    public Task(File file, int intold, int intnew) {
+    protected Task(File file, int intold, int intnew) {
         super();
         this.file = file;
         this.intold = intold;
@@ -181,7 +190,7 @@ class Task extends SwingWorker<File, Message> {
         }
 
         File tmpFile = renameAndBackup(file, newfilename);
-        if (tmpFile != null) {
+        if (Objects.nonNull(tmpFile)) {
             return tmpFile;
         }
 
@@ -213,7 +222,7 @@ class Task extends SwingWorker<File, Message> {
         if (simpleRename) {
             if (file.renameTo(testFile)) {
                 publish(new Message("古い同名ファイルをリネーム", MessageType.REGULAR));
-                publish(new Message("    " + file.getName() + " -> " + testFile.getName(), MessageType.BLUE));
+                publish(new Message(String.format("    %s -> %s", file.getName(), testFile.getName()), MessageType.BLUE));
                 return new File(newfilename);
             } else {
                 publish(new Message("ファイルのリネームに失敗", MessageType.ERROR));

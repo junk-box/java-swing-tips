@@ -18,7 +18,8 @@ public final class MainPanel extends JPanel {
         add(makeLabel("Rotate:  90", new RotateIcon(i,  90)));
         add(makeLabel("Rotate: -90", new RotateIcon(i, -90)));
 /*/
-        setOpaque(true); setBackground(Color.RED);
+        setOpaque(true);
+        setBackground(Color.RED);
         add(makeLabel("Rotate: 180", new QuadrantRotateIcon(i, QuadrantRotate.VERTICAL_FLIP)));
         add(makeLabel("Rotate: 90",  new QuadrantRotateIcon(i, QuadrantRotate.CLOCKWISE)));
         add(makeLabel("Rotate: -90", new QuadrantRotateIcon(i, QuadrantRotate.COUNTER_CLOCKWISE)));
@@ -57,30 +58,32 @@ public final class MainPanel extends JPanel {
 }
 
 class RotateIcon implements Icon {
-    private int width, height;
+    private final Dimension d = new Dimension();
     private final Image image;
     private AffineTransform trans;
-    public RotateIcon(Icon icon, int rotate) {
+    protected RotateIcon(Icon icon, int rotate) {
         if (rotate % 90 != 0) {
             throw new IllegalArgumentException(rotate + ": Rotate must be (rotate % 90 == 0)");
         }
-
-        width  = icon.getIconWidth();
-        height = icon.getIconHeight();
-        image  = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        d.setSize(icon.getIconWidth(), icon.getIconHeight());
+        image = new BufferedImage(d.width, d.height, BufferedImage.TYPE_INT_ARGB);
         Graphics g = image.getGraphics();
         icon.paintIcon(null, g, 0, 0);
         g.dispose();
 
         int numquadrants = (rotate / 90) % 4;
         if (numquadrants == 1 || numquadrants == -3) {
-            trans = AffineTransform.getTranslateInstance(height, 0);
-            int v = width; width = height; height = v;
+            trans = AffineTransform.getTranslateInstance(d.height, 0);
+            int v = d.width;
+            d.width = d.height;
+            d.height = v;
         } else if (numquadrants == -1 || numquadrants == 3) {
-            trans = AffineTransform.getTranslateInstance(0, width);
-            int v = width; width = height; height = v;
+            trans = AffineTransform.getTranslateInstance(0, d.width);
+            int v = d.width;
+            d.width = d.height;
+            d.height = v;
         } else if (Math.abs(numquadrants) == 2) {
-            trans = AffineTransform.getTranslateInstance(width, height);
+            trans = AffineTransform.getTranslateInstance(d.width, d.height);
         } else {
             trans = AffineTransform.getTranslateInstance(0, 0);
         }
@@ -90,14 +93,13 @@ class RotateIcon implements Icon {
         Graphics2D g2 = (Graphics2D) g.create();
         g2.translate(x, y);
         g2.drawImage(image, trans, c);
-        g2.translate(-x, -y);
         g2.dispose();
     }
     @Override public int getIconWidth() {
-        return width;
+        return d.width;
     }
     @Override public int getIconHeight() {
-        return height;
+        return d.height;
     }
 }
 
@@ -106,7 +108,7 @@ enum QuadrantRotate {
     VERTICAL_FLIP(2),
     COUNTER_CLOCKWISE(-1);
     private final int numquadrants;
-    private QuadrantRotate(int numquadrants) {
+    QuadrantRotate(int numquadrants) {
         this.numquadrants = numquadrants;
     }
     public int getNumQuadrants() {
@@ -117,7 +119,7 @@ enum QuadrantRotate {
 class QuadrantRotateIcon implements Icon {
     private final QuadrantRotate rotate;
     private final Icon icon;
-    public QuadrantRotateIcon(Icon icon, QuadrantRotate rotate) {
+    protected QuadrantRotateIcon(Icon icon, QuadrantRotate rotate) {
         this.icon = icon;
         this.rotate = rotate;
     }
@@ -127,10 +129,17 @@ class QuadrantRotateIcon implements Icon {
         Graphics2D g2 = (Graphics2D) g.create();
         g2.translate(x, y);
         switch (rotate) {
-          case CLOCKWISE:         g2.translate(h, 0); break;
-          case VERTICAL_FLIP:     g2.translate(w, h); break;
-          case COUNTER_CLOCKWISE: g2.translate(0, w); break;
-          default:                throw new AssertionError("Unknown QuadrantRotateIcon");
+          case CLOCKWISE:
+            g2.translate(h, 0);
+            break;
+          case VERTICAL_FLIP:
+            g2.translate(w, h);
+            break;
+          case COUNTER_CLOCKWISE:
+            g2.translate(0, w);
+            break;
+          default:
+            throw new AssertionError("Unknown QuadrantRotateIcon");
         }
         g2.rotate(Math.toRadians(90 * rotate.getNumQuadrants()));
         icon.paintIcon(c, g2, 0, 0);

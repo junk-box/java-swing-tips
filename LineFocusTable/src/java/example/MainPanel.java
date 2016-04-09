@@ -20,7 +20,7 @@ public final class MainPanel extends JPanel {
         @Override public Class<?> getColumnClass(int column) {
             // ArrayIndexOutOfBoundsException: 0 >= 0
             // Bug ID: JDK-6967479 JTable sorter fires even if the model is empty
-            // http://bugs.sun.com/view_bug.do?bug_id=6967479
+            // http://bugs.java.com/view_bug.do?bug_id=6967479
             //return getValueAt(0, column).getClass();
             switch (column) {
               case 0:
@@ -57,8 +57,8 @@ public final class MainPanel extends JPanel {
         setPreferredSize(new Dimension(320, 240));
     }
     class TestCreateAction extends AbstractAction {
-        public TestCreateAction(String label, Icon icon) {
-            super(label, icon);
+        protected TestCreateAction(String label) {
+            super(label);
         }
         @Override public void actionPerformed(ActionEvent e) {
             model.addRow(new Object[] {"New row", 0, true});
@@ -67,39 +67,35 @@ public final class MainPanel extends JPanel {
         }
     }
     class DeleteAction extends AbstractAction {
-        public DeleteAction(String label, Icon icon) {
-            super(label, icon);
+        protected DeleteAction(String label) {
+            super(label);
         }
         @Override public void actionPerformed(ActionEvent e) {
             int[] selection = table.getSelectedRows();
-            if (selection.length == 0) {
-                return;
-            }
             for (int i = selection.length - 1; i >= 0; i--) {
                 model.removeRow(table.convertRowIndexToModel(selection[i]));
             }
         }
     }
     class ClearAction extends AbstractAction {
-        public ClearAction(String label, Icon icon) {
-            super(label, icon);
+        protected ClearAction(String label) {
+            super(label);
         }
         @Override public void actionPerformed(ActionEvent e) {
             table.clearSelection();
         }
     }
     private class TablePopupMenu extends JPopupMenu {
-        private final Action deleteAction = new DeleteAction("delete", null);
-        public TablePopupMenu() {
+        private final Action deleteAction = new DeleteAction("delete");
+        protected TablePopupMenu() {
             super();
-            add(new TestCreateAction("add", null));
-            add(new ClearAction("clearSelection", null));
+            add(new TestCreateAction("add"));
+            add(new ClearAction("clearSelection"));
             addSeparator();
             add(deleteAction);
         }
         @Override public void show(Component c, int x, int y) {
-            int[] l = table.getSelectedRows();
-            deleteAction.setEnabled(l.length > 0);
+            deleteAction.setEnabled(table.getSelectedRowCount() > 0);
             super.show(c, x, y);
         }
     }
@@ -144,12 +140,12 @@ public final class MainPanel extends JPanel {
 class LineFocusTable extends JTable {
     private final DotBorder dotBorder = new DotBorder(2, 2, 2, 2);
     private final Border emptyBorder  = BorderFactory.createEmptyBorder(2, 2, 2, 2);
-    public LineFocusTable(DefaultTableModel model) {
+    protected LineFocusTable(DefaultTableModel model) {
         super(model);
     }
     @Override public void updateUI() {
         // Bug ID: 6788475 Changing to Nimbus LAF and back doesn't reset look and feel of JTable completely
-        // http://bugs.sun.com/view_bug.do?bug_id=6788475
+        // http://bugs.java.com/view_bug.do?bug_id=6788475
         //XXX: set dummy ColorUIResource
         setSelectionForeground(new ColorUIResource(Color.RED));
         setSelectionBackground(new ColorUIResource(Color.RED));
@@ -161,14 +157,14 @@ class LineFocusTable extends JTable {
         TableModel m = getModel();
         for (int i = 0; i < m.getColumnCount(); i++) {
             TableCellRenderer r = getDefaultRenderer(m.getColumnClass(i));
-            if (r instanceof JComponent) {
-                ((JComponent) r).updateUI();
+            if (r instanceof Component) {
+                SwingUtilities.updateComponentTreeUI((Component) r);
             }
         }
     }
     private void remakeBooleanEditor() {
         JCheckBox checkBox = new JCheckBox();
-        checkBox.setHorizontalAlignment(JCheckBox.CENTER);
+        checkBox.setHorizontalAlignment(SwingConstants.CENTER);
         checkBox.setBorderPainted(true);
         checkBox.setOpaque(true);
         checkBox.addMouseListener(new MouseAdapter() {
@@ -242,7 +238,7 @@ class DotBorder extends EmptyBorder {
     private static final Color DOT_COLOR = new Color(200, 150, 150);
     public EnumSet<Type> type = EnumSet.noneOf(Type.class);
 
-    public DotBorder(int top, int left, int bottom, int right) {
+    protected DotBorder(int top, int left, int bottom, int right) {
         super(top, left, bottom, right);
     }
     @Override public boolean isBorderOpaque() {
@@ -266,7 +262,6 @@ class DotBorder extends EmptyBorder {
             g2.drawLine(1, 0, w, 0);
             g2.drawLine(1, h - 1, w, h - 1);
         }
-        //g2.translate(-x, -y);
         g2.dispose();
     }
 }
@@ -295,8 +290,12 @@ class DotBorder extends EmptyBorder {
 //         border.type = EnumSet.noneOf(DotBorder.Type.class);
 //         if (isLeadRow) {
 //           border.type.add(DotBorder.Type.LEAD);
-//           if (column == 0) { border.type.add(DotBorder.Type.WEST); }
-//           if (column == getColumnCount() - 1) { border.type.add(DotBorder.Type.EAST); }
+//           if (column == 0) {
+//             border.type.add(DotBorder.Type.WEST);
+//           }
+//           if (column == getColumnCount() - 1) {
+//             border.type.add(DotBorder.Type.EAST);
+//           }
 //         }
 //       }
 //       @Override public Component prepareRenderer(TableCellRenderer tcr, int row, int column) {
@@ -343,7 +342,7 @@ class DotBorder extends EmptyBorder {
 //   public EnumSet<Type> type = EnumSet.noneOf(Type.class);
 //   private static final BasicStroke dashed = new BasicStroke(
 //     1f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER,
-//     10f, (new float[] {1f}), 0f);
+//     10f, (new float[] { 1f }), 0f);
 //   private static final Color DOT_COLOR = new Color(200, 150, 150);
 //   public DotBorder(int top, int left, int bottom, int right) {
 //     super(top, left, bottom, right);
@@ -351,8 +350,7 @@ class DotBorder extends EmptyBorder {
 //   @Override public boolean isBorderOpaque() {
 //     return true;
 //   }
-//   @Override public void paintBorder(
-//     Component c, Graphics g, int x, int y, int w, int h) {
+//   @Override public void paintBorder(Component c, Graphics g, int x, int y, int w, int h) {
 //     Graphics2D g2 = (Graphics2D) g.create();
 //     g2.translate(x, y);
 //     g2.setPaint(DOT_COLOR);
@@ -372,7 +370,6 @@ class DotBorder extends EmptyBorder {
 //         g2.drawLine(1, h - 1, w, h - 1);
 //       }
 //     }
-//     //g2.translate(-x, -y);
 //     g2.dispose();
 //   }
 // }

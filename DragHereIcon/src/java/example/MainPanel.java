@@ -26,7 +26,7 @@ public final class MainPanel extends JPanel {
         //Test: label.setTransferHandler(new FileTransferHandler());
 
         add(label);
-        setPreferredSize(new Dimension(320, 200));
+        setPreferredSize(new Dimension(320, 240));
     }
     public static void main(String... args) {
         EventQueue.invokeLater(new Runnable() {
@@ -57,7 +57,7 @@ class DragHereIcon implements Icon {
     private static final float SLIT_WIDTH = 8f;
     private static final int ARC_SIZE = 16;
     private static final int SLIT_NUM = 3;
-    private static final Shape BORDER = new RoundRectangle2D.Float(
+    private static final Shape BORDER = new RoundRectangle2D.Double(
         BORDER_WIDTH, BORDER_WIDTH,
         ICON_SIZE - 2 * BORDER_WIDTH - 1, ICON_SIZE - 2 * BORDER_WIDTH - 1,
         ARC_SIZE, ARC_SIZE);
@@ -76,7 +76,7 @@ class DragHereIcon implements Icon {
         g2.draw(BORDER);
 
         g2.setStroke(new BasicStroke(SLIT_WIDTH));
-        g2.setColor(UIManager.getColor("Panel.background"));
+        g2.setPaint(UIManager.getColor("Panel.background"));
 
         int n = SLIT_NUM + 1;
         int v = ICON_SIZE / n;
@@ -96,10 +96,8 @@ class DragHereIcon implements Icon {
 
         g2.setPaint(LINE_COLOR);
         Rectangle2D b = ARROW.getBounds();
-        Point2D p = new Point2D.Double(b.getX() + b.getWidth() / 2d, b.getY() + b.getHeight() / 2d);
-        AffineTransform toCenterAT = AffineTransform.getTranslateInstance(ICON_SIZE / 2d - p.getX(), ICON_SIZE / 2d - p.getY());
+        AffineTransform toCenterAT = AffineTransform.getTranslateInstance(ICON_SIZE / 2d - b.getCenterX(), ICON_SIZE / 2d - b.getCenterY());
         g2.fill(toCenterAT.createTransformedShape(ARROW));
-        g2.translate(-x, -y);
         g2.dispose();
     }
     @Override public int getIconWidth() {
@@ -141,7 +139,7 @@ class FileDropTargetAdapter extends DropTargetAdapter {
 }
 
 // class FileTransferHandler extends TransferHandler {
-//     @Override public boolean importData(TransferSupport support) {
+//     @Override public boolean importData(TransferHandler.TransferSupport support) {
 //         try {
 //             if (canImport(support)) {
 //                 for (Object o: (List) support.getTransferable().getTransferData(DataFlavor.javaFileListFlavor)) {
@@ -157,7 +155,7 @@ class FileDropTargetAdapter extends DropTargetAdapter {
 //         }
 //         return false;
 //     }
-//     @Override public boolean canImport(TransferSupport support) {
+//     @Override public boolean canImport(TransferHandler.TransferSupport support) {
 //         return support.isDataFlavorSupported(DataFlavor.javaFileListFlavor);
 //     }
 // }

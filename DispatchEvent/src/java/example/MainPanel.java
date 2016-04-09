@@ -19,8 +19,8 @@ public final class MainPanel extends JPanel {
 //         final EventQueue eventQueue = new EventQueue() {
 //             @Override protected void dispatchEvent(AWTEvent e) {
 //                 super.dispatchEvent(e);
-//                 if (e instanceof InputEvent) {
-//                     if (timer != null && timer.isRunning()) { timer.restart(); }
+//                 if (e instanceof InputEvent && Objects.nonNull(timer) && timer.isRunning()) {
+//                     timer.restart();
 //                 }
 //             }
 //         };
@@ -66,7 +66,7 @@ public final class MainPanel extends JPanel {
         add(p, BorderLayout.NORTH);
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         add(panel);
-        setPreferredSize(new Dimension(320, 180));
+        setPreferredSize(new Dimension(320, 240));
     }
     private void setTestConnected(boolean flag) {
         String str = flag ? "<font color='blue'>Connected" : "<font color='red'>Not connected";

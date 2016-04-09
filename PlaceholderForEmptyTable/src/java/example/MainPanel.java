@@ -28,19 +28,15 @@ public final class MainPanel extends JPanel {
         editor.setOpaque(false);
         editor.setEditable(false);
         editor.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
-        editor.addHyperlinkListener(new HyperlinkListener() {
-            @Override public void hyperlinkUpdate(HyperlinkEvent e) {
-                if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-                    Toolkit.getDefaultToolkit().beep();
-                }
+        editor.addHyperlinkListener(e -> {
+            if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+                Toolkit.getDefaultToolkit().beep();
             }
         });
 
-        model.addTableModelListener(new TableModelListener() {
-            @Override public void tableChanged(TableModelEvent e) {
-                DefaultTableModel model = (DefaultTableModel) e.getSource();
-                editor.setVisible(model.getRowCount() == 0);
-            }
+        model.addTableModelListener(e -> {
+            DefaultTableModel model = (DefaultTableModel) e.getSource();
+            editor.setVisible(model.getRowCount() == 0);
         });
 
         table.setAutoCreateRowSorter(true);
@@ -88,16 +84,13 @@ class TablePopupMenu extends JPopupMenu {
         @Override public void actionPerformed(ActionEvent e) {
             JTable table = (JTable) getInvoker();
             int[] selection = table.getSelectedRows();
-            if (selection.length == 0) {
-                return;
-            }
             DefaultTableModel model = (DefaultTableModel) table.getModel();
             for (int i = selection.length - 1; i >= 0; i--) {
                 model.removeRow(table.convertRowIndexToModel(selection[i]));
             }
         }
     };
-    public TablePopupMenu() {
+    protected TablePopupMenu() {
         super();
         add(addAction);
         addSeparator();
@@ -106,8 +99,7 @@ class TablePopupMenu extends JPopupMenu {
     @Override public void show(Component c, int x, int y) {
         if (c instanceof JTable) {
             JTable table = (JTable) c;
-            int[] l = table.getSelectedRows();
-            deleteAction.setEnabled(l.length > 0);
+            deleteAction.setEnabled(table.getSelectedRowCount() > 0);
             super.show(c, x, y);
         }
     }

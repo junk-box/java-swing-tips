@@ -42,7 +42,7 @@ public final class MainPanel extends JPanel {
         button2.setVerifyInputWhenFocusTarget(false);
 
         for (JTextField tf: Arrays.asList(field0, field1, field2)) {
-            tf.setHorizontalAlignment(JTextField.RIGHT);
+            tf.setHorizontalAlignment(SwingConstants.RIGHT);
             tf.setInputVerifier(new IntegerInputVerifier());
         }
 
@@ -126,7 +126,7 @@ class IntegerInputVerifier extends InputVerifier {
             try {
                 Integer.parseInt(textField.getText());
                 verified = true;
-            } catch (NumberFormatException e) {
+            } catch (NumberFormatException ex) {
                 System.out.println("InputVerifier#verify: false");
                 UIManager.getLookAndFeel().provideErrorFeedback(c);
             }

@@ -12,17 +12,27 @@ import javax.swing.filechooser.*;
 //import sun.awt.shell.ShellFolder;
 
 public final class MainPanel extends JPanel {
-    private final JLabel smallLabel = new JLabel();
-    private final JLabel largeLabel = new JLabel();
+    private final JLabel smallLabel = new JLabel() {
+        @Override public Dimension getPreferredSize() {
+            return new Dimension(16 + 1, 16 + 1);
+        }
+        @Override public Dimension getMaximumSize() {
+            return getPreferredSize();
+        }
+    };
+    private final JLabel largeLabel = new JLabel() {
+        @Override public Dimension getPreferredSize() {
+            return new Dimension(32 + 1, 32 + 1);
+        }
+        @Override public Dimension getMaximumSize() {
+            return getPreferredSize();
+        }
+    };
     public MainPanel() {
         super();
-        smallLabel.setPreferredSize(new Dimension(16 + 1, 16 + 1));
-        smallLabel.setMaximumSize(new Dimension(16 + 1, 16 + 1));
         smallLabel.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
         smallLabel.setAlignmentY(BOTTOM_ALIGNMENT);
 
-        largeLabel.setPreferredSize(new Dimension(32 + 1, 32 + 1));
-        largeLabel.setMaximumSize(new Dimension(32 + 1, 32 + 1));
         largeLabel.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
         largeLabel.setAlignmentY(BOTTOM_ALIGNMENT);
 
@@ -67,7 +77,7 @@ public final class MainPanel extends JPanel {
             }
         };
         setDropTarget(new DropTarget(this, DnDConstants.ACTION_COPY, dtl, true));
-        setPreferredSize(new Dimension(320, 200));
+        setPreferredSize(new Dimension(320, 240));
     }
 
     public static void main(String... args) {

@@ -63,7 +63,7 @@ public final class MainPanel extends JPanel {
     private List<? extends AbstractExpansionPanel> makeList() {
         return Arrays.asList(
             new AbstractExpansionPanel("Panel1") {
-                public Container makePanel() {
+                @Override public Container makePanel() {
                     Box p = Box.createVerticalBox();
                     p.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15));
                     p.add(new JCheckBox("aaaa"));
@@ -72,7 +72,7 @@ public final class MainPanel extends JPanel {
                 }
             },
             new AbstractExpansionPanel("Panel2") {
-                public Container makePanel() {
+                @Override public Container makePanel() {
                     Box p = Box.createVerticalBox();
                     p.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15));
                     for (int i = 0; i < 16; i++) {
@@ -82,13 +82,14 @@ public final class MainPanel extends JPanel {
                 }
             },
             new AbstractExpansionPanel("Panel3") {
-                public Container makePanel() {
+                @Override public Container makePanel() {
                     Box p = Box.createVerticalBox();
                     p.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15));
                     ButtonGroup bg = new ButtonGroup();
-                    for (JRadioButton b: Arrays.<JRadioButton>asList(
-                        new JRadioButton("aa"), new JRadioButton("bb"), new JRadioButton("cc"))) {
-                        p.add(b); bg.add(b); b.setSelected(true);
+                    for (JRadioButton b: Arrays.<JRadioButton>asList(new JRadioButton("aa"), new JRadioButton("bb"), new JRadioButton("cc"))) {
+                        p.add(b);
+                        bg.add(b);
+                        b.setSelected(true);
                     }
                     return p;
                 }
@@ -124,7 +125,7 @@ abstract class AbstractExpansionPanel extends JPanel {
     private final JScrollPane scroll;
     private boolean openFlag;
 
-    public AbstractExpansionPanel(String title) {
+    protected AbstractExpansionPanel(String title) {
         super(new BorderLayout());
         JButton button = new JButton(new AbstractAction(title) {
             @Override public void actionPerformed(ActionEvent e) {
@@ -172,7 +173,7 @@ abstract class AbstractExpansionPanel extends JPanel {
         for (int i = listeners.length - 2; i >= 0; i -= 2) {
             if (listeners[i] == ExpansionListener.class) {
                 // Lazily create the event:
-                if (expansionEvent == null) {
+                if (Objects.isNull(expansionEvent)) {
                     expansionEvent = new ExpansionEvent(this);
                 }
                 ((ExpansionListener) listeners[i + 1]).expansionStateChanged(expansionEvent);
@@ -183,7 +184,7 @@ abstract class AbstractExpansionPanel extends JPanel {
 
 class ExpansionEvent extends EventObject {
     private static final long serialVersionUID = 1L;
-    public ExpansionEvent(Object source) {
+    protected ExpansionEvent(Object source) {
         super(source);
     }
 }

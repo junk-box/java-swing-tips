@@ -15,11 +15,9 @@ public final class MainPanel extends JPanel {
     public MainPanel() {
         super(new BorderLayout());
 
-        comboBox.addItemListener(new ItemListener() {
-            @Override public void itemStateChanged(ItemEvent e) {
-                if (e.getStateChange() == ItemEvent.SELECTED) {
-                    tabbedPane.setTabPlacement(((TabPlacements) e.getItem()).tabPlacement);
-                }
+        comboBox.addItemListener(e -> {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                tabbedPane.setTabPlacement(((TabPlacements) e.getItem()).tabPlacement);
             }
         });
         Box box = Box.createHorizontalBox();
@@ -71,7 +69,7 @@ enum TabPlacements {
     LEFT(JTabbedPane.LEFT),
     RIGHT(JTabbedPane.RIGHT);
     public final int tabPlacement;
-    private TabPlacements(int tabPlacement) {
+    TabPlacements(int tabPlacement) {
         this.tabPlacement = tabPlacement;
     }
 }

@@ -25,7 +25,7 @@ public final class MainPanel extends JPanel {
             return getValueAt(0, column).getClass();
         }
         @Override public boolean isCellEditable(int row, int col) {
-            return (col == 0) ? false : !r4.isSelected();
+            return col != 0 && !r4.isSelected();
         }
     };
     private final JTable table = new JTable(model);
@@ -40,7 +40,7 @@ public final class MainPanel extends JPanel {
         table.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
 
         // //System.out.println(table.getActionMap().get("startEditing"));
-        //InputMap im = table.getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+        //InputMap im = table.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
         //for (KeyStroke ks: im.allKeys()) {
         //    Object actionMapKey = im.get(ks);
         //    if ("startEditing".equals(actionMapKey.toString())) {
@@ -59,7 +59,9 @@ public final class MainPanel extends JPanel {
         r0.setSelected(true);
         Box p = Box.createVerticalBox();
         for (AbstractButton b: Arrays.asList(r0, r1, r2, r3, r4)) {
-            b.addActionListener(al); bg.add(b); p.add(b);
+            b.addActionListener(al);
+            bg.add(b);
+            p.add(b);
         }
         add(p, BorderLayout.NORTH);
         add(new JScrollPane(table));

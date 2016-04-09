@@ -4,7 +4,7 @@ package example;
 //@homepage@
 import java.awt.*;
 import java.awt.event.*;
-import java.util.Enumeration;
+import java.util.*;
 import javax.swing.*;
 import javax.swing.tree.*;
 
@@ -37,14 +37,14 @@ public final class MainPanel extends JPanel {
         add(p2, BorderLayout.SOUTH);
         setPreferredSize(new Dimension(320, 240));
     }
-    private static JScrollPane makeTitledScrollPane(JComponent c, String title) {
-        JScrollPane sp = new JScrollPane(c);
-        sp.setBorder(BorderFactory.createTitledBorder(title));
-        return sp;
+    private static JScrollPane makeTitledScrollPane(Component view, String title) {
+        JScrollPane scroll = new JScrollPane(view);
+        scroll.setBorder(BorderFactory.createTitledBorder(title));
+        return scroll;
     }
     private static void searchTree(JTree tree, TreePath path, String q) {
         TreeNode node = (TreeNode) path.getLastPathComponent();
-        if (node == null) {
+        if (Objects.isNull(node)) {
             return;
         }
         if (node.toString().equals(q)) {

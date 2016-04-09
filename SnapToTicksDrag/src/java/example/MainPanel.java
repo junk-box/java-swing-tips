@@ -59,14 +59,12 @@ public final class MainPanel extends JPanel {
                 s.setValue(s.getValue() - s.getMajorTickSpacing());
             }
         });
-        slider.addMouseWheelListener(new MouseWheelListener() {
-            @Override public void mouseWheelMoved(MouseWheelEvent e) {
-                JSlider s = (JSlider) e.getComponent();
-                int intValue = s.getValue() - e.getWheelRotation() * s.getMajorTickSpacing();
-                BoundedRangeModel model = s.getModel();
-                if (model.getMaximum() >= intValue && model.getMinimum() <= intValue) {
-                    s.setValue(intValue);
-                }
+        slider.addMouseWheelListener(e -> {
+            JSlider s = (JSlider) e.getComponent();
+            int intValue = s.getValue() - e.getWheelRotation() * s.getMajorTickSpacing();
+            BoundedRangeModel model = s.getModel();
+            if (model.getMaximum() >= intValue && model.getMinimum() <= intValue) {
+                s.setValue(intValue);
             }
         });
         if (slider.getUI() instanceof WindowsSliderUI) {
@@ -100,7 +98,7 @@ public final class MainPanel extends JPanel {
 }
 
 class WindowsSnapToTicksDragSliderUI extends WindowsSliderUI {
-    public WindowsSnapToTicksDragSliderUI(JSlider slider) {
+    protected WindowsSnapToTicksDragSliderUI(JSlider slider) {
         super(slider);
     }
     @Override protected TrackListener createTrackListener(final JSlider slider) {
@@ -110,7 +108,7 @@ class WindowsSnapToTicksDragSliderUI extends WindowsSliderUI {
                     super.mouseDragged(e);
                     return;
                 }
-                //case JSlider.HORIZONTAL:
+                //case HORIZONTAL:
                 int halfThumbWidth = thumbRect.width / 2;
                 final int trackLength = trackRect.width;
                 final int trackLeft   = trackRect.x - halfThumbWidth;
@@ -158,7 +156,7 @@ class MetalSnapToTicksDragSliderUI extends MetalSliderUI {
                     super.mouseDragged(e);
                     return;
                 }
-                //case JSlider.HORIZONTAL:
+                //case HORIZONTAL:
                 int halfThumbWidth = thumbRect.width / 2;
                 final int trackLength = trackRect.width;
                 final int trackLeft   = trackRect.x - halfThumbWidth;

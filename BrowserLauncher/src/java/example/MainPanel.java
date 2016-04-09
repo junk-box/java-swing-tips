@@ -5,24 +5,23 @@ package example;
 import java.awt.*;
 import java.io.IOException;
 import java.lang.reflect.*;
+import java.util.Objects;
 import javax.swing.*;
 import javax.swing.event.*;
 
 public final class MainPanel extends JPanel {
-    private static final String MYSITE = "http://terai.xrea.jp/";
+    private static final String MYSITE = "http://ateraimemo.com/";
     private final JTextArea textArea = new JTextArea();
     public MainPanel() {
         super(new BorderLayout());
-        JEditorPane editor = new JEditorPane("text/html", "<html><a href='" + MYSITE + "'>" + MYSITE + "</a>");
+        JEditorPane editor = new JEditorPane("text/html", String.format("<html><a href='%s'>%s</a>", MYSITE, MYSITE));
         editor.setOpaque(false);
         editor.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
         editor.setEditable(false);
-        editor.addHyperlinkListener(new HyperlinkListener() {
-            @Override public void hyperlinkUpdate(HyperlinkEvent e) {
-                if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-                    BrowserLauncher.openURL(MYSITE);
-                    textArea.setText(e.toString());
-                }
+        editor.addHyperlinkListener(e -> {
+            if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+                BrowserLauncher.openURL(MYSITE);
+                textArea.setText(e.toString());
             }
         });
         JPanel p = new JPanel();
@@ -81,22 +80,22 @@ final class BrowserLauncher {
             } else if (osName.startsWith("Windows")) {
                 Runtime.getRuntime().exec("rundll32 url.dll, FileProtocolHandler " + url);
             } else { //assume Unix or Linux
-                String[] browsers = {"firefox", "opera", "konqueror", "epiphany", "mozilla", "netscape" };
+                String[] browsers = {"firefox", "opera", "konqueror", "epiphany", "mozilla", "netscape"};
                 String browser = null;
-                for (int count = 0; count < browsers.length && browser == null; count++) {
+                for (int count = 0; count < browsers.length && Objects.isNull(browser); count++) {
                     if (Runtime.getRuntime().exec(new String[] {"which", browsers[count]}).waitFor() == 0) {
                         browser = browsers[count];
                     }
                 }
-                if (browser == null) {
-                    throw new UnsupportedOperationException("Could not find web browser");
-                } else {
+                if (Objects.nonNull(browser)) {
                     Runtime.getRuntime().exec(new String[] {browser, url});
+                } else {
+                    throw new UnsupportedOperationException("Could not find web browser");
                 }
             }
-        } catch (IOException | InterruptedException | ClassNotFoundException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+        } catch (IOException | InterruptedException | ClassNotFoundException | IllegalAccessException | InvocationTargetException | NoSuchMethodException ex) {
             Toolkit.getDefaultToolkit().beep();
-            JOptionPane.showMessageDialog(null, ERR_MSG + ":\n" + e.getLocalizedMessage(), "titlebar", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null, ERR_MSG + ":\n" + ex.getLocalizedMessage(), "titlebar", JOptionPane.ERROR_MESSAGE);
         }
     }
 }

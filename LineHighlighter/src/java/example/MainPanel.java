@@ -4,6 +4,7 @@ package example;
 //@homepage@
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Objects;
 import javax.swing.*;
 import javax.swing.text.*;
 
@@ -53,13 +54,12 @@ public final class MainPanel extends JPanel {
 
 class HighlightCursorTextArea extends JTextArea {
     private static final Color LINE_COLOR = new Color(250, 250, 220);
-    private final DefaultCaret caret;
-    public HighlightCursorTextArea() {
-        super();
+    @Override public void updateUI() {
+        super.updateUI();
         setOpaque(false);
-        caret = new DefaultCaret() {
+        DefaultCaret caret = new DefaultCaret() {
             @Override protected synchronized void damage(Rectangle r) {
-                if (r != null) {
+                if (Objects.nonNull(r)) {
                     JTextComponent c = getComponent();
                     x = 0;
                     y = r.y;
@@ -69,17 +69,22 @@ class HighlightCursorTextArea extends JTextArea {
                 }
             }
         };
-        caret.setBlinkRate(getCaret().getBlinkRate());
+        //caret.setBlinkRate(getCaret().getBlinkRate());
+        caret.setBlinkRate(UIManager.getInt("TextArea.caretBlinkRate"));
         setCaret(caret);
     }
     @Override protected void paintComponent(Graphics g) {
-        Graphics2D g2 = (Graphics2D) g.create();
-        Insets i = getInsets();
-        int h = caret.height;
-        int y = caret.y;
-        g2.setPaint(LINE_COLOR);
-        g2.fillRect(i.left, y, getSize().width - i.left - i.right, h);
-        g2.dispose();
+        Caret c = getCaret();
+        if (c instanceof DefaultCaret) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            Insets i = getInsets();
+            DefaultCaret caret = (DefaultCaret) c;
+            int h = caret.height;
+            int y = caret.y;
+            g2.setPaint(LINE_COLOR);
+            g2.fillRect(i.left, y, getSize().width - i.left - i.right, h);
+            g2.dispose();
+        }
         super.paintComponent(g);
     }
 }

@@ -30,7 +30,7 @@ public final class MainPanel extends JPanel {
             @Override public Class<?> getColumnClass(int column) {
                 // ArrayIndexOutOfBoundsException: 0 >= 0
                 // Bug ID: JDK-6967479 JTable sorter fires even if the model is empty
-                // http://bugs.sun.com/view_bug.do?bug_id=6967479
+                // http://bugs.java.com/view_bug.do?bug_id=6967479
                 //return getValueAt(0, column).getClass();
                 switch (column) {
                   case 0:
@@ -53,7 +53,7 @@ public final class MainPanel extends JPanel {
 
         //Disable row Cut, Copy, Paste
         ActionMap map = table.getActionMap();
-        AbstractAction dummy = new AbstractAction() {
+        Action dummy = new AbstractAction() {
             @Override public void actionPerformed(ActionEvent e) { /* Dummy action */ }
         };
         map.put(TransferHandler.getCutAction().getValue(Action.NAME),   dummy);
@@ -103,7 +103,7 @@ class TableRowTransferHandler extends TransferHandler {
     private int addCount; //Number of items added.
     private JComponent source;
 
-    public TableRowTransferHandler() {
+    protected TableRowTransferHandler() {
         super();
         localObjectFlavor = new ActivationDataFlavor(Object[].class, DataFlavor.javaJVMLocalObjectMimeType, "Array of items");
     }
@@ -114,12 +114,12 @@ class TableRowTransferHandler extends TransferHandler {
         List<Object> list = new ArrayList<>();
         indices = table.getSelectedRows();
         for (int i: indices) {
-            list.add(model.getDataVector().elementAt(i));
+            list.add(model.getDataVector().get(i));
         }
         Object[] transferedObjects = list.toArray();
         return new DataHandler(transferedObjects, localObjectFlavor.getMimeType());
     }
-    @Override public boolean canImport(TransferSupport info) {
+    @Override public boolean canImport(TransferHandler.TransferSupport info) {
         JTable table = (JTable) info.getComponent();
         boolean isDropable = info.isDrop() && info.isDataFlavorSupported(localObjectFlavor);
         //XXX bug?
@@ -127,9 +127,9 @@ class TableRowTransferHandler extends TransferHandler {
         return isDropable;
     }
     @Override public int getSourceActions(JComponent c) {
-        return MOVE; //TransferHandler.COPY_OR_MOVE;
+        return TransferHandler.MOVE; //TransferHandler.COPY_OR_MOVE;
     }
-    @Override public boolean importData(TransferSupport info) {
+    @Override public boolean importData(TransferHandler.TransferSupport info) {
         if (!canImport(info)) {
             return false;
         }
@@ -165,7 +165,7 @@ class TableRowTransferHandler extends TransferHandler {
         return false;
     }
     @Override protected void exportDone(JComponent c, Transferable data, int action) {
-        cleanup(c, action == MOVE);
+        cleanup(c, action == TransferHandler.MOVE);
     }
     private void cleanup(JComponent c, boolean remove) {
         if (remove && indices != null) {

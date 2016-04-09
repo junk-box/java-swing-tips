@@ -4,6 +4,7 @@ package example;
 //@homepage@
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Objects;
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.plaf.basic.BasicButtonUI;
@@ -49,13 +50,13 @@ public final class MainPanel extends JPanel {
 }
 
 // How to Use Tabbed Panes (The Java Tutorials > Creating a GUI With JFC/Swing > Using Swing Components)
-// http://download.oracle.com/javase/tutorial/uiswing/components/tabbedpane.html
+// http://docs.oracle.com/javase/tutorial/uiswing/components/tabbedpane.html
 class ButtonTabComponent extends JPanel {
     private final JTabbedPane pane;
 
-    public ButtonTabComponent(final JTabbedPane pane) {
+    protected ButtonTabComponent(final JTabbedPane pane) {
         super(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        if (pane == null) {
+        if (Objects.isNull(pane)) {
             throw new IllegalArgumentException("TabbedPane cannot be null");
         }
         this.pane = pane;
@@ -106,7 +107,7 @@ class TabButton extends JButton {
     private static final int SIZE  = 17;
     private static final int DELTA = 6;
 
-    public TabButton() {
+    protected TabButton() {
         super();
         setUI(new BasicButtonUI());
         setToolTipText("close this tab");
@@ -126,12 +127,12 @@ class TabButton extends JButton {
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setStroke(new BasicStroke(2));
-        g2.setColor(Color.BLACK);
+        g2.setPaint(Color.BLACK);
         if (getModel().isRollover()) {
-            g2.setColor(Color.ORANGE);
+            g2.setPaint(Color.ORANGE);
         }
         if (getModel().isPressed()) {
-            g2.setColor(Color.BLUE);
+            g2.setPaint(Color.BLUE);
         }
         g2.drawLine(DELTA, DELTA, getWidth() - DELTA - 1, getHeight() - DELTA - 1);
         g2.drawLine(getWidth() - DELTA - 1, DELTA, DELTA, getHeight() - DELTA - 1);
@@ -160,7 +161,7 @@ class TabTitleRenamePopupMenu extends JPopupMenu {
         }
     };
     private final Action newTabAction = new AbstractAction("new tab") {
-        @Override public void actionPerformed(ActionEvent evt) {
+        @Override public void actionPerformed(ActionEvent e) {
             JTabbedPane t = (JTabbedPane) getInvoker();
             int count = t.getTabCount();
             String title = "Tab " + count;
@@ -169,12 +170,12 @@ class TabTitleRenamePopupMenu extends JPopupMenu {
         }
     };
     private final Action closeAllAction = new AbstractAction("close all") {
-        @Override public void actionPerformed(ActionEvent evt) {
+        @Override public void actionPerformed(ActionEvent e) {
             JTabbedPane t = (JTabbedPane) getInvoker();
             t.removeAll();
         }
     };
-    public TabTitleRenamePopupMenu() {
+    protected TabTitleRenamePopupMenu() {
         super();
         textField.addAncestorListener(new AncestorListener() {
             @Override public void ancestorAdded(AncestorEvent e) {
@@ -200,7 +201,8 @@ class TabTitleRenamePopupMenu extends JPopupMenu {
 // class TabTitleEditListener extends MouseAdapter implements ChangeListener {
 //     private final JTextField editor = new JTextField();
 //     private final JTabbedPane tabbedPane;
-//     public TabTitleEditListener(final JTabbedPane tabbedPane) {
+//     protected TabTitleEditListener(final JTabbedPane tabbedPane) {
+//         super();
 //         this.tabbedPane = tabbedPane;
 //         editor.setBorder(BorderFactory.createEmptyBorder());
 //         editor.addFocusListener(new FocusAdapter() {
@@ -231,9 +233,9 @@ class TabTitleRenamePopupMenu extends JPopupMenu {
 //     @Override public void stateChanged(ChangeEvent e) {
 //         renameTabTitle();
 //     }
-//     @Override public void mouseClicked(MouseEvent me) {
+//     @Override public void mouseClicked(MouseEvent e) {
 //         Rectangle rect = tabbedPane.getUI().getTabBounds(tabbedPane, tabbedPane.getSelectedIndex());
-//         if (rect != null && rect.contains(me.getPoint()) && me.getClickCount() == 2) {
+//         if (Objects.nonNull(rect) && rect.contains(e.getPoint()) && e.getClickCount() == 2) {
 //             startEditing();
 //         } else {
 //             renameTabTitle();

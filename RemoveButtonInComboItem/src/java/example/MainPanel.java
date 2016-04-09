@@ -6,7 +6,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 import java.util.List;
-import javax.accessibility.Accessible;
+import javax.accessibility.*;
 import javax.swing.*;
 import javax.swing.plaf.basic.*;
 
@@ -34,25 +34,14 @@ public final class MainPanel extends JPanel {
         }), BorderLayout.SOUTH);
         setPreferredSize(new Dimension(320, 240));
     }
-    private static JComboBox<String> makeComboBox(final boolean isDefault, boolean isEditable) {
-        String[] m = {"aaa", "bbb", "ccc"};
-        JComboBox<String> comboBox = new JComboBox<String>(m) {
-            @Override public void updateUI() {
-                super.updateUI();
-                if (isDefault) {
-                    return;
-                }
-                setRenderer(new ButtonsRenderer(this));
-                Accessible a = getAccessibleContext().getAccessibleChild(0);
-                if (a instanceof BasicComboPopup) {
-                    BasicComboPopup pop = (BasicComboPopup) a;
-                    JList list = pop.getList();
-                    CellButtonsMouseListener cbml = new CellButtonsMouseListener();
-                    list.addMouseListener(cbml);
-                    list.addMouseMotionListener(cbml);
-                }
-            }
-        };
+    private static JComboBox<String> makeComboBox(boolean isDefault, boolean isEditable) {
+        ComboBoxModel<String> m = new DefaultComboBoxModel<>(new String[] {"aaa", "bbb", "ccc"});
+        JComboBox<String> comboBox;
+        if (isDefault) {
+            comboBox = new JComboBox<>(m);
+        } else {
+            comboBox = new RemoveButtonComboBox<String>(m);
+        }
         comboBox.setEditable(isEditable);
         return comboBox;
     }
@@ -63,10 +52,9 @@ public final class MainPanel extends JPanel {
         c.fill    = GridBagConstraints.HORIZONTAL;
         c.insets  = new Insets(5, 5, 5, 5);
         c.weightx = 1d;
-        c.gridy   = 0;
+        c.gridx   = GridBagConstraints.REMAINDER;
         for (JComponent cmp: list) {
             p.add(cmp, c);
-            c.gridy++;
         }
         return p;
     }
@@ -93,11 +81,40 @@ public final class MainPanel extends JPanel {
     }
 }
 
+class RemoveButtonComboBox<E> extends JComboBox<E> {
+    private transient CellButtonsMouseListener cbml;
+    protected RemoveButtonComboBox(ComboBoxModel<E> aModel) {
+        super(aModel);
+    }
+    @Override public void updateUI() {
+        if (Objects.nonNull(cbml)) {
+            getList().ifPresent(list -> {
+                list.removeMouseListener(cbml);
+                list.removeMouseMotionListener(cbml);
+            });
+        }
+        super.updateUI();
+        setRenderer(new ButtonsRenderer<E>(this));
+        getList().ifPresent(list -> {
+            cbml = new CellButtonsMouseListener();
+            list.addMouseListener(cbml);
+            list.addMouseMotionListener(cbml);
+        });
+    }
+    protected Optional<? extends JList> getList() {
+        Accessible a = getAccessibleContext().getAccessibleChild(0);
+        if (a instanceof BasicComboPopup) {
+            return Optional.of(((BasicComboPopup) a).getList());
+        }
+        return Optional.empty();
+    }
+}
+
 class CellButtonsMouseListener extends MouseAdapter {
     private int prevIndex = -1;
     private JButton prevButton;
     private static void listRepaint(JList list, Rectangle rect) {
-        if (rect != null) {
+        if (Objects.nonNull(rect)) {
             list.repaint(rect);
         }
     }
@@ -117,12 +134,17 @@ class CellButtonsMouseListener extends MouseAdapter {
         if (index >= 0) {
             JButton button = getButton(list, pt, index);
             ButtonsRenderer renderer = (ButtonsRenderer) list.getCellRenderer();
-            renderer.button = button;
-            if (button == null) {
+            if (Objects.nonNull(button)) {
+                renderer.rolloverIndex = index;
+                if (!button.equals(prevButton)) {
+                    Rectangle r = list.getCellBounds(prevIndex, index);
+                    listRepaint(list, r);
+                }
+            } else {
                 renderer.rolloverIndex = -1;
                 Rectangle r = null;
                 if (prevIndex == index) {
-                    if (prevIndex >= 0 && prevButton != null) {
+                    if (prevIndex >= 0 && Objects.nonNull(prevButton)) {
                         r = list.getCellBounds(prevIndex, prevIndex);
                     }
                 } else {
@@ -130,13 +152,6 @@ class CellButtonsMouseListener extends MouseAdapter {
                 }
                 listRepaint(list, r);
                 prevIndex = -1;
-            } else {
-                button.getModel().setRollover(true);
-                renderer.rolloverIndex = index;
-                if (!button.equals(prevButton)) {
-                    Rectangle r = list.getCellBounds(prevIndex, index);
-                    listRepaint(list, r);
-                }
             }
             prevButton = button;
         }
@@ -148,11 +163,8 @@ class CellButtonsMouseListener extends MouseAdapter {
         int index = list.locationToIndex(pt);
         if (index >= 0) {
             JButton button = getButton(list, pt, index);
-            if (button != null) {
-                ButtonsRenderer renderer = (ButtonsRenderer) list.getCellRenderer();
-                renderer.button = button;
-                Rectangle r = list.getCellBounds(index, index);
-                listRepaint(list, r);
+            if (Objects.nonNull(button)) {
+                listRepaint(list, list.getCellBounds(index, index));
             }
         }
     }
@@ -162,14 +174,17 @@ class CellButtonsMouseListener extends MouseAdapter {
         int index = list.locationToIndex(pt);
         if (index >= 0) {
             JButton button = getButton(list, pt, index);
-            if (button != null) {
-                ButtonsRenderer renderer = (ButtonsRenderer) list.getCellRenderer();
-                renderer.button = null;
+            if (Objects.nonNull(button)) {
                 button.doClick();
                 Rectangle r = list.getCellBounds(index, index);
                 listRepaint(list, r);
             }
         }
+    }
+    @Override public void mouseExited(MouseEvent e) {
+        JList list = (JList) e.getComponent();
+        ButtonsRenderer renderer = (ButtonsRenderer) list.getCellRenderer();
+        renderer.rolloverIndex = -1;
     }
     @SuppressWarnings("unchecked")
     private static JButton getButton(JList list, Point pt, int index) {
@@ -187,13 +202,12 @@ class CellButtonsMouseListener extends MouseAdapter {
     }
 }
 
-class ButtonsRenderer extends JPanel implements ListCellRenderer<String> {
+class ButtonsRenderer<E> extends JPanel implements ListCellRenderer<E> {
     private static final Color EVEN_COLOR = new Color(230, 255, 230);
-    private final JComboBox comboBox;
+    private final RemoveButtonComboBox<E> comboBox;
     private JList list;
     private int index;
     public int rolloverIndex = -1;
-    public JButton button;
     private final JLabel label = new DefaultListCellRenderer();
     private final JButton deleteButton = new JButton(new AbstractAction("x") {
         @Override public void actionPerformed(ActionEvent e) {
@@ -208,8 +222,8 @@ class ButtonsRenderer extends JPanel implements ListCellRenderer<String> {
             return new Dimension(16, 16);
         }
     };
-    public ButtonsRenderer(JComboBox comboBox) {
-        super(new BorderLayout(0, 0));
+    protected ButtonsRenderer(RemoveButtonComboBox<E> comboBox) {
+        super(new BorderLayout());
         this.comboBox = comboBox;
         label.setOpaque(false);
         setOpaque(true);
@@ -220,8 +234,7 @@ class ButtonsRenderer extends JPanel implements ListCellRenderer<String> {
         deleteButton.setContentAreaFilled(false);
         add(deleteButton, BorderLayout.EAST);
     }
-//  @Override public Component getListCellRendererComponent(JList list, E value, int index, boolean isSelected, boolean hasFocus) {
-    @Override public Component getListCellRendererComponent(JList<? extends String> list, String value, int index, boolean isSelected, boolean cellHasFocus) {
+    @Override public Component getListCellRendererComponent(JList<? extends E> list, E value, int index, boolean isSelected, boolean cellHasFocus) {
         label.setText(Objects.toString(value, ""));
         this.list = list;
         this.index = index;
@@ -238,12 +251,11 @@ class ButtonsRenderer extends JPanel implements ListCellRenderer<String> {
             deleteButton.setVisible(false);
             label.setForeground(list.getForeground());
         } else {
+            boolean f = index == rolloverIndex;
             setOpaque(true);
             deleteButton.setVisible(true);
-            deleteButton.setForeground(list.getForeground());
-            if (button != null && index == rolloverIndex) {
-                button.setForeground(Color.WHITE);
-            }
+            deleteButton.getModel().setRollover(f);
+            deleteButton.setForeground(f ? Color.WHITE : list.getForeground());
         }
         return this;
     }

@@ -11,7 +11,7 @@ public final class MainPanel extends JPanel {
     //<blockquote cite="FixedColumnExample.java">
     //@auther Nobuo Tamemasa
     private static final String ES = "";
-    private final Object[][] data = new Object[][] {
+    private final Object[][] data = {
         {1, 11, "A",  ES,  ES}, {2, 22, ES, "B", ES},
         {3, 33,  ES,  ES, "C"}, {4,  1, ES,  ES, ES},
         {5, 55,  ES,  ES,  ES}, {6, 66, ES,  ES, ES}
@@ -19,8 +19,8 @@ public final class MainPanel extends JPanel {
     private final String[] columnNames = {"1", "2", "a", "b", "c"};
     //</blockquote>
     private final DefaultTableModel model = new DefaultTableModel(data, columnNames) {
-        @Override public Class<?> getColumnClass(int modelIndex) {
-            return modelIndex < 2 ? Integer.class : Object.class;
+        @Override public Class<?> getColumnClass(int column) {
+            return column < 2 ? Integer.class : Object.class;
         }
     };
     private final JTable table;
@@ -42,8 +42,8 @@ public final class MainPanel extends JPanel {
             }
         }
         JScrollPane scroll1 = new JScrollPane(leftTable);
-        //scroll1.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
-        scroll1.setVerticalScrollBar(new JScrollBar(JScrollBar.VERTICAL) {
+        //scroll1.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+        scroll1.setVerticalScrollBar(new JScrollBar(Adjustable.VERTICAL) {
             @Override public Dimension getPreferredSize() {
                 Dimension dim = super.getPreferredSize();
                 return new Dimension(0, dim.height);

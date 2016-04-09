@@ -55,7 +55,7 @@ public final class MainPanel extends JPanel {
 //         return new JComboBox(model) {
 //             @Override public void updateUI() {
 //                 super.updateUI();
-//                 setUI(new javax.swing.plaf.basic.BasicComboBoxUI() {
+//                 setUI(new BasicComboBoxUI() {
 //                     @Override protected JButton createArrowButton() {
 //                         JButton button = new JButton() {
 //                             @Override public int getWidth() {
@@ -95,20 +95,18 @@ public final class MainPanel extends JPanel {
         p.setBorder(BorderFactory.createTitledBorder("Help"));
 
         GridBagConstraints c = new GridBagConstraints();
-        c.gridwidth  = 1;
-        c.gridheight = 1;
-        c.gridy   = 0;
+        c.insets  = new Insets(0, 5, 0, 5);
+        c.fill    = GridBagConstraints.BOTH;
         c.weighty = 1d;
 
         c.weightx = 1d;
-        c.fill    = GridBagConstraints.BOTH;
-        c.gridx   = 0; p.add(lp, c);
-        c.gridx   = 2; p.add(rp, c);
+        p.add(lp, c);
 
-        c.insets  = new Insets(0, 5, 0, 5);
         c.weightx = 0d;
-        c.gridx   = 1;
-        p.add(new JSeparator(JSeparator.VERTICAL), c);
+        p.add(new JSeparator(SwingConstants.VERTICAL), c);
+
+        c.weightx = 1d;
+        p.add(rp, c);
 
         return p;
     }
@@ -141,7 +139,7 @@ class ComboKeyHandler extends KeyAdapter {
     private final List<String> list = new ArrayList<>();
     private boolean shouldHide;
 
-    public ComboKeyHandler(JComboBox<String> combo) {
+    protected ComboKeyHandler(JComboBox<String> combo) {
         super();
         this.comboBox = combo;
         for (int i = 0; i < comboBox.getModel().getSize(); i++) {
@@ -289,9 +287,11 @@ class ComboKeyHandler extends KeyAdapter {
 //         }
 //         private ComboBoxModel getSuggestedModel(Vector<String> list, String text) {
 //             DefaultComboBoxModel m = new DefaultComboBoxModel();
-//             if (text != null && text.length() != 0) {
+//             if (Objects.nonNull(text) && text.isEmpty()) {
 //                 for (String s: list) {
-//                     if (s.startsWith(text)) { m.addElement(s); }
+//                     if (s.startsWith(text)) {
+//                         m.addElement(s);
+//                     }
 //                 }
 //             }
 //             return m;

@@ -4,6 +4,7 @@ package example;
 //@homepage@
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Objects;
 import javax.swing.*;
 import javax.swing.text.*;
 
@@ -63,13 +64,13 @@ public final class MainPanel extends JPanel {
 
 class SilentDeleteTextAction extends TextAction {
     private final Action deleteAction;
-    public SilentDeleteTextAction(String name, Action deleteAction) {
+    protected SilentDeleteTextAction(String name, Action deleteAction) {
         super(name);
         this.deleteAction = deleteAction;
     }
     @Override public void actionPerformed(ActionEvent e) {
         JTextComponent target = getTextComponent(e);
-        if (target != null && target.isEditable()) {
+        if (Objects.nonNull(target) && target.isEditable()) {
             Caret caret = target.getCaret();
             int dot  = caret.getDot();
             int mark = caret.getMark();
@@ -119,10 +120,10 @@ class SizeFilter extends DocumentFilter {
 // //DocumentSizeFilter.java]
 // class DocumentSizeFilter extends DocumentFilter {
 //     int maxCharacters;
-//     public DocumentSizeFilter(int maxChars) {
+//     protected DocumentSizeFilter(int maxChars) {
 //         maxCharacters = maxChars;
 //     }
-//     @Override public void insertString(FilterBypass fb, int offs, String str, AttributeSet a) throws BadLocationException {
+//     @Override public void insertString(DocumentFilter.FilterBypass fb, int offs, String str, AttributeSet a) throws BadLocationException {
 //         //This rejects the entire insertion if it would make
 //         //the contents too long. Another option would be
 //         //to truncate the inserted string so the contents
@@ -133,7 +134,7 @@ class SizeFilter extends DocumentFilter {
 //             Toolkit.getDefaultToolkit().beep();
 //         }
 //     }
-//     @Override public void replace(FilterBypass fb, int offs, int length, String str, AttributeSet a) throws BadLocationException {
+//     @Override public void replace(DocumentFilter.FilterBypass fb, int offs, int length, String str, AttributeSet a) throws BadLocationException {
 //         //This rejects the entire replacement if it would make
 //         //the contents too long. Another option would be
 //         //to truncate the replacement string so the contents

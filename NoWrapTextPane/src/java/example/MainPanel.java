@@ -4,6 +4,7 @@ package example;
 //@homepage@
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Objects;
 import java.util.concurrent.*;
 import javax.swing.*;
 import javax.swing.text.*;
@@ -22,9 +23,11 @@ public final class MainPanel extends JPanel {
         textPane = new JTextPane() {
             //Non Wrapping(Wrap) TextPane : TextField : Swing JFC : Java examples (example source code) Organized by topic
             //http://www.java2s.com/Code/Java/Swing-JFC/NonWrappingWrapTextPane.htm
-            @Override public boolean getScrollableTracksViewportWidth() {
+            @Override public boolean getScrollableTracksViewportWidth() { //NOPMD A getX() method which returns a boolean should be named isX()
                 Component p = getParent();
-                if (p == null) { return true; }
+                if (Objects.isNull(p)) {
+                    return true;
+                }
                 int ewidth = getUI().getPreferredSize(this).width;
                 return ewidth <= p.getSize().width;
             }
@@ -39,7 +42,7 @@ public final class MainPanel extends JPanel {
                 final JComponent c = (JComponent) e.getSource();
                 threadPool.execute(new Runnable() {
                     @Override public void run() {
-                        if (text != null) {
+                        if (Objects.nonNull(text)) {
                             if (c.equals(editorPaneButton)) {
                                 editorPane.setText(text);
                             } else {
@@ -122,7 +125,7 @@ class NoWrapEditorKit1 extends StyledEditorKit {
     static class StyledViewFactory implements ViewFactory {
         @Override public View create(Element elem) {
             String kind = elem.getName();
-            if (kind != null) {
+            if (Objects.nonNull(kind)) {
                 if (kind.equals(AbstractDocument.ContentElementName)) {
                     return new LabelView(elem);
                 } else if (kind.equals(AbstractDocument.ParagraphElementName)) {
@@ -150,7 +153,7 @@ class NoWrapEditorKit1 extends StyledEditorKit {
     }
 }
 /*/
-// https://forums.oracle.com/thread/1353861 Disabling word wrap for JTextPane
+// https://community.oracle.com/thread/1353861 Disabling word wrap for JTextPane
 class NoWrapParagraphView extends ParagraphView {
     public NoWrapParagraphView(Element elem) {
         super(elem);
@@ -168,7 +171,7 @@ class NoWrapParagraphView extends ParagraphView {
 class NoWrapViewFactory implements ViewFactory {
     @Override public View create(Element elem) {
         String kind = elem.getName();
-        if (kind != null) {
+        if (Objects.nonNull(kind)) {
             if (kind.equals(AbstractDocument.ContentElementName)) {
                 return new LabelView(elem);
             } else if (kind.equals(AbstractDocument.ParagraphElementName)) {

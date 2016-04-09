@@ -30,8 +30,8 @@ class MainPanel {
                             splashScreen.dispose();
                         }
                     });
-                } catch (InterruptedException | InvocationTargetException e) {
-                    e.printStackTrace();
+                } catch (InterruptedException | InvocationTargetException ex) {
+                    ex.printStackTrace();
                 }
             }
         }).start();
@@ -138,24 +138,18 @@ class MainPanel {
 }
 
 class DragWindowListener extends MouseAdapter {
-    private final transient Point startPt = new Point();
-    private transient Window window;
-    @Override public void mousePressed(MouseEvent me) {
-        if (window == null) {
-            Object o = me.getSource();
-            if (o instanceof Window) {
-                window = (Window) o;
-            } else if (o instanceof JComponent) {
-                window = SwingUtilities.windowForComponent(me.getComponent());
-            }
+    private final Point startPt = new Point();
+    @Override public void mousePressed(MouseEvent e) {
+        if (SwingUtilities.isLeftMouseButton(e)) {
+            startPt.setLocation(e.getPoint());
         }
-        startPt.setLocation(me.getPoint());
     }
-    @Override public void mouseDragged(MouseEvent me) {
-        if (window != null) {
-            Point eventLocationOnScreen = me.getLocationOnScreen();
-            window.setLocation(eventLocationOnScreen.x - startPt.x,
-                               eventLocationOnScreen.y - startPt.y);
+    @Override public void mouseDragged(MouseEvent e) {
+        Component c = SwingUtilities.getRoot(e.getComponent());
+        if (c instanceof Window && SwingUtilities.isLeftMouseButton(e)) {
+            Window window = (Window) c;
+            Point pt = window.getLocation();
+            window.setLocation(pt.x - startPt.x + e.getX(), pt.y - startPt.y + e.getY());
         }
     }
 }

@@ -39,19 +39,18 @@ public final class MainPanel extends JPanel {
 
         jtp.setEditable(false);
         StyledDocument doc = jtp.getStyledDocument();
-        Style def = StyleContext.getDefaultStyleContext().getStyle(
-            StyleContext.DEFAULT_STYLE);
+        //Style def = StyleContext.getDefaultStyleContext().getStyle(StyleContext.DEFAULT_STYLE);
+        Style def = doc.getStyle(StyleContext.DEFAULT_STYLE);
 
-        Style regular = doc.addStyle("regular", def);
+        //Style regular = doc.addStyle("regular", def);
         //StyleConstants.setForeground(def, Color.BLACK);
 
-        Style error = doc.addStyle("error", regular);
+        Style error = doc.addStyle("error", def);
         StyleConstants.setForeground(error, Color.RED);
 
-        JScrollPane scroll = new JScrollPane(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                             JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        JScrollPane scroll = new JScrollPane(jtp);
+        scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         scroll.getVerticalScrollBar().setUnitIncrement(25);
-        scroll.getViewport().add(jtp);
 
         add(scroll);
         add(box, BorderLayout.SOUTH);
@@ -75,15 +74,17 @@ public final class MainPanel extends JPanel {
 //             Document doc = jtp.getDocument();
 //             doc.insertString(doc.getLength(), str + SEPARATOR, sas);
 //             jtp.setCaretPosition(doc.getLength());
-//         } catch (BadLocationException e) { e.printStackTrace(); }
+//         } catch (BadLocationException ex) {
+//             ex.printStackTrace();
+//         }
 //     }
     private void append(String str, boolean flg) {
-        String style = flg ? "regular" : "error";
+        String style = flg ? StyleContext.DEFAULT_STYLE : "error";
         StyledDocument doc = jtp.getStyledDocument();
         try {
             doc.insertString(doc.getLength(), str + "\n", doc.getStyle(style));
-        } catch (BadLocationException e) {
-            e.printStackTrace();
+        } catch (BadLocationException ex) {
+            ex.printStackTrace();
         }
     }
 

@@ -71,8 +71,8 @@ public final class MainPanel extends JPanel {
 }
 
 class TestRenderer extends WrappedLabel implements TableCellRenderer {
-    public TestRenderer() {
-        super();
+    @Override public void updateUI() {
+        super.updateUI();
         setOpaque(true);
         setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
     }
@@ -93,10 +93,10 @@ class TestRenderer extends WrappedLabel implements TableCellRenderer {
 
 class WrappedLabel extends JLabel {
     private GlyphVector gvtext;
-    public WrappedLabel() {
-        this(null);
+    protected WrappedLabel() {
+        super();
     }
-    public WrappedLabel(String str) {
+    protected WrappedLabel(String str) {
         super(str);
     }
     //private int prevwidth = -1;
@@ -113,9 +113,7 @@ class WrappedLabel extends JLabel {
         super.doLayout();
     }
     @Override protected void paintComponent(Graphics g) {
-        if (gvtext == null) {
-            super.paintComponent(g);
-        } else {
+        if (Objects.nonNull(gvtext)) {
             Insets i = getInsets();
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setPaint(getBackground());
@@ -123,10 +121,12 @@ class WrappedLabel extends JLabel {
             g2.setPaint(getForeground());
             g2.drawGlyphVector(gvtext, i.left, getFont().getSize() + i.top);
             g2.dispose();
+        } else {
+            super.paintComponent(g);
         }
     }
     private GlyphVector getWrappedGlyphVector(String str, float width, Font font, FontRenderContext frc) {
-        Point2D gmPos    = new Point2D.Double(0d, 0d);
+        Point2D gmPos    = new Point2D.Float();
         GlyphVector gv   = font.createGlyphVector(frc, str);
         float lineheight = (float) (gv.getLogicalBounds().getHeight());
         float xpos       = 0f;
@@ -150,8 +150,8 @@ class WrappedLabel extends JLabel {
 
 class TextAreaCellRenderer extends JTextArea implements TableCellRenderer {
     //public static class UIResource extends TextAreaCellRenderer implements UIResource {}
-    public TextAreaCellRenderer() {
-        super();
+    @Override public void updateUI() {
+        super.updateUI();
         setLineWrap(true);
         setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
         //setName("Table.cellRenderer");
@@ -171,12 +171,14 @@ class TextAreaCellRenderer extends JTextArea implements TableCellRenderer {
     //Overridden for performance reasons. ---->
     @Override public boolean isOpaque() {
         Color back = getBackground();
-        Component p = getParent();
-        if (p != null) {
-            p = p.getParent();
-        } // p should now be the JTable.
-        boolean colorMatch = back != null && p != null && back.equals(p.getBackground()) && p.isOpaque();
-        return !colorMatch && super.isOpaque();
+        Object o = SwingUtilities.getAncestorOfClass(JTable.class, this);
+        if (o instanceof JTable) {
+            JTable table = (JTable) o;
+            boolean colorMatch = Objects.nonNull(back) && back.equals(table.getBackground()) && table.isOpaque();
+            return !colorMatch && super.isOpaque();
+        } else {
+            return super.isOpaque();
+        }
     }
     @Override protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
         //String literal pool

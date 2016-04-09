@@ -30,7 +30,7 @@ public final class MainPanel extends JPanel {
         box.add(makePanel("Search", field2));
 
         add(box, BorderLayout.NORTH);
-        setPreferredSize(new Dimension(320, 180));
+        setPreferredSize(new Dimension(320, 240));
     }
     private static JPanel makePanel(String title, JComponent c) {
         JPanel p = new JPanel(new BorderLayout());
@@ -64,20 +64,20 @@ public final class MainPanel extends JPanel {
 class WatermarkTextField extends JTextField implements FocusListener {
     private final ImageIcon image;
     private boolean showWatermark = true;
-    public WatermarkTextField() {
+    protected WatermarkTextField() {
         super();
         image = new ImageIcon(getClass().getResource("watermark.png"));
         addFocusListener(this);
     }
-    @Override public void paintComponent(Graphics g) {
+    @Override protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         if (showWatermark) {
-            Graphics2D g2d = (Graphics2D) g.create();
+            Graphics2D g2 = (Graphics2D) g.create();
             //Insets i = getMargin();
             Insets i = getInsets();
             int yy = (getHeight() - image.getIconHeight()) / 2;
-            g2d.drawImage(image.getImage(), i.left, yy, this);
-            g2d.dispose();
+            g2.drawImage(image.getImage(), i.left, yy, this);
+            g2.dispose();
         }
     }
     @Override public void focusGained(FocusEvent e) {
@@ -93,7 +93,7 @@ class GhostFocusListener implements FocusListener {
     private static final Color INACTIVE_COLOR = UIManager.getColor("TextField.inactiveForeground");
     private static final Color ORIGINAL_COLOR = UIManager.getColor("TextField.foreground");
     private final String ghostMessage;
-    public GhostFocusListener(final JTextComponent tf) {
+    protected GhostFocusListener(JTextComponent tf) {
         ghostMessage = tf.getText();
         tf.setForeground(INACTIVE_COLOR);
     }

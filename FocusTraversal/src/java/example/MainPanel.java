@@ -18,12 +18,10 @@ public final class MainPanel extends JPanel {
     private final JButton eb = new JButton("EAST");
     private final JScrollPane scroll = new JScrollPane(textarea);
     private final Box box = Box.createHorizontalBox();
-    private final JFrame frame;
     private final JCheckBox check = new JCheckBox("setEditable", true);
 
-    public MainPanel(JFrame frame) {
+    public MainPanel() {
         super(new BorderLayout(5, 5));
-        this.frame = frame;
         p.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
         p.add(scroll);
         p.add(nb, BorderLayout.NORTH);
@@ -75,11 +73,15 @@ public final class MainPanel extends JPanel {
         add(box, BorderLayout.NORTH);
         add(check, BorderLayout.SOUTH);
         setPreferredSize(new Dimension(320, 240));
-        debugPrint();
+        EventQueue.invokeLater(new Runnable() {
+            @Override public void run() {
+                debugPrint();
+            }
+        });
     }
     class FocusTraversalPolicyChangeAction extends AbstractAction {
         private final FocusTraversalPolicy policy;
-        public FocusTraversalPolicyChangeAction(String name, FocusTraversalPolicy p) {
+        protected FocusTraversalPolicyChangeAction(String name, FocusTraversalPolicy p) {
             super(name);
             this.policy = p;
         }
@@ -89,8 +91,9 @@ public final class MainPanel extends JPanel {
         }
     }
     private void debugPrint() {
+        Container w = getTopLevelAncestor();
         textarea.setText(
-            debugString("frame",    frame)
+            debugString("frame",    w)
           + debugString("this",     this)
           + debugString("p",        p)
           + debugString("box",      box)
@@ -122,7 +125,7 @@ public final class MainPanel extends JPanel {
         }
         JFrame frame = new JFrame("@title@");
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        frame.getContentPane().add(new MainPanel(frame));
+        frame.getContentPane().add(new MainPanel());
         frame.pack();
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
@@ -131,7 +134,7 @@ public final class MainPanel extends JPanel {
 
 class CustomFocusTraversalPolicy extends FocusTraversalPolicy {
     private final List<? extends Component> order;
-    public CustomFocusTraversalPolicy(List<? extends Component> order) {
+    protected CustomFocusTraversalPolicy(List<? extends Component> order) {
         super();
         this.order = order;
     }

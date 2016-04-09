@@ -28,7 +28,7 @@ public final class MainPanel extends JPanel {
 //                         return d;
                         return getLayout().preferredLayoutSize(this);
                     }
-                    @Override public void setTipText(final String tipText) {
+                    @Override public void setTipText(String tipText) {
                         String oldValue = iconlabel.getText();
                         iconlabel.setText(tipText);
                         firePropertyChange("tiptext", oldValue, tipText);
@@ -64,7 +64,7 @@ public final class MainPanel extends JPanel {
         l2.setToolTipText("Test2");
 
         JLabel l3 = new JLabel("ToolTip icon using HTML tags");
-        l3.setToolTipText("<html><img src='" + url + "'>Test3</img></html>"); //align='middle'
+        l3.setToolTipText(String.format("<html><img src='%s'>Test3</img></html>", url)); //align='middle'
 
         Box box = Box.createVerticalBox();
         box.add(l1);
@@ -76,7 +76,7 @@ public final class MainPanel extends JPanel {
 
         add(box);
         setBorder(BorderFactory.createEmptyBorder(20, 40, 20, 40));
-        setPreferredSize(new Dimension(320, 200));
+        setPreferredSize(new Dimension(320, 240));
     }
 
     public static void main(String... args) {

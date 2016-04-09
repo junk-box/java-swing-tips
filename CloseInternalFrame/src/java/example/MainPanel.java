@@ -5,6 +5,7 @@ package example;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyVetoException;
+import java.util.Optional;
 import javax.swing.*;
 import javax.swing.event.*;
 
@@ -12,38 +13,28 @@ public final class MainPanel extends JPanel {
     private final JDesktopPane desktop = new JDesktopPane();
     private final Action closeSelectedFrameAction1 = new AbstractAction() {
         @Override public void actionPerformed(ActionEvent e) {
-            JInternalFrame f = desktop.getSelectedFrame();
-            if (f != null) {
-                desktop.getDesktopManager().closeFrame(f);
-            }
+            getSelectedFrame().ifPresent(desktop.getDesktopManager()::closeFrame);
         }
     };
     private final Action closeSelectedFrameAction2 = new AbstractAction() {
         @Override public void actionPerformed(ActionEvent e) {
-            JInternalFrame f = desktop.getSelectedFrame();
-            if (f != null) {
-                f.doDefaultCloseAction();
-            }
+            getSelectedFrame().ifPresent(f -> f.doDefaultCloseAction());
         }
     };
     private final Action closeSelectedFrameAction3 = new AbstractAction() {
         @Override public void actionPerformed(ActionEvent e) {
-            try {
-                JInternalFrame f = desktop.getSelectedFrame();
-                if (f != null) {
+            getSelectedFrame().ifPresent(f -> {
+                try {
                     f.setClosed(true);
+                } catch (PropertyVetoException ex) {
+                    ex.printStackTrace();
                 }
-            } catch (PropertyVetoException ex) {
-                ex.printStackTrace();
-            }
+            });
         }
     };
     private final Action disposeSelectedFrameAction = new AbstractAction() {
         @Override public void actionPerformed(ActionEvent e) {
-            JInternalFrame f = desktop.getSelectedFrame();
-            if (f != null) {
-                f.dispose();
-            }
+            getSelectedFrame().ifPresent(f -> f.dispose());
         }
     };
     private final Action createNewFrameAction = new AbstractAction() {
@@ -76,11 +67,13 @@ public final class MainPanel extends JPanel {
         add(createToolBar(), BorderLayout.NORTH);
         setPreferredSize(new Dimension(320, 240));
     }
-
+    private Optional<? extends JInternalFrame> getSelectedFrame() {
+        return Optional.ofNullable(desktop.getSelectedFrame());
+    }
     private JToolBar createToolBar() {
         JToolBar toolbar = new JToolBar("toolbar");
         toolbar.setFloatable(false);
-        ToolBarButton b = new ToolBarButton(createNewFrameAction);
+        JButton b = new ToolBarButton(createNewFrameAction);
         b.setIcon(new ImageIcon(getClass().getResource("icon_new-file.png")));
         b.setToolTipText("create new InternalFrame");
         toolbar.add(b);
@@ -105,7 +98,7 @@ public final class MainPanel extends JPanel {
     }
 
     class MyInternalFrame extends JInternalFrame {
-        public MyInternalFrame() {
+        protected MyInternalFrame() {
             super(String.format("Document #%s", ++openFrameCount), true, true, true, true);
             row += 1;
             setSize(240, 120);
@@ -187,36 +180,43 @@ class MyInternalFrameListener implements InternalFrameListener {
 }
 
 class ToolBarButton extends JButton {
-    public ToolBarButton(Action a) {
+    private transient MouseAdapter handler;
+    protected ToolBarButton(Action a) {
         super(a);
+    }
+    @Override public void updateUI() {
+        removeMouseListener(handler);
+        super.updateUI();
         setContentAreaFilled(false);
         setFocusPainted(false);
-        addMouseListener(new MouseAdapter() {
-            @Override public void mouseEntered(MouseEvent me) {
+        handler = new MouseAdapter() {
+            @Override public void mouseEntered(MouseEvent e) {
                 setContentAreaFilled(true);
             }
-            @Override public void mouseExited(MouseEvent me) {
+            @Override public void mouseExited(MouseEvent e) {
                 setContentAreaFilled(false);
             }
-        });
+        };
+        addMouseListener(handler);
     }
 }
 
 class CloseIcon implements Icon {
     private final Color color;
-    public CloseIcon(Color color) {
+    protected CloseIcon(Color color) {
         this.color = color;
     }
     @Override public void paintIcon(Component c, Graphics g, int x, int y) {
-        g.translate(x, y);
-        g.setColor(color);
-        g.drawLine(4,  4, 11, 11);
-        g.drawLine(4,  5, 10, 11);
-        g.drawLine(5,  4, 11, 10);
-        g.drawLine(11, 4,  4, 11);
-        g.drawLine(11, 5,  5, 11);
-        g.drawLine(10, 4,  4, 10);
-        g.translate(-x, -y);
+        Graphics2D g2 = (Graphics2D) g.create();
+        g2.translate(x, y);
+        g2.setPaint(color);
+        g2.drawLine(4,  4, 11, 11);
+        g2.drawLine(4,  5, 10, 11);
+        g2.drawLine(5,  4, 11, 10);
+        g2.drawLine(11, 4,  4, 11);
+        g2.drawLine(11, 5,  5, 11);
+        g2.drawLine(10, 4,  4, 10);
+        g2.dispose();
     }
     @Override public int getIconWidth() {
         return 16;

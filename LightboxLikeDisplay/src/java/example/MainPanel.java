@@ -5,11 +5,10 @@ package example;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Ellipse2D;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
 import javax.swing.*;
+import javax.swing.Timer;
 
 public final class MainPanel extends JPanel {
     public MainPanel() {
@@ -30,9 +29,9 @@ public final class MainPanel extends JPanel {
         setPreferredSize(new Dimension(320, 240));
     }
     private JPanel makeDummyPanel() {
-        JButton b = new JButton("Button&Mnemonic");
+        JButton b = new JButton("Button & Mnemonic");
         b.setMnemonic(KeyEvent.VK_B);
-        JTextField t = new JTextField("TextField&ToolTip");
+        JTextField t = new JTextField("TextField & ToolTip");
         t.setToolTipText("ToolTip");
         JPanel p = new JPanel(new BorderLayout(5, 5));
         p.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
@@ -66,14 +65,15 @@ public final class MainPanel extends JPanel {
 }
 
 class LightboxGlassPane extends JPanel {
+    private static final int BW = 5;
     private final ImageIcon image = new ImageIcon(LightboxGlassPane.class.getResource("test.png"));
-    private final AnimeIcon animatedIcon = new AnimeIcon();
+    private final transient AnimeIcon animatedIcon = new AnimeIcon();
     private float alpha;
     private int w;
     private int h;
     private final Rectangle rect = new Rectangle();
     private Timer animator;
-    private Handler handler;
+    private transient Handler handler;
 
     @Override public void updateUI() {
         removeMouseListener(handler);
@@ -81,18 +81,16 @@ class LightboxGlassPane extends JPanel {
         super.updateUI();
         setOpaque(false);
         super.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        if (handler == null) {
-            handler = new Handler();
-        }
+        handler = new Handler();
         addMouseListener(handler);
         addHierarchyListener(handler);
     }
     private class Handler extends MouseAdapter implements HierarchyListener {
-        @Override public void mouseClicked(MouseEvent me) {
-            me.getComponent().setVisible(false);
+        @Override public void mouseClicked(MouseEvent e) {
+            e.getComponent().setVisible(false);
         }
         @Override public void hierarchyChanged(HierarchyEvent e) {
-            if ((e.getChangeFlags() & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0 && !e.getComponent().isDisplayable() && animator != null) {
+            if ((e.getChangeFlags() & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0 && !e.getComponent().isDisplayable() && Objects.nonNull(animator)) {
                 animator.stop();
             }
         }
@@ -101,10 +99,10 @@ class LightboxGlassPane extends JPanel {
         boolean oldVisible = isVisible();
         super.setVisible(isVisible);
         JRootPane rootPane = getRootPane();
-        if (rootPane != null && isVisible() != oldVisible) {
+        if (Objects.nonNull(rootPane) && isVisible() != oldVisible) {
             rootPane.getLayeredPane().setVisible(!isVisible);
         }
-        boolean b = animator == null || !animator.isRunning();
+        boolean b = Objects.isNull(animator) || !animator.isRunning();
         if (isVisible && b) {
             w = 40;
             h = 40;
@@ -117,27 +115,27 @@ class LightboxGlassPane extends JPanel {
             });
             animator.start();
         } else {
-            if (animator != null) {
+            if (Objects.nonNull(animator)) {
                 animator.stop();
             }
         }
         animatedIcon.setRunning(isVisible);
     }
-    @Override public void paintComponent(Graphics g) {
+    @Override protected void paintComponent(Graphics g) {
         JRootPane rootPane = getRootPane();
-        if (rootPane != null) {
+        if (Objects.nonNull(rootPane)) {
             rootPane.getLayeredPane().print(g);
         }
         super.paintComponent(g);
-        Graphics2D g2d = (Graphics2D) g.create();
+        Graphics2D g2 = (Graphics2D) g.create();
 
-        if (h < image.getIconHeight() + 5 + 5) {
+        if (h < image.getIconHeight() + BW + BW) {
             h += image.getIconHeight() / 16;
-        } else if (w < image.getIconWidth() + 5 + 5) {
-            h  = image.getIconHeight() + 5 + 5;
+        } else if (w < image.getIconWidth() + BW + BW) {
+            h  = image.getIconHeight() + BW + BW;
             w += image.getIconWidth() / 16;
         } else if (alpha < 1f) {
-            w  = image.getIconWidth() + 5 + 5;
+            w  = image.getIconWidth() + BW + BW;
             alpha = alpha + .1f;
         } else {
             animatedIcon.setRunning(false);
@@ -145,33 +143,28 @@ class LightboxGlassPane extends JPanel {
         }
         rect.setSize(w, h);
         Rectangle screen = getBounds();
-        rect.setLocation(screen.x + screen.width / 2  - rect.width / 2,
-                         screen.y + screen.height / 2 - rect.height / 2);
+        Point centerPt = new Point(screen.x + screen.width / 2, screen.y + screen.height / 2);
+        rect.setLocation(centerPt.x - rect.width / 2, centerPt.y - rect.height / 2);
 
-        g2d.setColor(new Color(100, 100, 100, 100));
-        g2d.fill(screen);
-        g2d.setColor(new Color(255, 255, 255, 200));
-        g2d.fill(rect);
+        g2.setPaint(new Color(0x64646464, true));
+        g2.fill(screen);
+        g2.setPaint(new Color(0xC8FFFFFF, true));
+        g2.fill(rect);
 
         if (alpha > 0) {
             if (alpha > 1f) {
                 alpha = 1f;
             }
-            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-            g2d.drawImage(image.getImage(), rect.x + 5, rect.y + 5,
-                          image.getIconWidth(),
-                          image.getIconHeight(), this);
+            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+            g2.drawImage(image.getImage(), rect.x + BW, rect.y + BW, image.getIconWidth(), image.getIconHeight(), this);
         } else {
-            animatedIcon.paintIcon(this, g2d,
-                                   screen.x + screen.width / 2  - animatedIcon.getIconWidth() / 2,
-                                   screen.y + screen.height / 2 - animatedIcon.getIconHeight() / 2);
+            animatedIcon.paintIcon(this, g2, centerPt.x - animatedIcon.getIconWidth() / 2, centerPt.y - animatedIcon.getIconHeight() / 2);
         }
-        g2d.dispose();
+        g2.dispose();
     }
 }
 
-class AnimeIcon implements Icon, Serializable {
-    private static final long serialVersionUID = 1L;
+class AnimeIcon implements Icon {
     private static final Color ELLIPSE_COLOR = new Color(.5f, .5f, .5f);
     private static final double R  = 2d;
     private static final double SX = 0d;
@@ -198,20 +191,19 @@ class AnimeIcon implements Icon, Serializable {
         this.isRunning = isRunning;
     }
     @Override public void paintIcon(Component c, Graphics g, int x, int y) {
-        Graphics2D g2d = (Graphics2D) g.create();
-        g2d.setPaint(new Color(0, true));
-        g2d.fillRect(x, y, getIconWidth(), getIconHeight());
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2d.setColor(ELLIPSE_COLOR);
-        g2d.translate(x, y);
+        Graphics2D g2 = (Graphics2D) g.create();
+        g2.translate(x, y);
+        g2.setPaint(new Color(0x0, true));
+        g2.fillRect(0, 0, getIconWidth(), getIconHeight());
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setPaint(ELLIPSE_COLOR);
         int size = list.size();
         for (int i = 0; i < size; i++) {
             float alpha = isRunning ? (i + 1) / (float) size : .5f;
-            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-            g2d.fill(list.get(i));
+            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+            g2.fill(list.get(i));
         }
-        //g2d.translate(-x, -y);
-        g2d.dispose();
+        g2.dispose();
     }
     @Override public int getIconWidth() {
         return WIDTH;

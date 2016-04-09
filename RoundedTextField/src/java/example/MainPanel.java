@@ -4,6 +4,7 @@ package example;
 //@homepage@
 import java.awt.*;
 import java.awt.geom.*;
+import java.util.Objects;
 import javax.swing.*;
 import javax.swing.border.*;
 
@@ -19,9 +20,9 @@ public final class MainPanel extends JPanel {
                     int h = getHeight();
                     Graphics2D g2 = (Graphics2D) g.create();
                     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                    g2.setColor(UIManager.getColor("TextField.background"));
+                    g2.setPaint(UIManager.getColor("TextField.background"));
                     g2.fillRoundRect(0, 0, w - 1, h - 1, h, h);
-                    g2.setColor(Color.GRAY);
+                    g2.setPaint(Color.GRAY);
                     g2.drawRoundRect(0, 0, w - 1, h - 1, h, h);
                     g2.dispose();
                 }
@@ -29,7 +30,7 @@ public final class MainPanel extends JPanel {
             }
         };
         textField01.setOpaque(false);
-        textField01.setBackground(new Color(0, 0, 0, 0));
+        textField01.setBackground(new Color(0x0, true));
         textField01.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
         textField01.setText("aaaaaaaaaaa");
 
@@ -42,7 +43,7 @@ public final class MainPanel extends JPanel {
         p.add(makeTitlePanel(textField02, "setBorder(new RoundedCornerBorder())"));
         add(p);
         setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        setPreferredSize(new Dimension(320, 200));
+        setPreferredSize(new Dimension(320, 240));
     }
     private JComponent makeTitlePanel(JComponent cmp, String title) {
         JPanel p = new JPanel(new GridBagLayout());
@@ -82,15 +83,15 @@ class RoundedCornerBorder extends AbstractBorder {
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         int r = height - 1;
-        RoundRectangle2D round = new RoundRectangle2D.Float(x, y, width - 1, height - 1, r, r);
+        RoundRectangle2D round = new RoundRectangle2D.Double(x, y, width - 1, height - 1, r, r);
         Container parent = c.getParent();
-        if (parent != null) {
-            g2.setColor(parent.getBackground());
-            Area corner = new Area(new Rectangle2D.Float(x, y, width, height));
+        if (Objects.nonNull(parent)) {
+            g2.setPaint(parent.getBackground());
+            Area corner = new Area(new Rectangle2D.Double(x, y, width, height));
             corner.subtract(new Area(round));
             g2.fill(corner);
         }
-        g2.setColor(Color.GRAY);
+        g2.setPaint(Color.GRAY);
         g2.draw(round);
         g2.dispose();
     }

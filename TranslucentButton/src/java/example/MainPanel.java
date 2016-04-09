@@ -134,7 +134,7 @@ public final class MainPanel extends JPanel {
             }
         }
         g2.dispose();
-        return new TexturePaint(img, new Rectangle(0, 0, sz, sz));
+        return new TexturePaint(img, new Rectangle(sz, sz));
     }
     @Override protected void paintComponent(Graphics g) {
         Graphics2D g2 = (Graphics2D) g.create();
@@ -151,10 +151,10 @@ class TranslucentButton extends JButton {
     private static final Color ST = new Color(1f, 1f, 1f, .2f);
     private static final Color SB = new Color(1f, 1f, 1f, .1f);
     private static final int R = 8;
-    public TranslucentButton(String text) {
+    protected TranslucentButton(String text) {
         super(text);
     }
-    public TranslucentButton(String text, Icon icon) {
+    protected TranslucentButton(String text, Icon icon) {
         super(text, icon);
     }
     @Override public void updateUI() {
@@ -172,7 +172,7 @@ class TranslucentButton extends JButton {
         int h = getHeight();
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        Shape area = new RoundRectangle2D.Float(x, y, w - 1, h - 1, R, R);
+        Shape area = new RoundRectangle2D.Double(x, y, w - 1, h - 1, R, R);
         Color ssc = TL;
         Color bgc = BR;
         ButtonModel m = getModel();
@@ -200,7 +200,7 @@ class TranslucentButtonIcon implements Icon {
     private static final int R = 8;
     private int width;
     private int height;
-    public TranslucentButtonIcon(JComponent c) {
+    protected TranslucentButtonIcon(JComponent c) {
         Insets i = c.getBorder().getBorderInsets(c);
         Dimension d = c.getPreferredSize();
         width  = d.width - i.left - i.right;
@@ -217,7 +217,7 @@ class TranslucentButtonIcon implements Icon {
             height = h - i.top - i.bottom;
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            Shape area = new RoundRectangle2D.Float(x - i.left, y - i.top, w - 1, h - 1, R, R);
+            Shape area = new RoundRectangle2D.Double(x - i.left, y - i.top, w - 1, h - 1, R, R);
             Color ssc = TL;
             Color bgc = BR;
             ButtonModel m = b.getModel();
@@ -243,12 +243,12 @@ class TranslucentButtonIcon implements Icon {
     }
 }
 
-// https://forums.oracle.com/thread/1395763 How can I use TextArea with Background Picture ?
-// http://terai.xrea.jp/Swing/CentredBackgroundBorder.html
+// https://community.oracle.com/thread/1395763 How can I use TextArea with Background Picture ?
+// http://ateraimemo.com/Swing/CentredBackgroundBorder.html
 class CentredBackgroundBorder implements Border {
     private final Insets insets = new Insets(0, 0, 0, 0);
     private final BufferedImage image;
-    public CentredBackgroundBorder(BufferedImage image) {
+    protected CentredBackgroundBorder(BufferedImage image) {
         this.image = image;
     }
     @Override public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {

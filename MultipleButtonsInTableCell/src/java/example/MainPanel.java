@@ -73,14 +73,16 @@ public final class MainPanel extends JPanel {
 //             Component c = ce.getTableCellEditorComponent(t, null, true, row, col);
 //             Point p = SwingUtilities.convertPoint(t, pt, c);
 //             Component b = SwingUtilities.getDeepestComponentAt(c, p.x, p.y);
-//             if (b instanceof JButton) { ((JButton) b).doClick(); }
+//             if (b instanceof JButton) {
+//                 ((JButton) b).doClick();
+//             }
 //         }
 //     }
 // }
 
 class ButtonsPanel extends JPanel {
     public final List<JButton> buttons = Arrays.asList(new JButton("view"), new JButton("edit"));
-    public ButtonsPanel() {
+    protected ButtonsPanel() {
         super();
         setOpaque(true);
         for (JButton b: buttons) {
@@ -95,8 +97,8 @@ class ButtonsPanel extends JPanel {
 }
 
 class ButtonsRenderer extends ButtonsPanel implements TableCellRenderer {
-    public ButtonsRenderer() {
-        super();
+    @Override public void updateUI() {
+        super.updateUI();
         setName("Table.cellRenderer");
     }
     @Override public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -107,8 +109,8 @@ class ButtonsRenderer extends ButtonsPanel implements TableCellRenderer {
 
 class ViewAction extends AbstractAction {
     private final JTable table;
-    public ViewAction(JTable table) {
-        super("vdit");
+    protected ViewAction(JTable table) {
+        super("view");
         this.table = table;
     }
     @Override public void actionPerformed(ActionEvent e) {
@@ -118,7 +120,7 @@ class ViewAction extends AbstractAction {
 
 class EditAction extends AbstractAction {
     private final JTable table;
-    public EditAction(JTable table) {
+    protected EditAction(JTable table) {
         super("edit");
         this.table = table;
     }
@@ -147,14 +149,10 @@ class ButtonsEditor extends ButtonsPanel implements TableCellEditor {
             }
         }
         @Override public void actionPerformed(ActionEvent e) {
-            EventQueue.invokeLater(new Runnable() {
-                @Override public void run() {
-                    fireEditingStopped();
-                }
-            });
+            EventQueue.invokeLater(() -> fireEditingStopped());
         }
     }
-    public ButtonsEditor(JTable table) {
+    protected ButtonsEditor(JTable table) {
         super();
         this.table = table;
         buttons.get(0).setAction(new ViewAction(table));
@@ -208,7 +206,7 @@ class ButtonsEditor extends ButtonsPanel implements TableCellEditor {
         for (int i = listeners.length - 2; i >= 0; i -= 2) {
             if (listeners[i] == CellEditorListener.class) {
                 // Lazily create the event:
-                if (changeEvent == null) {
+                if (Objects.isNull(changeEvent)) {
                     changeEvent = new ChangeEvent(this);
                 }
                 ((CellEditorListener) listeners[i + 1]).editingStopped(changeEvent);
@@ -223,7 +221,7 @@ class ButtonsEditor extends ButtonsPanel implements TableCellEditor {
         for (int i = listeners.length - 2; i >= 0; i -= 2) {
             if (listeners[i] == CellEditorListener.class) {
                 // Lazily create the event:
-                if (changeEvent == null) {
+                if (Objects.isNull(changeEvent)) {
                     changeEvent = new ChangeEvent(this);
                 }
                 ((CellEditorListener) listeners[i + 1]).editingCanceled(changeEvent);

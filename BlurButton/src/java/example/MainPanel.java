@@ -5,7 +5,7 @@ package example;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.*;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
 import javax.swing.*;
 
@@ -64,8 +64,7 @@ public final class MainPanel extends JPanel {
         add(box, BorderLayout.NORTH);
         add(new JToggleButton(new AbstractAction("setEnabled(false)") {
             @Override public void actionPerformed(ActionEvent e) {
-                boolean f = ((AbstractButton) e.getSource()).isSelected();
-                f ^= true;
+                boolean f = !((AbstractButton) e.getSource()).isSelected();
                 for (JButton b: list) {
                     b.setEnabled(f);
                 }
@@ -108,7 +107,7 @@ class BlurJButton extends JButton {
     private int iw = -1;
     private int ih = -1;
     private transient BufferedImage buf;
-    public BlurJButton(String label) {
+    protected BlurJButton(String label) {
         super(label);
         //System.out.println(op.getEdgeCondition());
     }
@@ -116,7 +115,7 @@ class BlurJButton extends JButton {
         if (isEnabled()) {
             super.paintComponent(g);
         } else {
-            if (buf == null || iw != getWidth() || ih != getHeight()) {
+            if (Objects.isNull(buf) || iw != getWidth() || ih != getHeight()) {
                 iw = getWidth();
                 ih = getHeight();
                 buf = new BufferedImage(iw, ih, BufferedImage.TYPE_INT_ARGB);
@@ -138,7 +137,7 @@ class BlurButton extends JButton {
     private int iw = -1;
     private int ih = -1;
     private transient BufferedImage buf;
-    public BlurButton(String label) {
+    protected BlurButton(String label) {
         super(label);
         //System.out.println(op.getEdgeCondition());
     }
@@ -146,7 +145,7 @@ class BlurButton extends JButton {
         if (isEnabled()) {
             super.paintComponent(g);
         } else {
-            if (buf == null || iw != getWidth() || ih != getHeight()) {
+            if (Objects.isNull(buf) || iw != getWidth() || ih != getHeight()) {
                 iw = getWidth();
                 ih = getHeight();
                 buf = new BufferedImage(iw, ih, BufferedImage.TYPE_INT_ARGB);

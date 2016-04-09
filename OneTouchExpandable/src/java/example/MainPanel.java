@@ -49,16 +49,16 @@ public final class MainPanel extends JPanel {
                         Method setKeepHidden = BasicSplitPaneUI.class.getDeclaredMethod("setKeepHidden", new Class<?>[] {Boolean.TYPE});
                         setKeepHidden.setAccessible(true);
                         setKeepHidden.invoke(splitPane.getUI(), new Object[] {Boolean.TRUE});
-                    } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-                        e.printStackTrace();
+                    } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException ex) {
+                        ex.printStackTrace();
                     }
                     return null;
                 }
             });
         }
 //         } else {
-// //             s1.setMinimumSize(new Dimension(0, 0));
-// //             s2.setMinimumSize(new Dimension(0, 0));
+// //             s1.setMinimumSize(new Dimension());
+// //             s2.setMinimumSize(new Dimension());
 // //             EventQueue.invokeLater(new Runnable() {
 // //                 @Override public void run() {
 // //                     splitPane.setDividerLocation(1d);

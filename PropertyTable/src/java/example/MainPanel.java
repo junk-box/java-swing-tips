@@ -51,7 +51,7 @@ public final class MainPanel extends JPanel {
         // component is saved in the TableModel. The class was saved when the
         // editor was invoked so the proper class can be created.
         @Override public Class<?> getColumnClass(int column) {
-            //return editingClass != null ? editingClass : super.getColumnClass(column);
+            //return Objects.nonNull(editingClass) ? editingClass : super.getColumnClass(column);
             if (convertColumnIndexToModel(column) == 1) {
                 //System.out.println("getColumnClass");
                 return editingClass;
@@ -100,12 +100,12 @@ class DateEditor extends JSpinner implements TableCellEditor {
     protected transient ChangeEvent changeEvent;
     private final JSpinner.DateEditor editor;
 
-    public DateEditor() {
+    protected DateEditor() {
         super(new SpinnerDateModel());
         editor = new JSpinner.DateEditor(this, "yyyy/MM/dd");
         setEditor(editor);
         setArrowButtonEnabled(false);
-        editor.getTextField().setHorizontalAlignment(JFormattedTextField.LEFT);
+        editor.getTextField().setHorizontalAlignment(SwingConstants.LEFT);
 
 //         addFocusListener(new FocusAdapter() {
 //             @Override public void focusGained(FocusEvent e) {
@@ -129,7 +129,7 @@ class DateEditor extends JSpinner implements TableCellEditor {
                 });
             }
         });
-        setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+        setBorder(BorderFactory.createEmptyBorder());
     }
     private void setArrowButtonEnabled(boolean flag) {
         for (Component c: getComponents()) {
@@ -188,7 +188,7 @@ class DateEditor extends JSpinner implements TableCellEditor {
         for (int i = listeners.length - 2; i >= 0; i -= 2) {
             if (listeners[i] == CellEditorListener.class) {
                 // Lazily create the event:
-                if (changeEvent == null) {
+                if (Objects.isNull(changeEvent)) {
                     changeEvent = new ChangeEvent(this);
                 }
                 ((CellEditorListener) listeners[i + 1]).editingStopped(changeEvent);
@@ -203,7 +203,7 @@ class DateEditor extends JSpinner implements TableCellEditor {
         for (int i = listeners.length - 2; i >= 0; i -= 2) {
             if (listeners[i] == CellEditorListener.class) {
                 // Lazily create the event:
-                if (changeEvent == null) {
+                if (Objects.isNull(changeEvent)) {
                     changeEvent = new ChangeEvent(this);
                 }
                 ((CellEditorListener) listeners[i + 1]).editingCanceled(changeEvent);
@@ -232,7 +232,7 @@ class ColorEditor extends AbstractCellEditor implements TableCellEditor, ActionL
     private final JDialog dialog;
     private Color currentColor;
 
-    public ColorEditor() {
+    protected ColorEditor() {
         super();
         //Set up the editor (from the table's point of view),
         //which is a button.
@@ -286,12 +286,15 @@ class ColorEditor extends AbstractCellEditor implements TableCellEditor, ActionL
 
 class ColorIcon implements Icon {
     private final Color color;
-    public ColorIcon(Color color) {
+    protected ColorIcon(Color color) {
         this.color = color;
     }
     @Override public void paintIcon(Component c, Graphics g, int x, int y) {
-        g.setColor(color);
-        g.fillRect(x, y, getIconWidth(), getIconHeight());
+        Graphics2D g2 = (Graphics2D) g.create();
+        g2.translate(x, y);
+        g2.setPaint(color);
+        g2.fillRect(0, 0, getIconWidth(), getIconHeight());
+        g2.dispose();
     }
     @Override public int getIconWidth() {
         return 10;

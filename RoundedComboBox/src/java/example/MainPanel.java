@@ -126,14 +126,14 @@ public final class MainPanel extends JPanel {
         } else {
             panel.add(cmp);
         }
-        if (str != null) {
+        if (Objects.nonNull(str)) {
             TitledBorder b = BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(), str);
-            if (bgc != null) {
+            if (Objects.nonNull(bgc)) {
                 b.setTitleColor(new Color(~bgc.getRGB()));
             }
             panel.setBorder(b);
         }
-        if (bgc != null) {
+        if (Objects.nonNull(bgc)) {
             panel.setOpaque(true);
             panel.setBackground(bgc);
         }
@@ -191,7 +191,7 @@ class ComboRolloverHandler extends MouseAdapter {
 
 class ArrowIcon implements Icon {
     private final Color color, rollover;
-    public ArrowIcon(Color color, Color rollover) {
+    protected ArrowIcon(Color color, Color rollover) {
         this.color = color;
         this.rollover = rollover;
     }
@@ -213,7 +213,6 @@ class ArrowIcon implements Icon {
         g2.drawLine(2, 3, 6, 3);
         g2.drawLine(3, 4, 5, 4);
         g2.drawLine(4, 5, 4, 5);
-        //g2.translate(-x, -y - shift);
         g2.dispose();
     }
     @Override public int getIconWidth() {
@@ -232,12 +231,12 @@ class RoundedCornerBorder extends AbstractBorder {
         int w = width  - 1;
         int h = height - 1;
 
-        Area round = new Area(new RoundRectangle2D.Float(x, y, w, h, r, r));
+        Area round = new Area(new RoundRectangle2D.Double(x, y, w, h, r, r));
 
         Container parent = c.getParent();
-        if (parent != null) {
-            g2.setColor(parent.getBackground());
-            Area corner = new Area(new Rectangle2D.Float(x, y, width, height));
+        if (Objects.nonNull(parent)) {
+            g2.setPaint(parent.getBackground());
+            Area corner = new Area(new Rectangle2D.Double(x, y, width, height));
             corner.subtract(round);
             g2.fill(corner);
         }
@@ -264,11 +263,13 @@ class KamabokoBorder extends RoundedCornerBorder {
 //         g2.fillRect(0, 0, sz, sz);
 //         for (int i = 0; i * cs < sz; i++) {
 //             for (int j = 0; j * cs < sz; j++) {
-//                 if ((i + j) % 2 == 0) { g2.fillRect(i * cs, j * cs, cs, cs); }
+//                 if ((i + j) % 2 == 0) {
+//                     g2.fillRect(i * cs, j * cs, cs, cs);
+//                 }
 //             }
 //         }
 //         g2.dispose();
-//         return new TexturePaint(bi, new Rectangle(0, 0, sz, sz));
+//         return new TexturePaint(bi, new Rectangle(sz, sz));
 //     }
 //     private static TexturePaint tp = makeCheckerTexture();
     @Override public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
@@ -278,7 +279,7 @@ class KamabokoBorder extends RoundedCornerBorder {
         int w = width  - 1;
         int h = height - 1;
 //*/
-        Path2D.Float p = new Path2D.Float();
+        Path2D p = new Path2D.Double();
         p.moveTo(x, y + h);
         p.lineTo(x, y + r);
         p.quadTo(x, y, x + r, y);
@@ -288,15 +289,15 @@ class KamabokoBorder extends RoundedCornerBorder {
         p.closePath();
         Area round = new Area(p);
 /*/
-        Area round = new Area(new RoundRectangle2D.Float(x, y, w, h, r, r));
+        Area round = new Area(new RoundRectangle2D.Double(x, y, w, h, r, r));
         Rectangle b = round.getBounds();
         b.setBounds(b.x, b.y + r, b.width, b.height - r);
         round.add(new Area(b));
 //*/
         Container parent = c.getParent();
-        if (parent != null) {
-            g2.setColor(parent.getBackground());
-            Area corner = new Area(new Rectangle2D.Float(x, y, width, height));
+        if (Objects.nonNull(parent)) {
+            g2.setPaint(parent.getBackground());
+            Area corner = new Area(new Rectangle2D.Double(x, y, width, height));
             corner.subtract(round);
             g2.fill(corner);
         }

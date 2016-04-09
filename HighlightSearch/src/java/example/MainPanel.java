@@ -5,7 +5,7 @@ package example;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
-import java.util.Arrays;
+import java.util.*;
 import java.util.regex.*;
 import javax.swing.*;
 import javax.swing.event.*;
@@ -84,7 +84,7 @@ public final class MainPanel extends JPanel {
     private static void scrollToCenter(JTextComponent tc, int pos) throws BadLocationException {
         Rectangle rect = tc.modelToView(pos);
         Container c = SwingUtilities.getAncestorOfClass(JViewport.class, tc);
-        if (rect != null && c instanceof JViewport) {
+        if (Objects.nonNull(rect) && c instanceof JViewport) {
             rect.x      = (int) (rect.x - c.getWidth() * .5);
             rect.width  = c.getWidth();
             rect.height = (int) (c.getHeight() * .5);
@@ -94,7 +94,7 @@ public final class MainPanel extends JPanel {
 
     private Pattern getPattern() {
         String text = field.getText();
-        if (text == null || text.isEmpty()) {
+        if (Objects.isNull(text) || text.isEmpty()) {
             return null;
         }
         try {
@@ -115,7 +115,7 @@ public final class MainPanel extends JPanel {
         Document doc = textArea.getDocument();
         try {
             Pattern pattern = getPattern();
-            if (pattern != null) {
+            if (Objects.nonNull(pattern)) {
                 Matcher matcher = pattern.matcher(doc.getText(0, doc.getLength()));
                 int pos = 0;
                 while (matcher.find(pos)) {
@@ -140,8 +140,8 @@ public final class MainPanel extends JPanel {
                 scrollToCenter(textArea, hh.getStartOffset());
             }
             label.setText(String.format("%02d / %02d%n", current + 1, hits));
-        } catch (BadLocationException e) {
-            e.printStackTrace();
+        } catch (BadLocationException ex) {
+            ex.printStackTrace();
         }
         field.repaint();
     }
@@ -192,27 +192,27 @@ public final class MainPanel extends JPanel {
 }
 
 class PlaceholderLayerUI extends LayerUI<JTextComponent> {
-    private static final Color INACTIVE = UIManager.getColor("TextField.inactiveForeground");
-    public final JLabel hint;
-    public PlaceholderLayerUI() {
-        super();
-        this.hint = new JLabel();
-        hint.setForeground(INACTIVE);
-        hint.setBackground(Color.RED);
-    }
+    public final JLabel hint = new JLabel() {
+        @Override public void updateUI() {
+            super.updateUI();
+            setForeground(UIManager.getColor("TextField.inactiveForeground"));
+            setBackground(Color.RED);
+        }
+    };
     @Override public void paint(Graphics g, JComponent c) {
         super.paint(g, c);
         if (c instanceof JLayer) {
             JLayer jlayer = (JLayer) c;
             JTextComponent tc = (JTextComponent) jlayer.getView();
-            if (tc.getText().length() != 0) {
+            if (!tc.getText().isEmpty()) {
                 Graphics2D g2 = (Graphics2D) g.create();
-                g2.setPaint(INACTIVE);
+                g2.setPaint(hint.getForeground());
                 Insets i = tc.getInsets();
                 Dimension d = hint.getPreferredSize();
                 int x = tc.getWidth() - i.right - d.width - 2;
                 int y = (tc.getHeight() - d.height) / 2;
-                SwingUtilities.paintComponent(g2, hint, tc, x, y, d.width, d.height);
+                g2.translate(x, y);
+                SwingUtilities.paintComponent(g2, hint, tc, 0, 0, d.width, d.height);
                 g2.dispose();
             }
         }

@@ -58,7 +58,7 @@ public final class MainPanel extends JPanel {
     }
     @Override public void updateUI() {
         super.updateUI();
-        if (disabledAreNavigableCheck != null) {
+        if (Objects.nonNull(disabledAreNavigableCheck)) {
             Boolean b = UIManager.getBoolean(DISABLED_ARE_NAVIGABLE);
             disabledAreNavigableCheck.setSelected(b);
         }
@@ -99,30 +99,27 @@ public final class MainPanel extends JPanel {
 }
 
 class ExitAction extends AbstractAction {
-    public ExitAction() {
+    protected ExitAction() {
         super("Exit");
     }
     @Override public void actionPerformed(ActionEvent e) {
-        JComponent c = (JComponent) e.getSource();
-        Window window = null;
-        Container parent = c.getParent();
+        Component root = null;
+        Container parent = SwingUtilities.getUnwrappedParent((Component) e.getSource());
         if (parent instanceof JPopupMenu) {
             JPopupMenu popup = (JPopupMenu) parent;
-            JComponent invoker = (JComponent) popup.getInvoker();
-            window = SwingUtilities.getWindowAncestor(invoker);
+            root = SwingUtilities.getRoot(popup.getInvoker());
         } else if (parent instanceof JToolBar) {
             JToolBar toolbar = (JToolBar) parent;
             if (((BasicToolBarUI) toolbar.getUI()).isFloating()) {
-                window = SwingUtilities.getWindowAncestor(toolbar).getOwner();
+                root = SwingUtilities.getWindowAncestor(toolbar).getOwner();
             } else {
-                window = SwingUtilities.getWindowAncestor(toolbar);
+                root = SwingUtilities.getRoot(toolbar);
             }
         } else {
-            Component invoker = c.getParent();
-            window = SwingUtilities.getWindowAncestor(invoker);
+            root = SwingUtilities.getRoot(parent);
         }
-        if (window != null) {
-            //window.dispose();
+        if (root instanceof Window) {
+            Window window = (Window) root;
             window.dispatchEvent(new WindowEvent(window, WindowEvent.WINDOW_CLOSING));
         }
     }

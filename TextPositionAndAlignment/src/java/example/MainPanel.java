@@ -51,21 +51,22 @@ public final class MainPanel extends JPanel {
 
         JPanel p2 = new JPanel(new GridBagLayout());
         GridBagConstraints c = new GridBagConstraints();
-        c.gridheight = 1;
+
         c.gridx   = 0;
         c.insets  = new Insets(5, 5, 5, 0);
-        c.anchor  = GridBagConstraints.WEST;
-        c.gridy   = 0; p2.add(new JLabel("setVerticalAlignment:"), c);
-        c.gridy   = 1; p2.add(new JLabel("setVerticalTextPosition:"), c);
-        c.gridy   = 2; p2.add(new JLabel("setHorizontalAlignment:"), c);
-        c.gridy   = 3; p2.add(new JLabel("setHorizontalTextPosition:"), c);
+        c.anchor  = GridBagConstraints.LINE_END;
+        p2.add(new JLabel("setVerticalAlignment:"), c);
+        p2.add(new JLabel("setVerticalTextPosition:"), c);
+        p2.add(new JLabel("setHorizontalAlignment:"), c);
+        p2.add(new JLabel("setHorizontalTextPosition:"), c);
+
         c.gridx   = 1;
         c.weightx = 1d;
         c.fill    = GridBagConstraints.HORIZONTAL;
-        c.gridy   = 0; p2.add(verticalAlignmentChoices, c);
-        c.gridy   = 1; p2.add(verticalTextPositionChoices, c);
-        c.gridy   = 2; p2.add(horizontalAlignmentChoices, c);
-        c.gridy   = 3; p2.add(horizontalTextPositionChoices, c);
+        p2.add(verticalAlignmentChoices, c);
+        p2.add(verticalTextPositionChoices, c);
+        p2.add(horizontalAlignmentChoices, c);
+        p2.add(horizontalTextPositionChoices, c);
 
         add(p1);
         add(p2, BorderLayout.NORTH);
@@ -100,7 +101,7 @@ enum Vertical {
     CENTER(SwingConstants.CENTER),
     BOTTOM(SwingConstants.BOTTOM);
     public final int alignment;
-    private Vertical(int alignment) {
+    Vertical(int alignment) {
         this.alignment = alignment;
     }
 }
@@ -112,7 +113,7 @@ enum Horizontal {
     LEADING(SwingConstants.LEADING),
     TRAILING(SwingConstants.TRAILING);
     public final int alignment;
-    private Horizontal(int alignment) {
+    Horizontal(int alignment) {
         this.alignment = alignment;
     }
 }
@@ -122,10 +123,10 @@ class StarburstIcon implements Icon {
     private static final int R1 = 20;
     private static final int VC = 18;
     private final Shape star;
-    public StarburstIcon() {
+    protected StarburstIcon() {
         double agl = 0d;
         double add = 2 * Math.PI / (VC * 2);
-        Path2D.Double p = new Path2D.Double();
+        Path2D p = new Path2D.Double();
         p.moveTo(R2 * 1, R2 * 0);
         for (int i = 0; i < VC * 2 - 1; i++) {
             agl += add;
@@ -146,15 +147,13 @@ class StarburstIcon implements Icon {
         return 2 * R2;
     }
     @Override public void paintIcon(Component c, Graphics g, int x, int y) {
-        Graphics2D g2d = (Graphics2D) g.create();
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2d.translate(x, y);
-        g2d.setPaint(Color.YELLOW);
-        g2d.fill(star);
-        g2d.setPaint(Color.BLACK);
-        g2d.draw(star);
-        //g2d.translate(-x, -y);
-        //g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-        g2d.dispose();
+        Graphics2D g2 = (Graphics2D) g.create();
+        g2.translate(x, y);
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setPaint(Color.YELLOW);
+        g2.fill(star);
+        g2.setPaint(Color.BLACK);
+        g2.draw(star);
+        g2.dispose();
     }
 }

@@ -1,7 +1,7 @@
 /**
 @version 1.0 02/25/99
 @author Nobuo Tamemasa
-modified by aterai at.terai@gmail.com
+modified by aterai aterai@outlook.com
 */
 package example;
 //-*- mode:java; encoding:utf-8 -*-
@@ -26,15 +26,15 @@ class ColumnComparator implements Comparator, Serializable {
     private static final long serialVersionUID = 1L;
     protected final int index;
     protected final boolean ascending;
-    public ColumnComparator(int index, boolean ascending) {
+    protected ColumnComparator(int index, boolean ascending) {
         this.index = index;
         this.ascending = ascending;
     }
     @SuppressWarnings("unchecked")
     @Override public int compare(Object one, Object two) {
         if (one instanceof Vector && two instanceof Vector) {
-            Object oOne = ((Vector) one).elementAt(index);
-            Object oTwo = ((Vector) two).elementAt(index);
+            Object oOne = ((Vector) one).get(index);
+            Object oTwo = ((Vector) two).get(index);
             int dir = ascending ? 1 : -1;
             if (oOne instanceof Comparable && oTwo instanceof Comparable) {
                 Comparable cOne = (Comparable) oOne;
@@ -50,7 +50,7 @@ class ColumnComparator implements Comparator, Serializable {
         }
         return 1;
     }
-//     public int compare(Number o1, Number o2) {
+//     @Override public int compare(Number o1, Number o2) {
 //         return new BigDecimal(o1.toString()).compareTo(new BigDecimal(o2.toString()));
 // //         double n1 = o1.doubleValue();
 // //         double n2 = o2.doubleValue();
@@ -77,10 +77,10 @@ class SortButtonRenderer extends JButton implements TableCellRenderer {
     private final ConcurrentMap<Integer, Boolean> dmap  = new ConcurrentHashMap<>();
     private final JTableHeader header;
 
-    public SortButtonRenderer(JTableHeader header) {
+    protected SortButtonRenderer(JTableHeader header) {
         super();
         this.header = header;
-        setHorizontalTextPosition(JButton.LEFT);
+        setHorizontalTextPosition(SwingConstants.LEFT);
         Icon i = UIManager.getIcon("Table.ascendingSortIcon");
         iconSize = new Dimension(i.getIconWidth(), i.getIconHeight());
         setIcon(new EmptyIcon(iconSize));
@@ -128,7 +128,9 @@ class SortButtonRenderer extends JButton implements TableCellRenderer {
         header.repaint();
     }
     public boolean isEnabledAt(int col) {
-        return dmap.containsKey(col) ? dmap.get(col) : true;
+        //return dmap.containsKey(col) ? dmap.get(col) : true;
+        //return !dmap.containsKey(col) ? true : dmap.get(col);
+        return !dmap.containsKey(col) || dmap.get(col);
     }
     public void setSelectedColumn(int col) {
         if (col < 0) {
@@ -143,7 +145,7 @@ class SortButtonRenderer extends JButton implements TableCellRenderer {
     }
     public int getState(int col) {
         Integer i = state.get(col);
-        return (i == null) ? NONE : i;
+        return i == null ? NONE : i;
     }
 }
 
@@ -180,7 +182,7 @@ class HeaderMouseListener extends MouseAdapter {
 
 class EmptyIcon implements Icon {
     private final Dimension size;
-    public EmptyIcon(Dimension size) {
+    protected EmptyIcon(Dimension size) {
         this.size = size;
     }
     @Override public void paintIcon(Component c, Graphics g, int x, int y) { /* Empty icon */ }

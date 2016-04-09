@@ -5,6 +5,7 @@ package example;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
+import java.util.stream.*;
 import javax.swing.*;
 
 public final class MainPanel extends JPanel {
@@ -18,7 +19,7 @@ public final class MainPanel extends JPanel {
         initDisableIndex(disableIndexSet);
         ActionMap am = list.getActionMap();
         am.put("selectNextRow", new AbstractAction() {
-            @Override public void actionPerformed(ActionEvent ae) {
+            @Override public void actionPerformed(ActionEvent e) {
                 int index = list.getSelectedIndex();
                 for (int i = index + 1; i < list.getModel().getSize(); i++) {
                     if (!disableIndexSet.contains(i)) {
@@ -29,7 +30,7 @@ public final class MainPanel extends JPanel {
             }
         });
         am.put("selectPreviousRow", new AbstractAction() {
-            @Override public void actionPerformed(ActionEvent ae) {
+            @Override public void actionPerformed(ActionEvent e) {
                 int index = list.getSelectedIndex();
                 for (int i = index - 1; i >= 0; i--) {
                     if (!disableIndexSet.contains(i)) {
@@ -83,8 +84,7 @@ public final class MainPanel extends JPanel {
 
 //         list.setSelectionModel(new DefaultListSelectionModel() {
 //             @Override public boolean isSelectedIndex(int index) {
-//                 if (disableIndexSet.contains(index)) { return false; }
-//                 return super.isSelectedIndex(index);
+//                 return !disableIndexSet.contains(index) && super.isSelectedIndex(index);
 //             }
 //         });
 
@@ -92,15 +92,12 @@ public final class MainPanel extends JPanel {
     }
 
     private void initDisableIndex(Set<Integer> set) {
-        StringTokenizer st = new StringTokenizer(field.getText(), ",");
         set.clear();
         try {
-            while (st.hasMoreTokens()) {
-                set.add(Integer.valueOf(st.nextToken().trim()));
-            }
-        } catch (NumberFormatException nfe) {
+            set.addAll(Arrays.stream(field.getText().split(",")).map(String::trim).filter(s -> !s.isEmpty()).map(Integer::valueOf).collect(Collectors.toSet()));
+        } catch (NumberFormatException ex) {
             Toolkit.getDefaultToolkit().beep();
-            JOptionPane.showMessageDialog(field, "invalid value.\n" + nfe.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(field, "invalid value.\n" + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 

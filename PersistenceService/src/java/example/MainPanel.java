@@ -52,7 +52,7 @@ public final class MainPanel extends JPanel {
                     ex.printStackTrace();
                 }
                 JFrame frame = new JFrame("@title@");
-                if (windowListener != null) {
+                if (Objects.nonNull(windowListener)) {
                     frame.addWindowListener(windowListener);
                 }
                 frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -68,7 +68,7 @@ public final class MainPanel extends JPanel {
 
 class LoadSaveTask extends SwingWorker<WindowAdapter, Void> {
     private final WindowState windowState;
-    public LoadSaveTask(WindowState windowState) {
+    protected LoadSaveTask(WindowState windowState) {
         super();
         this.windowState = windowState;
     }
@@ -83,24 +83,26 @@ class LoadSaveTask extends SwingWorker<WindowAdapter, Void> {
             ps = null;
             bs = null;
         }
-        if (ps == null || bs == null) {
-            return null;
-        } else {
+        if (Objects.nonNull(ps) && Objects.nonNull(bs)) {
             final PersistenceService persistenceService = ps;
             final URL codebase = bs.getCodeBase();
             loadWindowState(persistenceService, codebase, windowState);
             return new WindowAdapter() {
                 @Override public void windowClosing(WindowEvent e) {
                     JFrame f = (JFrame) e.getComponent();
-                    if (f.getExtendedState() == JFrame.NORMAL) {
+                    if (f.getExtendedState() == Frame.NORMAL) {
                         windowState.setSize(f.getSize());
                         //Point pt = f.getLocationOnScreen();
-                        //if (pt.x < 0 || pt.y < 0) { return; }
+                        //if (pt.x < 0 || pt.y < 0) {
+                        //    return;
+                        //}
                         windowState.setLocation(f.getLocationOnScreen());
                     }
                     saveWindowState(persistenceService, codebase, windowState);
                 }
             };
+        } else {
+            return null;
         }
     }
     private static void loadWindowState(PersistenceService ps, URL codebase, WindowState windowState) {

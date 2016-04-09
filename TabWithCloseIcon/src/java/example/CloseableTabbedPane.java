@@ -8,6 +8,7 @@ import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.plaf.basic.BasicTabbedPaneUI;
 //import javax.swing.plaf.metal.MetalTabbedPaneUI;
+import javax.swing.text.View;
 import com.sun.java.swing.plaf.windows.WindowsTabbedPaneUI;
 
 //Copied from
@@ -32,7 +33,7 @@ public class CloseableTabbedPane extends JTabbedPane { //implements MouseListene
     /**
      * The viewport of the scrolled tabs.
      */
-    protected JViewport headerViewport;
+    //protected JViewport headerViewport;
 
     protected transient CloseableTabIconHandler handler;
 
@@ -74,9 +75,7 @@ public class CloseableTabbedPane extends JTabbedPane { //implements MouseListene
         removeMouseMotionListener(handler);
         super.updateUI();
         eventListenerList = new EventListenerList();
-        if (handler == null) {
-            handler = new CloseableTabIconHandler();
-        }
+        handler = new CloseableTabIconHandler();
         addMouseListener(handler);
         addMouseMotionListener(handler);
 
@@ -108,14 +107,14 @@ public class CloseableTabbedPane extends JTabbedPane { //implements MouseListene
         //addTab(title, component, null);
         super.addTab(title, new CloseTabIcon(null), component);
 
-        if (headerViewport == null) {
-            for (Component c: getComponents()) {
-                if ("TabbedPane.scrollableViewport".equals(c.getName())) {
-                    headerViewport = (JViewport) c;
-                    break;
-                }
-            }
-        }
+//         if (Objects.isNull(headerViewport)) {
+//             for (Component c: getComponents()) {
+//                 if ("TabbedPane.scrollableViewport".equals(c.getName())) {
+//                     headerViewport = (JViewport) c;
+//                     break;
+//                 }
+//             }
+//         }
     }
 
 //     /**
@@ -128,7 +127,7 @@ public class CloseableTabbedPane extends JTabbedPane { //implements MouseListene
 // //         boolean doPaintCloseIcon = true;
 // //         if (component instanceof JComponent) {
 // //             Object prop = ((JComponent) component).getClientProperty("isClosable");
-// //             if (prop != null) {
+// //             if (Objects.nonNull(prop)) {
 // //                 doPaintCloseIcon = ((Boolean) prop).booleanValue();
 // //             }
 // //         }
@@ -136,7 +135,7 @@ public class CloseableTabbedPane extends JTabbedPane { //implements MouseListene
 // //         super.addTab(title, doPaintCloseIcon ? new CloseTabIcon(extraIcon) : null, component);
 //         super.addTab(title, new CloseTabIcon(extraIcon), component);
 //
-//         if (headerViewport == null) {
+//         if (Objects.isNull(headerViewport)) {
 //             //for (Component c: getComponents()) {
 //             //    if ("TabbedPane.scrollableViewport".equals(c.getName()))
 //             //      headerViewport = (JViewport) c;
@@ -198,6 +197,14 @@ public class CloseableTabbedPane extends JTabbedPane { //implements MouseListene
         }
         return closeit;
     }
+    public Point getHeaderViewPosition() {
+        for (Component c: getComponents()) {
+            if (c instanceof JViewport && "TabbedPane.scrollableViewport".equals(c.getName())) {
+                return ((JViewport) c).getViewPosition();
+            }
+        }
+        return new Point();
+    }
 }
 
 class CloseableTabIconHandler extends MouseAdapter {
@@ -205,8 +212,7 @@ class CloseableTabIconHandler extends MouseAdapter {
 
     private boolean isCloseTabIconRollover(CloseableTabbedPane tabbedPane, CloseTabIcon icon, MouseEvent e) {
         Rectangle rect = icon.getBounds();
-        JViewport vp = tabbedPane.headerViewport;
-        Point pos = vp == null ? new Point() : vp.getViewPosition();
+        Point pos = tabbedPane.getHeaderViewPosition();
         drawRect.setBounds(rect.x - pos.x, rect.y - pos.y, rect.width, rect.height);
         pos.translate(e.getX(), e.getY());
         return rect.contains(pos);
@@ -224,7 +230,7 @@ class CloseableTabIconHandler extends MouseAdapter {
         }
         CloseableTabbedPane tabbedPane = (CloseableTabbedPane) c;
         CloseTabIcon icon = getCloseTabIcon(tabbedPane, e.getPoint());
-        if (icon == null) {
+        if (Objects.isNull(icon)) {
             return;
         }
         if (isCloseTabIconRollover(tabbedPane, icon, e)) {
@@ -269,7 +275,7 @@ class CloseableTabIconHandler extends MouseAdapter {
         CloseableTabbedPane tabbedPane = (CloseableTabbedPane) c;
         for (int i = 0; i < tabbedPane.getTabCount(); i++) {
             CloseTabIcon icon = (CloseTabIcon) tabbedPane.getIconAt(i);
-            if (icon != null) {
+            if (Objects.nonNull(icon)) {
                 icon.mouseover = false;
             }
         }
@@ -287,9 +293,9 @@ class CloseableTabIconHandler extends MouseAdapter {
         }
         CloseableTabbedPane tabbedPane = (CloseableTabbedPane) c;
         CloseTabIcon icon = getCloseTabIcon(tabbedPane, e.getPoint());
-        if (icon != null) {
+        if (Objects.nonNull(icon)) {
             Rectangle rect = icon.getBounds();
-            Point pos = tabbedPane.headerViewport == null ? new Point() : tabbedPane.headerViewport.getViewPosition();
+            Point pos = tabbedPane.getHeaderViewPosition();
             drawRect.setBounds(rect.x - pos.x, rect.y - pos.y, rect.width, rect.height);
             icon.mousepressed = e.getModifiers() == e.BUTTON1_MASK;
             tabbedPane.repaint(drawRect);
@@ -315,7 +321,7 @@ class CloseableTabIconHandler extends MouseAdapter {
         }
         CloseableTabbedPane tabbedPane = (CloseableTabbedPane) c;
         CloseTabIcon icon = getCloseTabIcon(tabbedPane, e.getPoint());
-        if (icon != null) {
+        if (Objects.nonNull(icon)) {
             if (isCloseTabIconRollover(tabbedPane, icon, e)) {
                 icon.mouseover = true;
                 icon.mousepressed = e.getModifiers() == e.BUTTON1_MASK;
@@ -338,7 +344,7 @@ class CloseableTabIconHandler extends MouseAdapter {
         }
         CloseableTabbedPane tabbedPane = (CloseableTabbedPane) c;
         CloseTabIcon icon = getCloseTabIcon(tabbedPane, e.getPoint());
-        if (icon != null) {
+        if (Objects.nonNull(icon)) {
             if (isCloseTabIconRollover(tabbedPane, icon, e)) {
                 icon.mouseover = true;
                 icon.mousepressed = e.getModifiers() == e.BUTTON1_MASK;
@@ -357,157 +363,6 @@ class CloseableTabIconHandler extends MouseAdapter {
         } else {
             return (CloseTabIcon) tabbedPane.getIconAt(tabNumber);
         }
-    }
-}
-
-/**
- * The class which generates the 'X' icon for the tabs. The constructor
- * accepts an icon which is extra to the 'X' icon, so you can have tabs
- * like in JBuilder. This value is null if no extra icon is required.
- */
-class CloseTabIcon implements Icon {
-    /**
-     * the x position of the icon
-     */
-    private int xpos;
-
-    /**
-     * the y position of the icon
-     */
-    private int ypos;
-
-    /**
-     * the width the icon
-     */
-    private final int width;
-
-    /**
-     * the height the icon
-     */
-    private final int height;
-
-    /**
-     * the additional fileicon
-     */
-    private final Icon fileIcon;
-
-    /**
-     * true whether the mouse is over this icon, false otherwise
-     */
-    public boolean mouseover;
-
-    /**
-     * true whether the mouse is pressed on this icon, false otherwise
-     */
-    public boolean mousepressed;
-
-    /**
-     * Creates a new instance of <code>CloseTabIcon</code>
-     * @param fileIcon the additional fileicon, if there is one set
-     */
-    public CloseTabIcon(Icon fileIcon) {
-        this.fileIcon = fileIcon;
-        this.width = 16;
-        this.height = 16;
-    }
-
-    /**
-     * Draw the icon at the specified location. Icon implementations may use the
-     * Component argument to get properties useful for painting, e.g. the
-     * foreground or background color.
-     * @param c the component which the icon belongs to
-     * @param g the graphic object to draw on
-     * @param x the upper left point of the icon in the x direction
-     * @param y the upper left point of the icon in the y direction
-     */
-    @Override public void paintIcon(Component c, Graphics g, int x, int y) {
-        //boolean doPaintCloseIcon = true;
-        //// try {
-        ////     JComponent.putClientProperty("isClosable", new Boolean(false));
-        //if (c instanceof JTabbedPane) {
-        //    JTabbedPane tabbedpane = (JTabbedPane) c;
-        //    int tabNumber = tabbedpane.getUI().tabForCoordinate(tabbedpane, x, y);
-        //    JComponent curPanel = (JComponent) tabbedpane.getComponentAt(tabNumber);
-        //    Object prop = curPanel.getClientProperty("isClosable");
-        //    if (prop != null) {
-        //        doPaintCloseIcon = ((Boolean) prop).booleanValue();
-        //    }
-        //}
-        ////} catch (Exception ignored) {
-        ////    /*Could probably be a ClassCastException*/
-        ////    ignored.printStackTrace();
-        ////}
-        //if (doPaintCloseIcon) {
-        xpos = x;
-        ypos = y;
-        int yp = y + 2; //+2: baseline?
-
-        //if (normalCloseIcon != null && !mouseover) {
-        //    normalCloseIcon.paintIcon(c, g, x, yp);
-        //} else if (hooverCloseIcon != null && mouseover && !mousepressed) {
-        //    hooverCloseIcon.paintIcon(c, g, x, yp);
-        //} else if (pressedCloseIcon != null && mousepressed) {
-        //    pressedCloseIcon.paintIcon(c, g, x, yp);
-        //} else {
-        //yp++;
-
-        //Color col = g.getColor();
-
-        Graphics2D g2 = (Graphics2D) g.create();
-        if (mousepressed && mouseover) {
-            g2.setColor(Color.WHITE);
-            g2.fillRect(x + 1, yp + 1, 12, 13);
-        }
-
-        g2.setColor(mouseover ? Color.ORANGE : Color.BLACK);
-        //g2.setColor(Color.BLACK);
-        g2.drawLine(x + 1,  yp,      x + 12, yp);
-        g2.drawLine(x + 1,  yp + 13, x + 12, yp + 13);
-        g2.drawLine(x,      yp + 1,  x,      yp + 12);
-        g2.drawLine(x + 13, yp + 1,  x + 13, yp + 12);
-        g2.drawLine(x + 3,  yp + 3,  x + 10, yp + 10);
-
-//         if (mouseover) {
-//             g.setColor(Color.GRAY);
-//         }
-        g2.drawLine(x + 3,  yp + 4, x + 9,  yp + 10);
-        g2.drawLine(x + 4,  yp + 3, x + 10, yp + 9);
-        g2.drawLine(x + 10, yp + 3, x + 3,  yp + 10);
-        g2.drawLine(x + 10, yp + 4, x + 4,  yp + 10);
-        g2.drawLine(x + 9,  yp + 3, x + 3,  yp + 9);
-        g2.dispose();
-//         g.setColor(col);
-        //        if (fileIcon != null) {
-        //            fileIcon.paintIcon(c, g, x + width, yp);
-        //        }
-        //    }
-        //}
-    }
-
-    /**
-     * Returns the icon's width.
-     * @return an int specifying the fixed width of the icon.
-     */
-    @Override public int getIconWidth() {
-        return fileIcon == null ? width : width + fileIcon.getIconWidth();
-    }
-
-    /**
-     * Returns the icon's height.
-     * @return an int specifying the fixed height of the icon.
-     */
-    @Override public int getIconHeight() {
-        return height;
-    }
-
-    /**
-     * Gets the bounds of this icon in the form of a <code>Rectangle<code>
-     * object. The bounds specify this icon's width, height, and location
-     * relative to its parent.
-     * @return a rectangle indicating this icon's bounds
-     */
-    public Rectangle getBounds() {
-        return new Rectangle(xpos, ypos, width, height);
     }
 }
 
@@ -539,7 +394,7 @@ class CloseableWindowsTabbedPaneUI extends WindowsTabbedPaneUI {
     /**
      * Creates a new instance of <code>CloseableTabbedPaneUI</code>
      */
-    public CloseableWindowsTabbedPaneUI() {
+    protected CloseableWindowsTabbedPaneUI() {
         super();
     }
 
@@ -548,7 +403,7 @@ class CloseableWindowsTabbedPaneUI extends WindowsTabbedPaneUI {
      * @param horizontalTextPosition the horizontal position of the text (e.g.
      * SwingUtilities.TRAILING or SwingUtilities.LEFT)
      */
-    public CloseableWindowsTabbedPaneUI(int horizontalTextPosition) {
+    protected CloseableWindowsTabbedPaneUI(int horizontalTextPosition) {
         super();
         this.horizontalTextPosition = horizontalTextPosition;
     }
@@ -572,17 +427,17 @@ class CloseableWindowsTabbedPaneUI extends WindowsTabbedPaneUI {
         textRect.setLocation(0, 0);
         iconRect.setLocation(0, 0);
 
-        javax.swing.text.View v = getTextViewForTab(tabIndex);
-        if (v != null) {
+        View v = getTextViewForTab(tabIndex);
+        if (Objects.nonNull(v)) {
             tabPane.putClientProperty(HTML, v);
         }
 
         SwingUtilities.layoutCompoundLabel((JComponent) tabPane,
                                            metrics, title, icon,
-                                           SwingUtilities.CENTER,
-                                           SwingUtilities.CENTER,
-                                           SwingUtilities.CENTER,
-                                           //SwingUtilities.TRAILING,
+                                           SwingConstants.CENTER,
+                                           SwingConstants.CENTER,
+                                           SwingConstants.CENTER,
+                                           //SwingConstants.TRAILING,
                                            horizontalTextPosition,
                                            tabRect,
                                            iconRect,
@@ -614,7 +469,7 @@ class CloseableTabbedPaneUI extends BasicTabbedPaneUI {
     /**
      * Creates a new instance of <code>CloseableTabbedPaneUI</code>
      */
-    public CloseableTabbedPaneUI() {
+    protected CloseableTabbedPaneUI() {
         super();
     }
 
@@ -623,7 +478,7 @@ class CloseableTabbedPaneUI extends BasicTabbedPaneUI {
      * @param horizontalTextPosition the horizontal position of the text (e.g.
      * SwingUtilities.TRAILING or SwingUtilities.LEFT)
      */
-    public CloseableTabbedPaneUI(int horizontalTextPosition) {
+    protected CloseableTabbedPaneUI(int horizontalTextPosition) {
         super();
         this.horizontalTextPosition = horizontalTextPosition;
     }
@@ -648,17 +503,17 @@ class CloseableTabbedPaneUI extends BasicTabbedPaneUI {
         textRect.setLocation(0, 0);
         iconRect.setLocation(0, 0);
 
-        javax.swing.text.View v = getTextViewForTab(tabIndex);
-        if (v != null) {
+        View v = getTextViewForTab(tabIndex);
+        if (Objects.nonNull(v)) {
             tabPane.putClientProperty(HTML, v);
         }
 
         SwingUtilities.layoutCompoundLabel((JComponent) tabPane,
                                            metrics, title, icon,
-                                           SwingUtilities.CENTER,
-                                           SwingUtilities.CENTER,
-                                           SwingUtilities.CENTER,
-                                           //SwingUtilities.TRAILING,
+                                           SwingConstants.CENTER,
+                                           SwingConstants.CENTER,
+                                           SwingConstants.CENTER,
+                                           //SwingConstants.TRAILING,
                                            horizontalTextPosition,
                                            tabRect,
                                            iconRect,

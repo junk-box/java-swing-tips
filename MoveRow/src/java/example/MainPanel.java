@@ -85,7 +85,7 @@ class TablePopupMenu extends JPopupMenu {
     private final Action upAction;
     private final Action downAction;
     private final JTable table;
-    public TablePopupMenu(JTable table) {
+    protected TablePopupMenu(JTable table) {
         super();
         this.table = table;
 
@@ -102,9 +102,9 @@ class TablePopupMenu extends JPopupMenu {
         add(downAction);
     }
     @Override public void show(Component c, int x, int y) {
-        int row     = table.rowAtPoint(new Point(x, y));
-        int count   = table.getSelectedRowCount();
-        int[] l     = table.getSelectedRows();
+        int row   = table.rowAtPoint(new Point(x, y));
+        int count = table.getSelectedRowCount();
+        int[] l   = table.getSelectedRows();
         boolean flg = true;
         for (int i = 0; i < l.length; i++) {
             if (l[i] == row) {
@@ -127,7 +127,7 @@ class TablePopupMenu extends JPopupMenu {
 
 class TestCreateAction extends AbstractAction {
     private final JTable table;
-    public TestCreateAction(String str, JTable table) {
+    protected TestCreateAction(String str, JTable table) {
         super(str);
         this.table = table;
     }
@@ -144,7 +144,7 @@ class TestCreateAction extends AbstractAction {
 
 class DeleteAction extends AbstractAction {
     private final JTable table;
-    public DeleteAction(String str, JTable table) {
+    protected DeleteAction(String str, JTable table) {
         super(str);
         this.table = table;
     }
@@ -153,9 +153,6 @@ class DeleteAction extends AbstractAction {
             table.getCellEditor().stopCellEditing();
         }
         int[] selection = table.getSelectedRows();
-        if (selection.length == 0) {
-            return;
-        }
         TestModel model = (TestModel) table.getModel();
         for (int i = selection.length - 1; i >= 0; i--) {
             //Test ixsc = model.getTest(selection[i]);
@@ -166,7 +163,7 @@ class DeleteAction extends AbstractAction {
 
 class UpAction extends AbstractAction {
     private final JTable table;
-    public UpAction(String str, JTable table) {
+    protected UpAction(String str, JTable table) {
         super(str);
         this.table = table;
     }
@@ -196,7 +193,7 @@ class UpAction extends AbstractAction {
 
 class DownAction extends AbstractAction {
     private final JTable table;
-    public DownAction(String str, JTable table) {
+    protected DownAction(String str, JTable table) {
         super(str);
         this.table = table;
     }
@@ -226,7 +223,7 @@ class DownAction extends AbstractAction {
 
 class InitAction extends AbstractAction {
     private final JTable table;
-    public InitAction(String str, JTable table) {
+    protected InitAction(String str, JTable table) {
         super(str);
         this.table = table;
     }
@@ -243,9 +240,9 @@ class InitAction extends AbstractAction {
         Vector dv = model.getDataVector();
         for (int i = 0; i < row; i++) {
             //Test test = model.getTest(i);
-            Vector v = (Vector) dv.elementAt(i);
-            //new Test((String) v.elementAt(1), (String) v.elementAt(2));
-            nmodel.addTest(new Test((String) v.elementAt(1), (String) v.elementAt(2)));
+            Vector v = (Vector) dv.get(i);
+            //new Test((String) v.get(1), (String) v.get(2));
+            nmodel.addTest(new Test((String) v.get(1), (String) v.get(2)));
         }
         JTableHeader h = table.getTableHeader();
         TableCellRenderer tcr = h.getDefaultRenderer();
@@ -275,20 +272,20 @@ class TestModel extends SortableTableModel {
     @Override public boolean isCellEditable(int row, int col) {
         return COLUMN_ARRAY[col].isEditable;
     }
-    @Override public Class<?> getColumnClass(int modelIndex) {
-        return COLUMN_ARRAY[modelIndex].columnClass;
+    @Override public Class<?> getColumnClass(int column) {
+        return COLUMN_ARRAY[column].columnClass;
     }
     @Override public int getColumnCount() {
         return COLUMN_ARRAY.length;
     }
-    @Override public String getColumnName(int modelIndex) {
-        return COLUMN_ARRAY[modelIndex].columnName;
+    @Override public String getColumnName(int column) {
+        return COLUMN_ARRAY[column].columnName;
     }
     private static class ColumnContext {
         public final String  columnName;
         public final Class   columnClass;
         public final boolean isEditable;
-        public ColumnContext(String columnName, Class columnClass, boolean isEditable) {
+        protected ColumnContext(String columnName, Class columnClass, boolean isEditable) {
             this.columnName = columnName;
             this.columnClass = columnClass;
             this.isEditable = isEditable;
@@ -297,8 +294,9 @@ class TestModel extends SortableTableModel {
 }
 
 class Test {
-    private String name, comment;
-    public Test(String name, String comment) {
+    private String name;
+    private String comment;
+    protected Test(String name, String comment) {
         this.name = name;
         this.comment = comment;
     }

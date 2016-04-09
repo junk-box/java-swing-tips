@@ -25,42 +25,43 @@ public final class MainPanel extends JPanel {
             return String.format("%s, %s", m.getValueAt(row, 0), m.getValueAt(row, 2));
         }
     };
-    private final JScrollPane scroll = new JScrollPane(table) {
-        @Override public void updateUI() {
-            super.updateUI();
-            JPopupMenu jpm = getComponentPopupMenu();
-            if (jpm == null && pop != null) {
-                SwingUtilities.updateComponentTreeUI(pop);
-            }
-        }
-    };
+    private final JScrollPane scroll = new JScrollPane(table);
+    //Fixed: [[#JDK-6299213] The PopupMenu is not updated if the LAF is changed (incomplete fix of 4962731) - Java Bug System]
+    //       (https://bugs.openjdk.java.net/browse/JDK-6299213)
+    //private final JScrollPane scroll = new JScrollPane(table) {
+    //    @Override public void updateUI() {
+    //        super.updateUI();
+    //        JPopupMenu jpm = getComponentPopupMenu();
+    //        if (jpm == null && pop != null) {
+    //            SwingUtilities.updateComponentTreeUI(pop);
+    //        }
+    //    }
+    //};
     private final JCheckBox check    = new JCheckBox("Disable Scrolling");
     private final TablePopupMenu pop = new TablePopupMenu();
     public MainPanel() {
         super(new BorderLayout());
 
         for (int i = 0; i < 100; i++) {
-            model.addRow(new Object[] {"Name " + i, Integer.valueOf(i), Boolean.FALSE});
+            model.addRow(new Object[] {"Name " + i, i, Boolean.FALSE});
         }
         table.setAutoCreateRowSorter(true);
 
-        check.addItemListener(new ItemListener() {
-            @Override public void itemStateChanged(ItemEvent ie) {
-                table.clearSelection();
-                JScrollBar bar = scroll.getVerticalScrollBar();
-                if (ie.getStateChange() == ItemEvent.SELECTED) {
-                    bar.setEnabled(false);
-                    scroll.setWheelScrollingEnabled(false);
-                    table.setEnabled(false);
-                    //table.getTableHeader().setEnabled(false);
-                    //scroll.setComponentPopupMenu(null);
-                } else if (ie.getStateChange() == ItemEvent.DESELECTED) {
-                    bar.setEnabled(true);
-                    scroll.setWheelScrollingEnabled(true);
-                    table.setEnabled(true);
-                    //table.getTableHeader().setEnabled(true);
-                    //scroll.setComponentPopupMenu(pop);
-                }
+        check.addItemListener(e -> {
+            table.clearSelection();
+            JScrollBar bar = scroll.getVerticalScrollBar();
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                bar.setEnabled(false);
+                scroll.setWheelScrollingEnabled(false);
+                table.setEnabled(false);
+                //table.getTableHeader().setEnabled(false);
+                //scroll.setComponentPopupMenu(null);
+            } else if (e.getStateChange() == ItemEvent.DESELECTED) {
+                bar.setEnabled(true);
+                scroll.setWheelScrollingEnabled(true);
+                table.setEnabled(true);
+                //table.getTableHeader().setEnabled(true);
+                //scroll.setComponentPopupMenu(pop);
             }
         });
 
@@ -73,25 +74,22 @@ public final class MainPanel extends JPanel {
     }
 
     class TestCreateAction extends AbstractAction {
-        public TestCreateAction(String label, Icon icon) {
-            super(label, icon);
+        protected TestCreateAction(String label) {
+            super(label);
         }
         @Override public void actionPerformed(ActionEvent e) {
-            model.addRow(new Object[] {"New Name", Integer.valueOf(0), Boolean.FALSE});
+            model.addRow(new Object[] {"New Name", 0, Boolean.FALSE});
             Rectangle rect = table.getCellRect(model.getRowCount() - 1, 0, true);
             table.scrollRectToVisible(rect);
         }
     }
 
     class DeleteAction extends AbstractAction {
-        public DeleteAction(String label, Icon icon) {
-            super(label, icon);
+        protected DeleteAction(String label) {
+            super(label);
         }
         @Override public void actionPerformed(ActionEvent e) {
             int[] selection = table.getSelectedRows();
-            if (selection.length == 0) {
-                return;
-            }
             for (int i = selection.length - 1; i >= 0; i--) {
                 model.removeRow(table.convertRowIndexToModel(selection[i]));
             }
@@ -99,9 +97,9 @@ public final class MainPanel extends JPanel {
     }
 
     private class TablePopupMenu extends JPopupMenu {
-        private final Action createAction = new TestCreateAction("add", null);
-        private final Action deleteAction = new DeleteAction("delete", null);
-        public TablePopupMenu() {
+        private final Action createAction = new TestCreateAction("add");
+        private final Action deleteAction = new DeleteAction("delete");
+        protected TablePopupMenu() {
             super();
             add(createAction);
             addSeparator();
@@ -109,8 +107,7 @@ public final class MainPanel extends JPanel {
         }
         @Override public void show(Component c, int x, int y) {
             createAction.setEnabled(!check.isSelected());
-            int[] l = table.getSelectedRows();
-            deleteAction.setEnabled(l.length > 0);
+            deleteAction.setEnabled(table.getSelectedRowCount() > 0);
             super.show(c, x, y);
         }
     }

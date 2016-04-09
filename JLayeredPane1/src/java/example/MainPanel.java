@@ -4,6 +4,7 @@ package example;
 //@homepage@
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Objects;
 import javax.swing.*;
 import javax.swing.border.*;
 
@@ -98,21 +99,18 @@ public final class MainPanel extends JPanel {
 //タイトル部分のマウスクリックでパネルを最上位にもってくる。ドラッグで移動。
 class DragMouseListener extends MouseAdapter {
     private final JLayeredPane parent;
-    private Point origin;
-    public DragMouseListener(JLayeredPane parent) {
+    private final Point origin = new Point();
+    protected DragMouseListener(JLayeredPane parent) {
         super();
         this.parent = parent;
     }
     @Override public void mousePressed(MouseEvent e) {
         JComponent panel = (JComponent) e.getComponent();
-        origin = e.getPoint();
+        origin.setLocation(e.getPoint());
         //選択された部品を上へ
         parent.moveToFront(panel);
     }
     @Override public void mouseDragged(MouseEvent e) {
-        if (origin == null) {
-            return;
-        }
         JComponent panel = (JComponent) e.getComponent();
         //ずれた分だけ JPanel を移動させる
         int dx = e.getX() - origin.x;
@@ -125,18 +123,18 @@ class DragMouseListener extends MouseAdapter {
 //背景画像を描画する JLayeredPane
 class BGImageLayeredPane extends JLayeredPane {
     private final Image bgImage;
-    public BGImageLayeredPane(Image img) {
+    protected BGImageLayeredPane(Image img) {
         super();
         this.bgImage = img;
     }
     @Override public boolean isOptimizedDrawingEnabled() {
         return false;
     }
-    @Override public void paintComponent(Graphics g) {
+    @Override protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        if (bgImage != null) {
-            int imageh = bgImage.getHeight(null);
-            int imagew = bgImage.getWidth(null);
+        if (Objects.nonNull(bgImage)) {
+            int imageh = bgImage.getHeight(this);
+            int imagew = bgImage.getWidth(this);
             Dimension d = getSize();
             for (int h = 0; h < d.getHeight(); h += imageh) {
                 for (int w = 0; w < d.getWidth(); w += imagew) {

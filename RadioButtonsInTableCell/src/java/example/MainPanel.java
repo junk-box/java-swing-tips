@@ -4,12 +4,12 @@ package example;
 //@homepage@
 import java.awt.*;
 import java.awt.event.*;
-import java.util.EventObject;
+import java.util.*;
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.table.*;
 
-//http://www.crionics.com/products/opensource/faq/swing_ex/JTableExamples2.html
+//http://www2.gol.com/users/tame/swing/examples/JTableExamples2.html
 public final class MainPanel extends JPanel {
     private final String[] columnNames = {"Integer", "Answer"};
     private final Object[][] data = {
@@ -51,7 +51,9 @@ public final class MainPanel extends JPanel {
 //                     Component c = ce.getTableCellEditorComponent(t, null, true, row, col);
 //                     Point p = SwingUtilities.convertPoint(t, pt, c);
 //                     Component b = SwingUtilities.getDeepestComponentAt(c, p.x, p.y);
-//                     if (b instanceof JRadioButton) { ((JRadioButton) b).doClick(); }
+//                     if (b instanceof JRadioButton) {
+//                         ((JRadioButton) b).doClick();
+//                     }
 //                 }
 //             }
 //         });
@@ -85,11 +87,10 @@ public final class MainPanel extends JPanel {
 }
 
 class RadioButtonsPanel extends JPanel {
-    private static final String OSNAME = System.getProperty("os.name");
     private final String[] answer = {Answer.A.toString(), Answer.B.toString(), Answer.C.toString()};
     public JRadioButton[] buttons;
     public ButtonGroup bg = new ButtonGroup();
-    public RadioButtonsPanel() {
+    protected RadioButtonsPanel() {
         super();
         setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
         initButtons();
@@ -107,23 +108,29 @@ class RadioButtonsPanel extends JPanel {
         }
     }
     protected void updateSelectedButton(Object v) {
-        if ("Windows 7".equals(OSNAME)) { //Windows aero?
+        if (v instanceof Answer) {
             removeAll();
             initButtons();
-        }
-        if ("A".equals(v)) {
-            buttons[0].setSelected(true);
-        } else if ("B".equals(v)) {
-            buttons[1].setSelected(true);
-        } else {
-            buttons[2].setSelected(true);
+            switch ((Answer) v) {
+              case A:
+                buttons[0].setSelected(true);
+                break;
+              case B:
+                buttons[1].setSelected(true);
+                break;
+              case C:
+                buttons[2].setSelected(true);
+                break;
+              default:
+                break;
+            }
         }
     }
 }
 
 class RadioButtonsRenderer extends RadioButtonsPanel implements TableCellRenderer {
-    public RadioButtonsRenderer() {
-        super();
+    @Override public void updateUI() {
+        super.updateUI();
         setName("Table.cellRenderer");
     }
     @Override public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -135,8 +142,10 @@ class RadioButtonsRenderer extends RadioButtonsPanel implements TableCellRendere
 class RadioButtonsEditor extends RadioButtonsPanel implements TableCellEditor {
     protected transient ChangeEvent changeEvent;
 
-    public RadioButtonsEditor() {
+    protected RadioButtonsEditor() {
         super();
+        // PMD: False positive: ConstructorCallsOverridableMethod
+        // ActionListener al = e -> fireEditingStopped();
         ActionListener al = new ActionListener() {
             @Override public void actionPerformed(ActionEvent e) {
                 fireEditingStopped();
@@ -187,7 +196,7 @@ class RadioButtonsEditor extends RadioButtonsPanel implements TableCellEditor {
         for (int i = listeners.length - 2; i >= 0; i -= 2) {
             if (listeners[i] == CellEditorListener.class) {
                 // Lazily create the event:
-                if (changeEvent == null) {
+                if (Objects.isNull(changeEvent)) {
                     changeEvent = new ChangeEvent(this);
                 }
                 ((CellEditorListener) listeners[i + 1]).editingStopped(changeEvent);
@@ -202,7 +211,7 @@ class RadioButtonsEditor extends RadioButtonsPanel implements TableCellEditor {
         for (int i = listeners.length - 2; i >= 0; i -= 2) {
             if (listeners[i] == CellEditorListener.class) {
                 // Lazily create the event:
-                if (changeEvent == null) {
+                if (Objects.isNull(changeEvent)) {
                     changeEvent = new ChangeEvent(this);
                 }
                 ((CellEditorListener) listeners[i + 1]).editingCanceled(changeEvent);

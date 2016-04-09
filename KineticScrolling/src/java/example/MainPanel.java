@@ -7,15 +7,16 @@ import java.awt.event.*;
 import javax.swing.*;
 
 public final class MainPanel extends JPanel {
-    private final JRadioButton r1    = new JRadioButton("scrollRectToVisible");
-    private final JRadioButton r2    = new JRadioButton("setViewPosition");
-    private final JScrollPane scroll = new JScrollPane(JScrollPane.VERTICAL_SCROLLBAR_NEVER,
-                                                       JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
     private static final boolean HEAVYWEIGHT_LIGHTWEIGHT_MIXING = false;
+    private final JScrollPane scroll = new JScrollPane();
     private final JViewport viewport; // = scroll.getViewport();
+    private final JRadioButton r1 = new JRadioButton("scrollRectToVisible");
+    private final JRadioButton r2 = new JRadioButton("setViewPosition");
 
     public MainPanel() {
         super(new BorderLayout());
+        scroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+        scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
         //JDK 1.7.0
         viewport = new JViewport() {
@@ -64,8 +65,14 @@ public final class MainPanel extends JPanel {
         };
         Box box = Box.createHorizontalBox();
         ButtonGroup bg = new ButtonGroup();
-        box.add(r1); bg.add(r1); r1.addActionListener(al);
-        box.add(r2); bg.add(r2); r2.addActionListener(al);
+        box.add(r1);
+        bg.add(r1);
+        r1.addActionListener(al);
+
+        box.add(r2);
+        bg.add(r2);
+        r2.addActionListener(al);
+
         r1.setSelected(true);
         viewport.addMouseMotionListener(l1);
         viewport.addMouseListener(l1);
@@ -104,7 +111,7 @@ public final class MainPanel extends JPanel {
 class KineticScrollingListener1 extends MouseAdapter implements HierarchyListener {
     private static final int SPEED = 4;
     private static final int DELAY = 10;
-    private static final double D = 0.8;
+    private static final double D = .8;
     private final Cursor dc;
     private final Cursor hc = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
     private final Timer scroller;
@@ -112,7 +119,7 @@ class KineticScrollingListener1 extends MouseAdapter implements HierarchyListene
     private final Point startPt = new Point();
     private final Point delta   = new Point();
 
-    public KineticScrollingListener1(JComponent comp) {
+    protected KineticScrollingListener1(JComponent comp) {
         super();
         this.label = comp;
         this.dc = comp.getCursor();
@@ -159,7 +166,7 @@ class KineticScrollingListener1 extends MouseAdapter implements HierarchyListene
 class KineticScrollingListener2 extends MouseAdapter implements HierarchyListener {
     private static final int SPEED = 4;
     private static final int DELAY = 10;
-    private static final double D = 0.8;
+    private static final double D = .8;
     private final JComponent label;
     private final Point startPt = new Point();
     private final Point delta   = new Point();
@@ -218,7 +225,7 @@ class KineticScrollingListener2 extends MouseAdapter implements HierarchyListene
         return vp.x >= 0 && vp.x + vport.getWidth()  - comp.getWidth()  <= 0
             && vp.y >= 0 && vp.y + vport.getHeight() - comp.getHeight() <= 0;
     }
-    public KineticScrollingListener2(JComponent comp) {
+    protected KineticScrollingListener2(JComponent comp) {
         super();
         this.label = comp;
         this.dc = comp.getCursor();

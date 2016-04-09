@@ -4,6 +4,7 @@ package example;
 //@homepage@
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Optional;
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.plaf.ColorUIResource;
@@ -57,20 +58,15 @@ public final class MainPanel extends JPanel {
         table.setDefaultRenderer(Color.class, new ColorRenderer());
         table.setDefaultEditor(Color.class,   new ColorEditor());
 
-        model.addTableModelListener(new TableModelListener() {
-            @Override public void tableChanged(TableModelEvent e) {
-                if (e.getType() == TableModelEvent.UPDATE && e.getColumn() == 1) {
-                    int row = e.getFirstRow();
-                    String key = (String) model.getValueAt(row, 0);
-                    Color color = (Color) model.getValueAt(row, 1);
-                    UIManager.put(key, new ColorUIResource(color));
-                    EventQueue.invokeLater(new Runnable() {
-                        @Override public void run() {
-                            Window w = SwingUtilities.getWindowAncestor(table);
-                            SwingUtilities.updateComponentTreeUI(w);
-                        }
-                    });
-                }
+        model.addTableModelListener(e -> {
+            if (e.getType() == TableModelEvent.UPDATE && e.getColumn() == 1) {
+                int row = e.getFirstRow();
+                String key = (String) model.getValueAt(row, 0);
+                Color color = (Color) model.getValueAt(row, 1);
+                UIManager.put(key, new ColorUIResource(color));
+                EventQueue.invokeLater(() -> {
+                    Optional.ofNullable(table.getTopLevelAncestor()).ifPresent(SwingUtilities::updateComponentTreeUI);
+                });
             }
         });
 
@@ -121,7 +117,7 @@ class ColorEditor extends AbstractCellEditor implements TableCellEditor, ActionL
     private final JDialog dialog;
     private Color currentColor;
 
-    public ColorEditor() {
+    protected ColorEditor() {
         super();
         //Set up the editor (from the table's point of view),
         //which is a button.
@@ -175,12 +171,15 @@ class ColorEditor extends AbstractCellEditor implements TableCellEditor, ActionL
 
 class ColorIcon implements Icon {
     private final Color color;
-    public ColorIcon(Color color) {
+    protected ColorIcon(Color color) {
         this.color = color;
     }
     @Override public void paintIcon(Component c, Graphics g, int x, int y) {
-        g.setColor(color);
-        g.fillRect(x, y, getIconWidth(), getIconHeight());
+        Graphics2D g2 = (Graphics2D) g.create();
+        g2.translate(x, y);
+        g2.setPaint(color);
+        g2.fillRect(0, 0, getIconWidth(), getIconHeight());
+        g2.dispose();
     }
     @Override public int getIconWidth() {
         return 10;

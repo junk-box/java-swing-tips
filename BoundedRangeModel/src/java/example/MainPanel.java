@@ -26,7 +26,7 @@ public final class MainPanel extends JPanel {
     private final JTable table         = new JTable(model);
     private final JScrollPane scroll   = new JScrollPane(table);
     private final JLabel label         = new JLabel();
-    private final JScrollBar scrollbar = new JScrollBar(JScrollBar.VERTICAL);
+    private final JScrollBar scrollbar = new JScrollBar(Adjustable.VERTICAL);
 
     public MainPanel() {
         super(new BorderLayout());
@@ -50,7 +50,7 @@ public final class MainPanel extends JPanel {
         scroll.setVerticalScrollBar(scrollbar);
 
         scrollbar.getModel().addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent e) {
+            @Override public void stateChanged(ChangeEvent e) {
                 label.repaint();
             }
         });
@@ -96,7 +96,7 @@ public final class MainPanel extends JPanel {
     private void updateHighlighter() {
         for (int i = 0; i < table.getRowCount(); i++) {
             Object o = table.getValueAt(i, 0);
-            if (o instanceof String && PATTERN.equals(o)) {
+            if (Objects.equals(PATTERN, o)) {
                 highlighter.add(i);
             }
         }

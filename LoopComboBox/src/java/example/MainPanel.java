@@ -16,13 +16,13 @@ public final class MainPanel extends JPanel {
         Action up = new AbstractAction() {
             @Override public void actionPerformed(ActionEvent e) {
                 int index = combo02.getSelectedIndex();
-                combo02.setSelectedIndex((index == 0) ? combo02.getItemCount() - 1 : index - 1);
+                combo02.setSelectedIndex(index == 0 ? combo02.getItemCount() - 1 : index - 1);
             }
         };
         Action down = new AbstractAction() {
             @Override public void actionPerformed(ActionEvent e) {
                 int index = combo02.getSelectedIndex();
-                combo02.setSelectedIndex((index == combo02.getItemCount() - 1) ? 0 : index + 1);
+                combo02.setSelectedIndex(index == combo02.getItemCount() - 1 ? 0 : index + 1);
             }
         };
         ActionMap amc = combo02.getActionMap();
@@ -39,7 +39,7 @@ public final class MainPanel extends JPanel {
         box.add(createPanel(combo02, "loop:"));
         box.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         add(box, BorderLayout.NORTH);
-        setPreferredSize(new Dimension(320, 200));
+        setPreferredSize(new Dimension(320, 240));
     }
     private static JComponent createPanel(JComponent cmp, String str) {
         JPanel panel = new JPanel(new BorderLayout());

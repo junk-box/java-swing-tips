@@ -38,7 +38,7 @@ public final class MainPanel extends JPanel {
         ServerSocket socket = null;
         try {
             socket = new ServerSocket(38765);
-        } catch (IOException e) {
+        } catch (IOException ex) {
             socket = null;
         }
         if (socket == null) {
@@ -115,6 +115,6 @@ public final class MainPanel extends JPanel {
 //     }
 //     @Override public int getInstanceCount() {
 //         int result = this.semaphore.tryAcquire();
-//         return (result != 0) ? result : this.launchLimit + 1;
+//         return result != 0 ? result : this.launchLimit + 1;
 //     }
 // }

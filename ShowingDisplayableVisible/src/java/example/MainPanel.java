@@ -39,13 +39,12 @@ public final class MainPanel extends JPanel {
 
         JTabbedPane tab = new JTabbedPane();
         tab.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
-        button.addHierarchyListener(new HierarchyListener() {
-            @Override public void hierarchyChanged(HierarchyEvent e) {
-                if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0) { //NOPMD
-                    printInfo("SHOWING_CHANGED");
-                } else if ((e.getChangeFlags() & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0) { //NOPMD
-                    printInfo("DISPLAYABILITY_CHANGED");
-                }
+        button.addHierarchyListener(e -> {
+            if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0) {
+                printInfo("SHOWING_CHANGED");
+            }
+            if ((e.getChangeFlags() & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0) {
+                printInfo("DISPLAYABILITY_CHANGED");
             }
         });
 
@@ -61,12 +60,16 @@ public final class MainPanel extends JPanel {
         tab.addTab("JLabel", new JLabel("Test"));
 
         JPanel p1 = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        p1.add(new JLabel("JButton:")); p1.add(vcheck); p1.add(echeck);
+        p1.add(new JLabel("JButton:"));
+        p1.add(vcheck);
+        p1.add(echeck);
         JPanel p2 = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        p2.add(new JLabel("Timer:")); p2.add(tcheck);
+        p2.add(new JLabel("Timer:"));
+        p2.add(tcheck);
 
         JPanel p = new JPanel(new GridLayout(2, 1));
-        p.add(p1); p.add(p2);
+        p.add(p1);
+        p.add(p2);
         add(p, BorderLayout.NORTH);
         add(tab);
         timer = new Timer(4000, new ActionListener() {

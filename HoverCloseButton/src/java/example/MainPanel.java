@@ -9,13 +9,23 @@ import javax.swing.*;
 public final class MainPanel extends JPanel {
     private final JTabbedPane tabbedPane = new HoverCloseButtonTabbedPane();
     private final JPopupMenu pop = new JPopupMenu();
-    private static int count;
+    private int count;
 
     public MainPanel() {
         super(new BorderLayout());
-        pop.add(new NewTabAction("Add", null));
+        pop.add(new AbstractAction("Add") {
+            @Override public void actionPerformed(ActionEvent e) {
+                tabbedPane.addTab("Title" + count, new JLabel("Tab" + count));
+                tabbedPane.setSelectedIndex(tabbedPane.getTabCount() - 1);
+                count++;
+            }
+        });
         pop.addSeparator();
-        pop.add(new CloseAllAction("Close All", null));
+        pop.add(new AbstractAction("Close All") {
+            @Override public void actionPerformed(ActionEvent e) {
+                tabbedPane.removeAll();
+            }
+        });
         tabbedPane.setComponentPopupMenu(pop);
         tabbedPane.addTab("aaaaaa", new JScrollPane(new JTree()));
         tabbedPane.addTab("12345678901234567890", new JScrollPane(new JLabel("asdfasdfsadf")));
@@ -28,25 +38,6 @@ public final class MainPanel extends JPanel {
         add(tabbedPane);
         setPreferredSize(new Dimension(320, 240));
     }
-    class NewTabAction extends AbstractAction {
-        public NewTabAction(String label, Icon icon) {
-            super(label, icon);
-        }
-        @Override public void actionPerformed(ActionEvent evt) {
-            tabbedPane.addTab("Title" + count, new JLabel("Tab" + count));
-            tabbedPane.setSelectedIndex(tabbedPane.getTabCount() - 1);
-            count++;
-        }
-    }
-    class CloseAllAction extends AbstractAction {
-        public CloseAllAction(String label, Icon icon) {
-            super(label, icon);
-        }
-        @Override public void actionPerformed(ActionEvent evt) {
-            tabbedPane.removeAll();
-        }
-    }
-
     public static void main(String... args) {
         EventQueue.invokeLater(new Runnable() {
             @Override public void run() {
@@ -73,10 +64,10 @@ public final class MainPanel extends JPanel {
 class HoverCloseButtonTabbedPane extends JTabbedPane {
     //private final Insets tabInsets = UIManager.getInsets("TabbedPane.tabInsets");
     private transient MouseMotionListener hoverHandler;
-    public HoverCloseButtonTabbedPane() {
+    protected HoverCloseButtonTabbedPane() {
         super(TOP, SCROLL_TAB_LAYOUT);
     }
-    public HoverCloseButtonTabbedPane(int tabPlacement) {
+    protected HoverCloseButtonTabbedPane(int tabPlacement) {
         super(tabPlacement, SCROLL_TAB_LAYOUT);
     }
 //     public HoverCloseButtonTabbedPane(int tabPlacement, int tabLayoutPolicy) {
@@ -86,23 +77,21 @@ class HoverCloseButtonTabbedPane extends JTabbedPane {
         removeMouseMotionListener(hoverHandler);
         super.updateUI();
         //setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
-        if (hoverHandler == null) {
-            hoverHandler = new MouseMotionAdapter() {
-                private int prev = -1;
-                @Override public void mouseMoved(MouseEvent e) {
-                    JTabbedPane source = (JTabbedPane) e.getComponent();
-                    int focussed = source.indexAtLocation(e.getX(), e.getY());
-                    if (focussed == prev) {
-                        return;
-                    }
-                    for (int i = 0; i < source.getTabCount(); i++) {
-                        TabPanel tab = (TabPanel) source.getTabComponentAt(i);
-                        tab.setButtonVisible(i == focussed);
-                    }
-                    prev = focussed;
+        hoverHandler = new MouseMotionAdapter() {
+            private int prev = -1;
+            @Override public void mouseMoved(MouseEvent e) {
+                JTabbedPane source = (JTabbedPane) e.getComponent();
+                int focussed = source.indexAtLocation(e.getX(), e.getY());
+                if (focussed == prev) {
+                    return;
                 }
-            };
-        }
+                for (int i = 0; i < source.getTabCount(); i++) {
+                    TabPanel tab = (TabPanel) source.getTabComponentAt(i);
+                    tab.setButtonVisible(i == focussed);
+                }
+                prev = focussed;
+            }
+        };
         addMouseMotionListener(hoverHandler);
     }
     @Override public void addTab(String title, final Component content) {
@@ -112,6 +101,7 @@ class HoverCloseButtonTabbedPane extends JTabbedPane {
 }
 
 class TabPanel extends JPanel {
+    private static final int PREFERRED_TAB_WIDTH = 80;
     private final JButton button = new JButton(new CloseTabIcon()) {
         @Override public void updateUI() {
             super.updateUI();
@@ -126,12 +116,12 @@ class TabPanel extends JPanel {
     private final JLabel label = new JLabel() {
         @Override public Dimension getPreferredSize() {
             Dimension dim = super.getPreferredSize();
-            int w = button.isVisible() ? 80 - button.getPreferredSize().width : 80;
-            return new Dimension(w, dim.height);
+            int bw = button.isVisible() ? button.getPreferredSize().width : 0;
+            return new Dimension(PREFERRED_TAB_WIDTH - bw, dim.height);
         }
     };
-    public TabPanel(final JTabbedPane pane, String title, final Component content) {
-        super(new BorderLayout(0, 0));
+    protected TabPanel(final JTabbedPane pane, String title, final Component content) {
+        super(new BorderLayout());
         setOpaque(false);
 
         label.setText(title);
@@ -158,15 +148,16 @@ class TabPanel extends JPanel {
 
 class CloseTabIcon implements Icon {
     @Override public void paintIcon(Component c, Graphics g, int x, int y) {
-        g.translate(x, y);
-        g.setColor(Color.ORANGE);
-        g.drawLine(2, 3, 9, 10);
-        g.drawLine(2, 4, 8, 10);
-        g.drawLine(3, 3, 9, 9);
-        g.drawLine(9, 3, 2, 10);
-        g.drawLine(9, 4, 3, 10);
-        g.drawLine(8, 3, 2, 9);
-        g.translate(-x, -y);
+        Graphics2D g2 = (Graphics2D) g.create();
+        g2.translate(x, y);
+        g2.setPaint(Color.ORANGE);
+        g2.drawLine(2, 3, 9, 10);
+        g2.drawLine(2, 4, 8, 10);
+        g2.drawLine(3, 3, 9, 9);
+        g2.drawLine(9, 3, 2, 10);
+        g2.drawLine(9, 4, 3, 10);
+        g2.drawLine(8, 3, 2, 9);
+        g2.dispose();
     }
     @Override public int getIconWidth() {
         return 12;

@@ -13,9 +13,9 @@ public final class MainPanel extends JPanel {
 
     public MainPanel() {
         super(new BorderLayout());
-        pop.add(new NewTabAction("Add", null));
+        pop.add(new NewTabAction("Add"));
         pop.addSeparator();
-        pop.add(new CloseAllAction("Close All", null));
+        pop.add(new CloseAllAction("Close All"));
         tab.setComponentPopupMenu(pop);
         tab.addTab("JLabel", new JLabel("JDK 6"));
         tab.addTab("JTree",  new JScrollPane(new JTree()));
@@ -23,20 +23,20 @@ public final class MainPanel extends JPanel {
         setPreferredSize(new Dimension(320, 240));
     }
     class NewTabAction extends AbstractAction {
-        public NewTabAction(String label, Icon icon) {
-            super(label, icon);
+        protected NewTabAction(String label) {
+            super(label);
         }
-        @Override public void actionPerformed(ActionEvent evt) {
+        @Override public void actionPerformed(ActionEvent e) {
             tab.addTab("Title" + count, new JLabel("Tab" + count));
             tab.setSelectedIndex(tab.getTabCount() - 1);
             count++;
         }
     }
     class CloseAllAction extends AbstractAction {
-        public CloseAllAction(String label, Icon icon) {
-            super(label, icon);
+        protected CloseAllAction(String label) {
+            super(label);
         }
-        @Override public void actionPerformed(ActionEvent evt) {
+        @Override public void actionPerformed(ActionEvent e) {
             tab.removeAll();
         }
     }
@@ -91,15 +91,16 @@ class MyJTabbedPane extends JTabbedPane {
 
 class CloseTabIcon implements Icon {
     @Override public void paintIcon(Component c, Graphics g, int x, int y) {
-        g.translate(x, y);
-        g.setColor(Color.BLACK);
-        g.drawLine(4,  4, 11, 11);
-        g.drawLine(4,  5, 10, 11);
-        g.drawLine(5,  4, 11, 10);
-        g.drawLine(11, 4,  4, 11);
-        g.drawLine(11, 5,  5, 11);
-        g.drawLine(10, 4,  4, 10);
-        g.translate(-x, -y);
+        Graphics2D g2 = (Graphics2D) g.create();
+        g2.translate(x, y);
+        g2.setPaint(Color.BLACK);
+        g2.drawLine(4,  4, 11, 11);
+        g2.drawLine(4,  5, 10, 11);
+        g2.drawLine(5,  4, 11, 10);
+        g2.drawLine(11, 4,  4, 11);
+        g2.drawLine(11, 5,  5, 11);
+        g2.drawLine(10, 4,  4, 10);
+        g2.dispose();
     }
     @Override public int getIconWidth() {
         return 16;

@@ -38,7 +38,7 @@ public final class MainPanel extends JPanel {
         return new JTable(model) {
             @Override public void updateUI() {
                 // Bug ID: 6788475 Changing to Nimbus LAF and back doesn't reset look and feel of JTable completely
-                // http://bugs.sun.com/view_bug.do?bug_id=6788475
+                // http://bugs.java.com/view_bug.do?bug_id=6788475
                 // XXX: set dummy ColorUIResource
                 setSelectionForeground(new ColorUIResource(Color.RED));
                 setSelectionBackground(new ColorUIResource(Color.RED));
@@ -51,8 +51,8 @@ public final class MainPanel extends JPanel {
                 TableModel m = getModel();
                 for (int i = 0; i < m.getColumnCount(); i++) {
                     TableCellRenderer r = getDefaultRenderer(m.getColumnClass(i));
-                    if (r instanceof JComponent) {
-                        ((JComponent) r).updateUI();
+                    if (r instanceof Component) {
+                        SwingUtilities.updateComponentTreeUI((Component) r);
                     }
                 }
             }
@@ -69,7 +69,7 @@ public final class MainPanel extends JPanel {
     }
     private static JCheckBox makeBooleanEditor(final JTable table) {
         JCheckBox checkBox = new JCheckBox();
-        checkBox.setHorizontalAlignment(JCheckBox.CENTER);
+        checkBox.setHorizontalAlignment(SwingConstants.CENTER);
         checkBox.setBorderPainted(true);
         checkBox.setOpaque(true);
         checkBox.addMouseListener(new MouseAdapter() {

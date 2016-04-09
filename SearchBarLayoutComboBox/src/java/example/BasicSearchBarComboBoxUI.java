@@ -5,24 +5,26 @@ package example;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.*;
+import java.util.Objects;
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.event.*;
+import javax.swing.plaf.ComponentUI;
 
-public class BasicSearchBarComboBoxUI extends SearchBarComboBoxUI {
+public class BasicSearchBarComboBoxUI extends SearchBarComboBoxUI { //NOPMD This class has too many methods, consider refactoring it.
     protected PopupMenuListener popupMenuListener;
     protected JButton loupeButton;
     protected Action loupeAction = new AbstractAction() {
         @Override public void actionPerformed(ActionEvent e) {
             comboBox.setPopupVisible(false);
             Object o = listBox.getSelectedValue();
-            if (o == null) {
+            if (Objects.isNull(o)) {
                 o = comboBox.getItemAt(0);
             }
             System.out.println(o + ": " + comboBox.getEditor().getItem());
         }
     };
-    public static javax.swing.plaf.ComponentUI createUI(JComponent c) {
+    public static ComponentUI createUI(JComponent c) {
         return new BasicSearchBarComboBoxUI();
     }
     //protected boolean isEditable = true;
@@ -35,17 +37,14 @@ public class BasicSearchBarComboBoxUI extends SearchBarComboBoxUI {
     @Override protected void installListeners() {
         super.installListeners();
         popupMenuListener = createPopupMenuListener();
-        //if (popupMenuListener != null)
         comboBox.addPopupMenuListener(popupMenuListener);
     }
     @Override protected void uninstallListeners() {
-        super.installListeners();
-        if (popupMenuListener != null) {
-            comboBox.removePopupMenuListener(popupMenuListener);
-        }
+        super.uninstallListeners();
+        comboBox.removePopupMenuListener(popupMenuListener);
     }
     protected PopupMenuListener createPopupMenuListener() {
-        if (popupMenuListener == null) {
+        if (Objects.isNull(popupMenuListener)) {
             popupMenuListener = new PopupMenuListener() {
                 private String str;
                 @Override public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
@@ -53,38 +52,35 @@ public class BasicSearchBarComboBoxUI extends SearchBarComboBoxUI {
                     str = combo.getEditor().getItem().toString();
                 }
                 @Override public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+                    JComboBox combo = (JComboBox) e.getSource();
                     Object o = listBox.getSelectedValue();
                     if (o instanceof SearchEngine) {
                         SearchEngine se = (SearchEngine) o;
                         arrowButton.setIcon(se.favicon);
-                        arrowButton.setRolloverIcon(IconUtil.makeRolloverIcon(se.favicon));
+                        arrowButton.setRolloverIcon(makeRolloverIcon(se.favicon));
                     }
-                    EventQueue.invokeLater(new Runnable() {
-                        @Override public void run() {
-                            comboBox.getEditor().setItem(str);
-                        }
-                    });
+                    combo.getEditor().setItem(str);
                 }
                 @Override public void popupMenuCanceled(PopupMenuEvent e) { /* not needed */ }
             };
         }
         return popupMenuListener;
     }
-    //NullPointerException at BasicComboBoxUI#isNavigationKey(int keyCode, int modifiers)
-    private static class DummyKeyAdapter extends KeyAdapter { /* dummy */ }
-    @Override protected KeyListener createKeyListener() {
-        if (keyListener == null) {
-            keyListener = new DummyKeyAdapter();
-        }
-        return keyListener;
-    }
+//     //NullPointerException at BasicComboBoxUI#isNavigationKey(int keyCode, int modifiers)
+//     private static class DummyKeyAdapter extends KeyAdapter { /* dummy */ }
+//     @Override protected KeyListener createKeyListener() {
+//         if (Objects.isNull(keyListener)) {
+//             keyListener = new DummyKeyAdapter();
+//         }
+//         return keyListener;
+//     }
     @Override protected void configureEditor() {
         //super.configureEditor();
         // Should be in the same state as the combobox
         editor.setEnabled(comboBox.isEnabled());
         editor.setFocusable(comboBox.isFocusable());
         editor.setFont(comboBox.getFont());
-        //if (focusListener != null) {
+        //if (Objects.nonNull(focusListener)) {
         //    editor.addFocusListener(focusListener);
         //}
         //editor.addFocusListener(getHandler());
@@ -106,7 +102,7 @@ public class BasicSearchBarComboBoxUI extends SearchBarComboBoxUI {
     }
     @Override public void configureArrowButton() {
         super.configureArrowButton();
-        if (arrowButton != null) {
+        if (Objects.nonNull(arrowButton)) {
             arrowButton.setBackground(UIManager.getColor("Panel.background"));
             arrowButton.setHorizontalAlignment(SwingConstants.LEFT);
             arrowButton.setOpaque(true);
@@ -121,12 +117,10 @@ public class BasicSearchBarComboBoxUI extends SearchBarComboBoxUI {
         //super.installComponents();
         arrowButton = createArrowButton();
         comboBox.add(arrowButton);
-        //if (arrowButton != null)
         configureArrowButton();
 
         loupeButton = createLoupeButton();
         comboBox.add(loupeButton);
-        //if (loupeButton != null)
         configureLoupeButton();
 
         //if (comboBox.isEditable())
@@ -134,7 +128,7 @@ public class BasicSearchBarComboBoxUI extends SearchBarComboBoxUI {
         comboBox.add(currentValuePane);
     }
     @Override protected void uninstallComponents() {
-        if (loupeButton != null) {
+        if (Objects.nonNull(loupeButton)) {
             unconfigureLoupeButton();
         }
         loupeButton = null;
@@ -144,11 +138,11 @@ public class BasicSearchBarComboBoxUI extends SearchBarComboBoxUI {
         JButton button = new JButton(loupeAction);
         ImageIcon loupe = new ImageIcon(BasicSearchBarComboBoxUI.class.getResource("loupe.png"));
         button.setIcon(loupe);
-        button.setRolloverIcon(IconUtil.makeRolloverIcon(loupe));
+        button.setRolloverIcon(makeRolloverIcon(loupe));
         return button;
     }
     public void configureLoupeButton() {
-        if (loupeButton != null) {
+        if (Objects.nonNull(loupeButton)) {
             loupeButton.setName("ComboBox.loupeButton");
             loupeButton.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
             loupeButton.setEnabled(comboBox.isEnabled());
@@ -165,7 +159,7 @@ public class BasicSearchBarComboBoxUI extends SearchBarComboBoxUI {
         }
     }
     public void unconfigureLoupeButton() {
-        if (loupeButton != null) {
+        if (Objects.nonNull(loupeButton)) {
             loupeButton.setAction(null);
             //loupeButton.removeMouseListener(popup.getMouseListener());
             //loupeButton.removeMouseMotionListener(popup.getMouseMotionListener());
@@ -177,11 +171,7 @@ public class BasicSearchBarComboBoxUI extends SearchBarComboBoxUI {
     @Override protected LayoutManager createLayoutManager() {
         return new SearchBarLayout();
     }
-}
-
-final class IconUtil {
-    private IconUtil() { /* Singleton */ }
-    public static Icon makeRolloverIcon(Icon srcIcon) {
+    private static Icon makeRolloverIcon(Icon srcIcon) {
         RescaleOp op = new RescaleOp(
             new float[] {1.2f, 1.2f, 1.2f, 1f},
             new float[] {0f, 0f, 0f, 0f}, null);
@@ -228,7 +218,7 @@ class SearchBarLayout implements LayoutManager {
         int loupeWidth   = buttonHeight;
 
         JButton arrowButton = (JButton) cb.getComponent(0);
-        if (arrowButton != null) {
+        if (Objects.nonNull(arrowButton)) {
             Insets arrowInsets = arrowButton.getInsets();
             buttonWidth = arrowButton.getPreferredSize().width + arrowInsets.left + arrowInsets.right;
             arrowButton.setBounds(insets.left, insets.top, buttonWidth, buttonHeight);
@@ -241,83 +231,17 @@ class SearchBarLayout implements LayoutManager {
             }
         }
         //= (JButton) cb.getComponent(3);
-        if (loupeButton != null) {
+        if (Objects.nonNull(loupeButton)) {
             //Insets loupeInsets = loupeButton.getInsets();
             //loupeWidth = loupeButton.getPreferredSize().width + loupeInsets.left + loupeInsets.right;
             loupeButton.setBounds(width - insets.right - loupeWidth, insets.top, loupeWidth, buttonHeight);
         }
         JTextField editor = (JTextField) cb.getEditor().getEditorComponent();
         //JTextField editor = (JTextField) cb.getComponent(1);
-        if (editor != null) {
+        if (Objects.nonNull(editor)) {
             editor.setBounds(insets.left + buttonWidth, insets.top,
                              width  - insets.left - insets.right - buttonWidth - loupeWidth,
                              height - insets.top  - insets.bottom);
-        }
-    }
-}
-
-class TriangleIcon implements Icon {
-    @Override public void paintIcon(Component c, Graphics g, int x, int y) {
-        Graphics2D g2 = (Graphics2D) g.create();
-        g2.setPaint(Color.GRAY);
-        g2.translate(x, y);
-        g2.drawLine(2, 3, 6, 3);
-        g2.drawLine(3, 4, 5, 4);
-        g2.drawLine(4, 5, 4, 5);
-        g2.translate(-x, -y);
-        g2.dispose();
-    }
-    @Override public int getIconWidth() {
-        return 9;
-    }
-    @Override public int getIconHeight() {
-        return 9;
-    }
-}
-
-class TriangleArrowButton extends JButton {
-    private static Icon triangleIcon = new TriangleIcon();
-//     @Override public void setIcon(Icon favicon) {
-//         super.setIcon(favicon);
-//         if (favicon != null) {
-//             setRolloverIcon(makeRolloverIcon(favicon));
-//         }
-//     }
-    @Override protected void paintComponent(Graphics g) {
-        Graphics2D g2 = (Graphics2D) g.create();
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        if (getModel().isArmed()) {
-            g2.setColor(new Color(220, 220, 220));
-        } else if (isRolloverEnabled() && getModel().isRollover()) {
-            g2.setColor(new Color(220, 220, 220));
-        } else if (hasFocus()) {
-            g2.setColor(new Color(220, 220, 220));
-        } else {
-            g2.setColor(getBackground());
-        }
-        Rectangle r = getBounds();
-        r.grow(1, 1);
-        g2.fill(r);
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-        g2.setColor(getBackground());
-        g2.dispose();
-
-        super.paintComponent(g);
-        Insets i = getInsets();
-        int x = r.width - i.right - triangleIcon.getIconWidth() - 2;
-        int y = i.top + (r.height - i.top - i.bottom - triangleIcon.getIconHeight()) / 2;
-        triangleIcon.paintIcon(this, g, x, y);
-    }
-    @Override public Dimension getPreferredSize() {
-        Insets i = getInsets();
-        Icon favicon = getIcon();
-        int fw = favicon == null ? 16 : favicon.getIconWidth();
-        int w  = fw + triangleIcon.getIconWidth() + i.left + i.right;
-        return new Dimension(w, w);
-    }
-    @Override public void setBorder(Border border) {
-        if (border instanceof CompoundBorder) {
-            super.setBorder(border);
         }
     }
 }

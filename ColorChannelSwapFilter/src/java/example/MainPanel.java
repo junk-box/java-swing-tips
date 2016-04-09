@@ -6,7 +6,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.*;
 import java.beans.*;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
 import javax.swing.*;
 import javax.swing.plaf.LayerUI;
@@ -44,7 +44,7 @@ public final class MainPanel extends JPanel implements HierarchyListener {
         box.add(Box.createHorizontalStrut(2));
         box.add(new JButton(new AbstractAction("Start") {
             @Override public void actionPerformed(ActionEvent e) {
-                if (worker != null && !worker.isDone()) {
+                if (Objects.nonNull(worker) && !worker.isDone()) {
                     worker.cancel(true);
                 }
                 worker = new Task();
@@ -61,7 +61,7 @@ public final class MainPanel extends JPanel implements HierarchyListener {
         setPreferredSize(new Dimension(320, 240));
     }
     @Override public void hierarchyChanged(HierarchyEvent e) {
-        if ((e.getChangeFlags() & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0 && !e.getComponent().isDisplayable() && worker != null) {
+        if ((e.getChangeFlags() & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0 && !e.getComponent().isDisplayable() && Objects.nonNull(worker)) {
             System.out.println("DISPOSE_ON_CLOSE");
             worker.cancel(true);
             worker = null;
@@ -74,10 +74,9 @@ public final class MainPanel extends JPanel implements HierarchyListener {
         c.fill    = GridBagConstraints.HORIZONTAL;
         c.insets  = new Insets(5, 5, 5, 5);
         c.weightx = 1d;
-        c.gridy   = 0;
+        c.gridx   = GridBagConstraints.REMAINDER;
         for (JComponent cmp: list) {
             p.add(cmp, c);
-            c.gridy++;
         }
         return p;
     }
@@ -118,7 +117,7 @@ class BlockedColorLayerUI extends LayerUI<JProgressBar> {
             int w = progress.getSize().width;
             int h = progress.getSize().height;
 
-            if (bi == null || w != prevw || h != prevh) {
+            if (Objects.isNull(bi) || w != prevw || h != prevh) {
                 bi = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
             }
             prevw = w;
@@ -139,10 +138,10 @@ class BlockedColorLayerUI extends LayerUI<JProgressBar> {
 
 class RedGreenChannelSwapFilter extends RGBImageFilter {
     @Override public int filterRGB(int x, int y, int argb) {
-        int r = (int) ((argb >> 16) & 0xff);
-        int g = (int) ((argb >>  8) & 0xff);
-        int b = (int) ((argb)       & 0xff);
-        return (argb & 0xff000000) | (g << 16) | (r << 8) | (b);
+        int r = (int) ((argb >> 16) & 0xFF);
+        int g = (int) ((argb >>  8) & 0xFF);
+        int b = (int) ((argb)       & 0xFF);
+        return (argb & 0xFF000000) | (g << 16) | (r << 8) | (b);
     }
 }
 
@@ -165,15 +164,15 @@ class Task extends SwingWorker<String, Void> {
 
 class ProgressListener implements PropertyChangeListener {
     private final JProgressBar progressBar;
-    ProgressListener(JProgressBar progressBar) {
+    protected ProgressListener(JProgressBar progressBar) {
         this.progressBar = progressBar;
         this.progressBar.setValue(0);
     }
-    @Override public void propertyChange(PropertyChangeEvent evt) {
-        String strPropertyName = evt.getPropertyName();
+    @Override public void propertyChange(PropertyChangeEvent e) {
+        String strPropertyName = e.getPropertyName();
         if ("progress".equals(strPropertyName)) {
             progressBar.setIndeterminate(false);
-            int progress = (Integer) evt.getNewValue();
+            int progress = (Integer) e.getNewValue();
             progressBar.setValue(progress);
         }
     }

@@ -5,7 +5,7 @@ package example;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Ellipse2D;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
 import javax.swing.*;
 //import javax.swing.plaf.basic.*;
@@ -17,7 +17,7 @@ public final class MainPanel extends JPanel {
       // JDK 5
       //new Box(BoxLayout.X_AXIS) {
       //    @Override protected void paintComponent(Graphics g) {
-      //        if (ui != null) {
+      //        if (Objects.nonNull(ui)) {
       //            super.paintComponent(g);
       //        } else if (isOpaque()) {
       //            g.setColor(getBackground());
@@ -57,15 +57,13 @@ public final class MainPanel extends JPanel {
                 box.repaint();
             }
         }));
-        alignmentsChoices.addItemListener(new ItemListener() {
-            @Override public void itemStateChanged(ItemEvent e) {
-                if (e.getStateChange() == ItemEvent.SELECTED) {
-                    ButtonAlignments ba = (ButtonAlignments) alignmentsChoices.getSelectedItem();
-                    for (JButton b: buttons) {
-                        b.setAlignmentY(ba.alingment);
-                    }
-                    box.revalidate();
+        alignmentsChoices.addItemListener(e -> {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                ButtonAlignments ba = (ButtonAlignments) alignmentsChoices.getSelectedItem();
+                for (JButton b: buttons) {
+                    b.setAlignmentY(ba.alingment);
                 }
+                box.revalidate();
             }
         });
         alignmentsChoices.setSelectedIndex(1);
@@ -129,7 +127,8 @@ public final class MainPanel extends JPanel {
 }
 
 class RoundButton extends JButton {
-    protected Shape shape, base;
+    protected Shape shape;
+    protected Shape base;
 //     public RoundButton() {
 //         super();
 //     }
@@ -148,7 +147,7 @@ class RoundButton extends JButton {
 //         //setModel(new DefaultButtonModel());
 //         //init(text, icon);
 //     }
-    public RoundButton(Icon icon, String i2, String i3) {
+    protected RoundButton(Icon icon, String i2, String i3) {
         super(icon);
         setPressedIcon(new ImageIcon(getClass().getResource(i2)));
         setRolloverIcon(new ImageIcon(getClass().getResource(i3)));
@@ -173,22 +172,21 @@ class RoundButton extends JButton {
         if (!getBounds().equals(base)) {
             Dimension s = getPreferredSize();
             base = getBounds();
-            shape = new Ellipse2D.Float(0, 0, s.width - 1, s.height - 1);
+            shape = new Ellipse2D.Double(0, 0, s.width - 1, s.height - 1);
         }
     }
     @Override protected void paintBorder(Graphics g) {
         initShape();
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2.setColor(getBackground());
+        g2.setPaint(getBackground());
         //g2.setStroke(new BasicStroke(1f));
         g2.draw(shape);
-        //g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
         g2.dispose();
     }
     @Override public boolean contains(int x, int y) {
         initShape();
-        return shape == null ? false : shape.contains(x, y);
+        return Objects.nonNull(shape) && shape.contains(x, y);
     }
 }
 
@@ -199,7 +197,9 @@ class RoundButton extends JButton {
 //         clearTextShiftOffset();
 //         defaultTextShiftOffset = 0;
 //         Icon icon = b.getIcon();
-//         if (icon == null) { return; }
+//         if (Objects.isNull(icon)) {
+//             return;
+//         }
 //         b.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
 //         b.setContentAreaFilled(false);
 //         b.setFocusPainted(false);
@@ -231,7 +231,7 @@ class RoundButton extends JButton {
 //                 }
 //             }
 //         };
-//         if (listener != null) {
+//         if (Objects.nonNull(listener)) {
 //             b.addMouseListener(listener);
 //             b.addMouseMotionListener(listener);
 //             b.addFocusListener(listener);
@@ -245,10 +245,9 @@ class RoundButton extends JButton {
 //         initShape(c);
 //         //Border
 //         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-//         g2.setColor(c.getBackground());
+//         g2.setPaint(c.getBackground());
 //         //g2.setStroke(new BasicStroke(1f));
 //         g2.draw(shape);
-//         //g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
 //         g2.dispose();
 //     }
 //     @Override public Dimension getPreferredSize(JComponent c) {
@@ -262,18 +261,18 @@ class RoundButton extends JButton {
 //         if (!c.getBounds().equals(base)) {
 //             Dimension s = c.getPreferredSize();
 //             base = c.getBounds();
-//             shape = new Ellipse2D.Float(0, 0, s.width - 1, s.height - 1);
+//             shape = new Ellipse2D.Double(0, 0, s.width - 1, s.height - 1);
 //         }
 //     }
 // }
 
 enum ButtonAlignments {
-    Top    ("Top Alignment", Component.TOP_ALIGNMENT),
-    Center ("Center Alignment", Component.CENTER_ALIGNMENT),
-    Bottom ("Bottom Alignment", Component.BOTTOM_ALIGNMENT);
+    Top("Top Alignment",       Component.TOP_ALIGNMENT),
+    Center("Center Alignment", Component.CENTER_ALIGNMENT),
+    Bottom("Bottom Alignment", Component.BOTTOM_ALIGNMENT);
     private final String description;
     public final float alingment;
-    private ButtonAlignments(String description, float alingment) {
+    ButtonAlignments(String description, float alingment) {
         this.description = description;
         this.alingment   = alingment;
     }

@@ -18,7 +18,7 @@ public final class MainPanel extends JPanel {
                 c.setBackground(getSelectionBackground());
             } else {
                 c.setForeground(getForeground());
-                c.setBackground((row % 2 == 0) ? EVEN_COLOR : getBackground());
+                c.setBackground(row % 2 == 0 ? EVEN_COLOR : getBackground());
             }
             return c;
         }
@@ -52,54 +52,6 @@ public final class MainPanel extends JPanel {
         setPreferredSize(new Dimension(320, 240));
     }
 
-    class TestCreateAction extends AbstractAction {
-        public TestCreateAction(String label, Icon icon) {
-            super(label, icon);
-        }
-        @Override public void actionPerformed(ActionEvent e) {
-            if (table.isEditing()) {
-                table.getCellEditor().stopCellEditing();
-            }
-            model.addTest(new Test("New row", ""));
-            Rectangle r = table.getCellRect(model.getRowCount() - 1, 0, true);
-            table.scrollRectToVisible(r);
-        }
-    }
-
-    class DeleteAction extends AbstractAction {
-        public DeleteAction(String label, Icon icon) {
-            super(label, icon);
-        }
-        @Override public void actionPerformed(ActionEvent e) {
-            if (table.isEditing()) {
-                table.getCellEditor().stopCellEditing();
-            }
-            int[] selection = table.getSelectedRows();
-            if (selection.length == 0) {
-                return;
-            }
-            for (int i = selection.length - 1; i >= 0; i--) {
-                //Test ixsc = model.getTest(selection[i]);
-                model.removeRow(selection[i]);
-            }
-        }
-    }
-
-    private class TablePopupMenu extends JPopupMenu {
-        private final Action deleteAction = new DeleteAction("delete", null);
-        public TablePopupMenu() {
-            super();
-            add(new TestCreateAction("add", null));
-            //add(new ClearAction("clearSelection", null));
-            addSeparator();
-            add(deleteAction);
-        }
-        @Override public void show(Component c, int x, int y) {
-            int[] l = table.getSelectedRows();
-            deleteAction.setEnabled(l.length > 0);
-            super.show(c, x, y);
-        }
-    }
 
     public static void main(String... args) {
         EventQueue.invokeLater(new Runnable() {
@@ -124,6 +76,45 @@ public final class MainPanel extends JPanel {
     }
 }
 
+class TablePopupMenu extends JPopupMenu {
+    private final Action createAction = new AbstractAction("add") {
+        @Override public void actionPerformed(ActionEvent e) {
+            JTable table = (JTable) getInvoker();
+            if (table.isEditing()) {
+                table.getCellEditor().stopCellEditing();
+            }
+            TestModel model = (TestModel) table.getModel();
+            model.addTest(new Test("New row", ""));
+            Rectangle r = table.getCellRect(model.getRowCount() - 1, 0, true);
+            table.scrollRectToVisible(r);
+        }
+    };
+    private final Action deleteAction = new AbstractAction("delete") {
+        @Override public void actionPerformed(ActionEvent e) {
+            JTable table = (JTable) getInvoker();
+            if (table.isEditing()) {
+                table.getCellEditor().stopCellEditing();
+            }
+            DefaultTableModel model = (DefaultTableModel) table.getModel();
+            int[] selection = table.getSelectedRows();
+            for (int i = selection.length - 1; i >= 0; i--) {
+                model.removeRow(selection[i]);
+            }
+        }
+    };
+    protected TablePopupMenu() {
+        super();
+        add(createAction);
+        addSeparator();
+        add(deleteAction);
+    }
+    @Override public void show(Component c, int x, int y) {
+        JTable table = (JTable) getInvoker();
+        deleteAction.setEnabled(table.getSelectedRowCount() > 0);
+        super.show(c, x, y);
+    }
+}
+
 class TestModel extends SortableTableModel {
     private static final ColumnContext[] COLUMN_ARRAY = {
         new ColumnContext("No.",     Integer.class, false),
@@ -139,20 +130,20 @@ class TestModel extends SortableTableModel {
     @Override public boolean isCellEditable(int row, int col) {
         return COLUMN_ARRAY[col].isEditable;
     }
-    @Override public Class<?> getColumnClass(int modelIndex) {
-        return COLUMN_ARRAY[modelIndex].columnClass;
+    @Override public Class<?> getColumnClass(int column) {
+        return COLUMN_ARRAY[column].columnClass;
     }
     @Override public int getColumnCount() {
         return COLUMN_ARRAY.length;
     }
-    @Override public String getColumnName(int modelIndex) {
-        return COLUMN_ARRAY[modelIndex].columnName;
+    @Override public String getColumnName(int column) {
+        return COLUMN_ARRAY[column].columnName;
     }
     private static class ColumnContext {
         public final String  columnName;
         public final Class   columnClass;
         public final boolean isEditable;
-        public ColumnContext(String columnName, Class columnClass, boolean isEditable) {
+        protected ColumnContext(String columnName, Class columnClass, boolean isEditable) {
             this.columnName = columnName;
             this.columnClass = columnClass;
             this.isEditable = isEditable;
@@ -161,8 +152,9 @@ class TestModel extends SortableTableModel {
 }
 
 class Test {
-    private String name, comment;
-    public Test(String name, String comment) {
+    private String name;
+    private String comment;
+    protected Test(String name, String comment) {
         this.name = name;
         this.comment = comment;
     }

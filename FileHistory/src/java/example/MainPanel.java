@@ -8,6 +8,7 @@ import java.io.*;
 import java.util.*;
 import java.util.List;
 import javax.swing.*;
+import javax.swing.plaf.basic.BasicToolBarUI;
 
 public final class MainPanel extends JPanel {
     private static final int MAX_HISTORY = 3;
@@ -21,13 +22,13 @@ public final class MainPanel extends JPanel {
         super(new BorderLayout());
         initActions(getActions());
         JPanel menupanel = new JPanel(new BorderLayout());
-        JMenuBar menuBar = BAR_FACTORY.createMenubar();
-        //if (menuBar != null)
+        JMenuBar menuBar = BAR_FACTORY.createMenuBar();
+        //if (Objects.nonNull(menuBar))
         menupanel.add(menuBar, BorderLayout.NORTH);
         initHistory();
 
-        JToolBar toolBar = BAR_FACTORY.createToolbar();
-        if (toolBar != null) {
+        JToolBar toolBar = BAR_FACTORY.createToolBar();
+        if (Objects.nonNull(toolBar)) {
             menupanel.add(toolBar, BorderLayout.SOUTH);
         }
         add(menupanel, BorderLayout.NORTH);
@@ -37,7 +38,9 @@ public final class MainPanel extends JPanel {
 
     private void initHistory() {
         JMenu fm = BAR_FACTORY.getMenu("file");
-        if (fileHistoryMenu == null) {
+        if (Objects.nonNull(fileHistoryMenu)) {
+            fileHistoryMenu.removeAll();
+        } else {
             fileHistoryMenu = new JMenu("最近使ったファイル(F)");
             fileHistoryMenu.setMnemonic('F');
             JMenuItem exit = BAR_FACTORY.getMenuItem("exit");
@@ -45,8 +48,6 @@ public final class MainPanel extends JPanel {
             fm.add(fileHistoryMenu);
             fm.addSeparator();
             fm.add(exit);
-        } else {
-            fileHistoryMenu.removeAll();
         }
         if (fileHistoryCache.isEmpty()) {
             noFile.setEnabled(false);
@@ -58,8 +59,7 @@ public final class MainPanel extends JPanel {
                 String num  = Integer.toString(i + 1);
                 JMenuItem mi = new JMenuItem(new HistoryAction(new File(name).getAbsolutePath()));
                 mi.setText(num + ": " + name);
-                //byte[] bt = num.getBytes();
-                mi.setMnemonic((int) num.charAt(0));
+                mi.setMnemonic(num.codePointAt(0));
                 fileHistoryMenu.add(mi);
             }
         }
@@ -77,19 +77,18 @@ public final class MainPanel extends JPanel {
             // JMenuItem mi = new JMenuItem(new HistoryAction(new File(name)));
             JMenuItem mi = new JMenuItem(new HistoryAction(name));
             mi.setText(num + ": " + name);
-            //byte[] bt = num.getBytes();
-            mi.setMnemonic((int) num.charAt(0));
+            mi.setMnemonic(num.codePointAt(0));
             fileHistoryMenu.add(mi, i);
         }
     }
     class HistoryAction extends AbstractAction {
 //         private final File file;
-//         public HistoryAction(File file) {
+//         protected HistoryAction(File file) {
 //             super();
 //             this.file = file;
 //         }
         private final String fileName;
-        public HistoryAction(String fileName) {
+        protected HistoryAction(String fileName) {
             super();
             this.fileName = fileName;
         }
@@ -125,7 +124,7 @@ public final class MainPanel extends JPanel {
 //     };
 
     private static class NewAction extends AbstractAction {
-        public NewAction() {
+        protected NewAction() {
             super("new");
         }
         @Override public void actionPerformed(ActionEvent e) {
@@ -135,7 +134,7 @@ public final class MainPanel extends JPanel {
 
     private class OpenAction extends AbstractAction {
         private int count;
-        public OpenAction() {
+        protected OpenAction() {
             super("open");
         }
         @Override public void actionPerformed(ActionEvent e) {
@@ -181,7 +180,7 @@ public final class MainPanel extends JPanel {
 }
 
 class SaveAsAction extends AbstractAction {
-    public SaveAsAction() {
+    protected SaveAsAction() {
         super("saveAs");
     }
     @Override public void actionPerformed(ActionEvent e) {
@@ -190,22 +189,34 @@ class SaveAsAction extends AbstractAction {
 }
 
 class ExitAction extends AbstractAction {
-    public ExitAction() {
+    protected ExitAction() {
         super("exit");
     }
     @Override public void actionPerformed(ActionEvent e) {
-        //exitActionPerformed();
-        //saveLocation(prefs);
-        Window w = SwingUtilities.getWindowAncestor((Component) e.getSource());
-        if (w != null) {
-            w.dispose();
+        Component root = null;
+        Container parent = SwingUtilities.getUnwrappedParent((Component) e.getSource());
+        if (parent instanceof JPopupMenu) {
+            JPopupMenu popup = (JPopupMenu) parent;
+            root = SwingUtilities.getRoot(popup.getInvoker());
+        } else if (parent instanceof JToolBar) {
+            JToolBar toolbar = (JToolBar) parent;
+            if (((BasicToolBarUI) toolbar.getUI()).isFloating()) {
+                root = SwingUtilities.getWindowAncestor(toolbar).getOwner();
+            } else {
+                root = SwingUtilities.getRoot(toolbar);
+            }
+        } else {
+            root = SwingUtilities.getRoot(parent);
         }
-        //System.exit(0);
+        if (root instanceof Window) {
+            Window window = (Window) root;
+            window.dispatchEvent(new WindowEvent(window, WindowEvent.WINDOW_CLOSING));
+        }
     }
 }
 
 class HelpAction extends AbstractAction {
-    public HelpAction() {
+    protected HelpAction() {
         super("help");
     }
     @Override public void actionPerformed(ActionEvent e) {
@@ -218,7 +229,7 @@ class VersionAction extends AbstractAction {
     private static final String COPYRIGHT = "Copyright(C) 2006";
     private static final String VERSION   = "0.0";
     private static final int    RELEASE   = 1;
-    public VersionAction() {
+    protected VersionAction() {
         super("version");
     }
     @Override public void actionPerformed(ActionEvent e) {

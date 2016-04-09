@@ -22,13 +22,17 @@ public final class MainPanel extends JPanel {
 
         int g = 5;
         JPanel p = new JPanel(new GridLayout(4, 2, g, g));
-        p.add(combo00); p.add(new JLabel("<- nomal"));
-        p.add(combo01); p.add(new JLabel("<- nomal, editable"));
-        p.add(combo02); p.add(new JLabel("<- wide"));
-        p.add(combo03); p.add(new JLabel("<- wide, editable"));
+        p.add(combo00);
+        p.add(new JLabel("<- nomal"));
+        p.add(combo01);
+        p.add(new JLabel("<- nomal, editable"));
+        p.add(combo02);
+        p.add(new JLabel("<- wide"));
+        p.add(combo03);
+        p.add(new JLabel("<- wide, editable"));
         setBorder(BorderFactory.createEmptyBorder(g, g, g, g));
         add(p, BorderLayout.NORTH);
-        setPreferredSize(new Dimension(320, 200));
+        setPreferredSize(new Dimension(320, 240));
     }
     private static JComboBox<String> makeComboBox() {
         DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
@@ -40,7 +44,7 @@ public final class MainPanel extends JPanel {
         model.addElement("bbb12");
         return new JComboBox<String>(model);
     }
-    // https://forums.oracle.com/thread/1368300 How to widen the drop-down list in a JComboBox
+    // https://community.oracle.com/thread/1368300 How to widen the drop-down list in a JComboBox
     private static class WidePopupMenuListener implements PopupMenuListener {
         private static final int POPUP_MIN_WIDTH = 300;
         private boolean adjusting;

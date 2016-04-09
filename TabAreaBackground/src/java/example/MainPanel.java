@@ -56,9 +56,10 @@ public final class MainPanel extends JPanel {
         map.put("TabbedPane.selected",              Color.WHITE);
         map.put("TabbedPane.selectHighlight",       Color.WHITE);
         map.put("TabbedPane.borderHightlightColor", Color.WHITE);
-        for (Map.Entry<String, Color> entry: map.entrySet()) {
-            UIManager.put(entry.getKey(), entry.getValue());
-        }
+        //for (Map.Entry<String, Color> entry: map.entrySet()) {
+        //    UIManager.put(entry.getKey(), entry.getValue());
+        //}
+        map.forEach(UIManager::put);
 
         final JTabbedPane tabs = makeTabbedPane();
         final JComboBox combo  = makeComboBox(map);
@@ -66,10 +67,9 @@ public final class MainPanel extends JPanel {
 
         GridBagConstraints c = new GridBagConstraints();
         JPanel p = new JPanel(new GridBagLayout());
-        c.anchor = GridBagConstraints.WEST;
-        c.gridx = 0;
-        c.gridy = 0;
-        p.add(opaque, c); c.gridy++;
+        c.anchor = GridBagConstraints.LINE_START;
+        c.gridx = GridBagConstraints.REMAINDER;
+        p.add(opaque, c);
         p.add(combo,  c);
 
         opaque.addActionListener(new ActionListener() {
@@ -78,20 +78,18 @@ public final class MainPanel extends JPanel {
                 tabs.repaint();
             }
         });
-        combo.addItemListener(new ItemListener() {
-            @Override public void itemStateChanged(ItemEvent e) {
-                if (e.getStateChange() != ItemEvent.SELECTED) {
-                    return;
-                }
-                for (Map.Entry<String, Color> entry: map.entrySet()) {
-                    UIManager.put(entry.getKey(), entry.getValue());
-                }
-                if (combo.getSelectedIndex() > 0) {
-                    UIManager.put(combo.getSelectedItem(), Color.GREEN);
-                }
-                //SwingUtilities.updateComponentTreeUI(tabs);
-                tabs.updateUI();
+        combo.addItemListener(e -> {
+            if (e.getStateChange() != ItemEvent.SELECTED) {
+                return;
             }
+            map.forEach(UIManager::put);
+            if (combo.getSelectedIndex() > 0) {
+                UIManager.put(combo.getSelectedItem(), Color.GREEN);
+            }
+            //XXX: JComboBox: by UP/DOWN keys
+            //XXX: NullPointerException at javax.swing.plaf.basic.BasicComboBoxUI.selectNextPossibleValue(BasicComboBoxUI.java:1128)
+            //SwingUtilities.updateComponentTreeUI(tabs);
+            tabs.updateUI();
         });
 
         tabs.addTab("JTree",     new JScrollPane(new JTree()));
@@ -139,9 +137,7 @@ public final class MainPanel extends JPanel {
     private static JComboBox<String> makeComboBox(Map<String, Color> map) {
         DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
         model.addElement("gray-white");
-        for (Map.Entry<String, Color> entry: map.entrySet()) {
-            model.addElement(entry.getKey());
-        }
+        map.forEach((key, value) -> model.addElement(key));
         return new JComboBox<String>(model);
     }
 
@@ -155,8 +151,9 @@ public final class MainPanel extends JPanel {
     public static void createAndShowGUI() {
 //         try {
 //             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-//         } catch (Exception e) {
-//             e.printStackTrace();
+//         } catch (ClassNotFoundException | InstantiationException
+//                | IllegalAccessException | UnsupportedLookAndFeelException ex) {
+//             ex.printStackTrace();
 //         }
         JFrame frame = new JFrame("@title@");
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);

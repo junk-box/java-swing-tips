@@ -45,15 +45,17 @@ public final class MainPanel extends JPanel {
         ActionListener al = new ActionListener() {
             @Override public void actionPerformed(ActionEvent e) {
                 JRootPane rootPane = box.getRootPane();
-                if (rootPane != null) {
+                if (Objects.nonNull(rootPane)) {
                     rootPane.setDefaultButton(map.get(bg.getSelection().getActionCommand()));
                 }
             }
         };
         for (String key: map.keySet()) {
             JRadioButton r = new JRadioButton(key);
-            r.setActionCommand(key); r.addActionListener(al);
-            bg.add(r); box.add(r);
+            r.setActionCommand(key);
+            r.addActionListener(al);
+            bg.add(r);
+            box.add(r);
         }
         box.add(Box.createHorizontalGlue());
         box.setBorder(BorderFactory.createTitledBorder("JRootPane#setDefaultButton: "));

@@ -32,7 +32,7 @@ public final class MainPanel extends JPanel {
                     c.setBackground(getSelectionBackground());
                 } else {
                     c.setForeground(getForeground());
-                    c.setBackground((row % 2 == 0) ? evenColor : getBackground());
+                    c.setBackground(row % 2 == 0 ? evenColor : getBackground());
                 }
                 return c;
             }
@@ -75,9 +75,8 @@ public final class MainPanel extends JPanel {
         table.setEnabled(false);
         table.setShowGrid(false);
         table.getColumnModel().getColumn(AUTOWRAP_COLUMN).setCellRenderer(new TextAreaCellRenderer());
-        //table.setIntercellSpacing(new Dimension(0, 0));
-        add(new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
-                                   ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER));
+        //table.setIntercellSpacing(new Dimension());
+        add(new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER));
         setPreferredSize(new Dimension(320, 240));
     }
 
@@ -108,8 +107,8 @@ class TextAreaCellRenderer extends JTextArea implements TableCellRenderer {
     private final List<List<Integer>> rowAndCellHeightList = new ArrayList<>();
 
     //public static class UIResource extends TextAreaCellRenderer implements javax.swing.plaf.UIResource {}
-    public TextAreaCellRenderer() {
-        super();
+    @Override public void updateUI() {
+        super.updateUI();
         setLineWrap(true);
         setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
         //setBorder(BorderFactory.createLineBorder(Color.RED, 2));
@@ -163,12 +162,14 @@ class TextAreaCellRenderer extends JTextArea implements TableCellRenderer {
     //Overridden for performance reasons. ---->
     @Override public boolean isOpaque() {
         Color back = getBackground();
-        Component p = getParent();
-        if (p != null) {
-            p = p.getParent();
-        } // p should now be the JTable.
-        boolean colorMatch = back != null && p != null && back.equals(p.getBackground()) && p.isOpaque();
-        return !colorMatch && super.isOpaque();
+        Object o = SwingUtilities.getAncestorOfClass(JTable.class, this);
+        if (o instanceof JTable) {
+            JTable table = (JTable) o;
+            boolean colorMatch = Objects.nonNull(back) && back.equals(table.getBackground()) && table.isOpaque();
+            return !colorMatch && super.isOpaque();
+        } else {
+            return super.isOpaque();
+        }
     }
     @Override protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
         //String literal pool

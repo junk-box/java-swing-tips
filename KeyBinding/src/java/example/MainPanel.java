@@ -4,9 +4,7 @@ package example;
 //@homepage@
 import java.awt.*;
 import java.awt.event.*;
-//import java.util.ArrayList;
-import java.util.Arrays;
-//import java.util.Hashtable;
+import java.util.*;
 import java.util.List;
 import javax.swing.*;
 import javax.swing.table.*;
@@ -22,7 +20,7 @@ public final class MainPanel extends JPanel {
                 c.setBackground(getSelectionBackground());
             } else {
                 c.setForeground(getForeground());
-                c.setBackground((row % 2 == 0) ? EVEN_COLOR : getBackground());
+                c.setBackground(row % 2 == 0 ? EVEN_COLOR : getBackground());
             }
             return c;
         }
@@ -57,7 +55,9 @@ public final class MainPanel extends JPanel {
     // modified by terai
 //     private Hashtable<Object, ArrayList<KeyStroke>> buildReverseMap(InputMap im) {
 //         Hashtable<Object, ArrayList<KeyStroke>> h = new Hashtable<>();
-//         if (im.allKeys() == null) { return h; }
+//         if (Objects.isNull(im.allKeys())) {
+//             return h;
+//         }
 //         for (KeyStroke ks: im.allKeys()) {
 //             Object name = im.get(ks);
 //             if (h.containsKey(name)) {
@@ -71,7 +71,7 @@ public final class MainPanel extends JPanel {
 //         return h;
 //     }
     private void loadBindingMap(Integer focusType, InputMap im, ActionMap am) {
-        if (im.allKeys() == null) {
+        if (Objects.isNull(im.allKeys())) {
             return;
         }
         ActionMap tmpAm = new ActionMap();
@@ -81,14 +81,14 @@ public final class MainPanel extends JPanel {
         for (KeyStroke ks: im.allKeys()) {
             Object actionMapKey = im.get(ks);
             Action action = am.get(actionMapKey);
-            if (action == null) {
+            if (Objects.isNull(action)) {
                 model.addBinding(new Binding(focusType, "____" + actionMapKey.toString(), ks.toString()));
             } else {
                 model.addBinding(new Binding(focusType, actionMapKey.toString(), ks.toString()));
             }
             tmpAm.remove(actionMapKey);
         }
-        if (tmpAm.allKeys() == null) {
+        if (Objects.isNull(tmpAm.allKeys())) {
             return;
         }
         for (Object actionMapKey: tmpAm.allKeys()) {
@@ -150,7 +150,7 @@ enum JComponentType {
     JTextArea(new JTextArea()),
     JTextField(new JTextField());
     public final JComponent component;
-    private JComponentType(JComponent component) {
+    JComponentType(JComponent component) {
         this.component = component;
     }
 }
@@ -172,20 +172,20 @@ class BindingMapModel extends DefaultTableModel {
     @Override public boolean isCellEditable(int row, int col) {
         return COLUMN_ARRAY[col].isEditable;
     }
-    @Override public Class<?> getColumnClass(int modelIndex) {
-        return COLUMN_ARRAY[modelIndex].columnClass;
+    @Override public Class<?> getColumnClass(int column) {
+        return COLUMN_ARRAY[column].columnClass;
     }
     @Override public int getColumnCount() {
         return COLUMN_ARRAY.length;
     }
-    @Override public String getColumnName(int modelIndex) {
-        return COLUMN_ARRAY[modelIndex].columnName;
+    @Override public String getColumnName(int column) {
+        return COLUMN_ARRAY[column].columnName;
     }
     private static class ColumnContext {
         public final String  columnName;
         public final Class   columnClass;
         public final boolean isEditable;
-        public ColumnContext(String columnName, Class columnClass, boolean isEditable) {
+        protected ColumnContext(String columnName, Class columnClass, boolean isEditable) {
             this.columnName = columnName;
             this.columnClass = columnClass;
             this.isEditable = isEditable;
@@ -196,7 +196,7 @@ class BindingMapModel extends DefaultTableModel {
 class Binding {
     private Integer focusType;
     private String actionName, keyDescription;
-    public Binding(Integer focusType, String actionName, String keyDescription) {
+    protected Binding(Integer focusType, String actionName, String keyDescription) {
         this.focusType = focusType;
         this.actionName = actionName;
         this.keyDescription = keyDescription;

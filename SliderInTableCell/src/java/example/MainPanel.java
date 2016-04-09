@@ -3,7 +3,7 @@ package example;
 // vim:set fileencoding=utf-8:
 //@homepage@
 import java.awt.*;
-import java.util.EventObject;
+import java.util.*;
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.table.*;
@@ -36,7 +36,7 @@ public final class MainPanel extends JPanel {
 
         //SliderEditorRednerer ser = new SliderEditorRednerer(table);
         table.getColumnModel().getColumn(1).setCellRenderer(new SliderRednerer());
-        table.getColumnModel().getColumn(1).setCellEditor(new SliderEditor(table));
+        table.getColumnModel().getColumn(1).setCellEditor(new SliderEditor());
         add(new JScrollPane(table));
         setPreferredSize(new Dimension(320, 240));
     }
@@ -64,8 +64,8 @@ public final class MainPanel extends JPanel {
 }
 
 class SliderRednerer extends JSlider implements TableCellRenderer {
-    public SliderRednerer() {
-        super();
+    @Override public void updateUI() {
+        super.updateUI();
         setName("Table.cellRenderer");
         setOpaque(true);
     }
@@ -78,12 +78,14 @@ class SliderRednerer extends JSlider implements TableCellRenderer {
     //Overridden for performance reasons. ---->
     @Override public boolean isOpaque() {
         Color back = getBackground();
-        Component p = getParent();
-        if (p != null) {
-            p = p.getParent();
-        } // p should now be the JTable. //System.out.println(p.getClass());
-        boolean colorMatch = back != null && p != null && back.equals(p.getBackground()) && p.isOpaque();
-        return !colorMatch && super.isOpaque();
+        Object o = SwingUtilities.getAncestorOfClass(JTable.class, this);
+        if (o instanceof JTable) {
+            JTable table = (JTable) o;
+            boolean colorMatch = Objects.nonNull(back) && back.equals(table.getBackground()) && table.isOpaque();
+            return !colorMatch && super.isOpaque();
+        } else {
+            return super.isOpaque();
+        }
     }
     @Override protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
 //         //System.out.println(propertyName);
@@ -102,20 +104,26 @@ class SliderRednerer extends JSlider implements TableCellRenderer {
 }
 
 class SliderEditor extends JSlider implements TableCellEditor {
-    public SliderEditor(final JTable table) {
-        super();
+    private transient ChangeListener handler;
+    private int prev;
+    @Override public void updateUI() {
+        removeChangeListener(handler);
+        super.updateUI();
         setOpaque(true);
-        addChangeListener(new ChangeListener() {
-            @Override public void stateChanged(ChangeEvent e) {
-                EventQueue.invokeLater(new Runnable() {
-                    @Override public void run() {
-                        int row = table.convertRowIndexToModel(table.getEditingRow());
-                        table.getModel().setValueAt(getValue(), row, 0);
-                        table.getModel().setValueAt(getValue(), row, 1);
-                    }
-                });
+        handler = e -> {
+            Object o = SwingUtilities.getAncestorOfClass(JTable.class, this);
+            if (o instanceof JTable) {
+                JTable table = (JTable) o;
+                int value = getValue();
+                if (table.isEditing() && value != prev) {
+                    int row = table.convertRowIndexToModel(table.getEditingRow());
+                    table.getModel().setValueAt(value, row, 0);
+                    table.getModel().setValueAt(value, row, 1);
+                    prev = value;
+                }
             }
-        });
+        };
+        addChangeListener(handler);
     }
     @Override public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
         Integer i = (Integer) value;
@@ -130,7 +138,6 @@ class SliderEditor extends JSlider implements TableCellEditor {
     //Copied from AbstractCellEditor
     //protected EventListenerList listenerList = new EventListenerList();
     //protected transient ChangeEvent changeEvent;
-
     @Override public boolean isCellEditable(EventObject e) {
         return true;
     }
@@ -161,7 +168,7 @@ class SliderEditor extends JSlider implements TableCellEditor {
         for (int i = listeners.length - 2; i >= 0; i -= 2) {
             if (listeners[i] == CellEditorListener.class) {
                 // Lazily create the event:
-                if (changeEvent == null) {
+                if (Objects.isNull(changeEvent)) {
                     changeEvent = new ChangeEvent(this);
                 }
                 ((CellEditorListener) listeners[i + 1]).editingStopped(changeEvent);
@@ -176,7 +183,7 @@ class SliderEditor extends JSlider implements TableCellEditor {
         for (int i = listeners.length - 2; i >= 0; i -= 2) {
             if (listeners[i] == CellEditorListener.class) {
                 // Lazily create the event:
-                if (changeEvent == null) {
+                if (Objects.isNull(changeEvent)) {
                     changeEvent = new ChangeEvent(this);
                 }
                 ((CellEditorListener) listeners[i + 1]).editingCanceled(changeEvent);

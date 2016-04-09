@@ -12,22 +12,40 @@ import javax.swing.table.*;
 
 public final class MainPanel extends JPanel {
     private static final Color EVEN_COLOR = new Color(250, 250, 250);
-    private final TestModel model = new TestModel();
-    public MainPanel() {
+    private final String[] columnNames = {"No.", "Name", "URL"};
+    private final DefaultTableModel model = new DefaultTableModel(columnNames, 0) {
+        @Override public Class<?> getColumnClass(int column) {
+            switch (column) {
+              case 0:
+                return Integer.class;
+              case 1:
+                return String.class;
+              case 2:
+                return URL.class;
+              default:
+                return super.getColumnClass(column);
+            }
+        }
+        @Override public boolean isCellEditable(int row, int col) {
+            return false;
+        }
+    };
+    private MainPanel() {
         super(new BorderLayout());
         try {
-            model.addTest(new Test("FrontPage", new URL("http://terai.xrea.jp/")));
-            model.addTest(new Test("Java Swing Tips", new URL("http://terai.xrea.jp/Swing.html")));
-            model.addTest(new Test("Example", new URL("http://www.example.com/")));
-            model.addTest(new Test("Example.jp", new URL("http://www.example.jp/")));
+            model.addRow(new Object[] {0, "FrontPage",       new URL("http://ateraimemo.com/")});
+            model.addRow(new Object[] {1, "Java Swing Tips", new URL("http://ateraimemo.com/Swing.html")});
+            model.addRow(new Object[] {2, "Example",         new URL("http://www.example.com/")});
+            model.addRow(new Object[] {3, "Example.jp",      new URL("http://www.example.jp/")});
         } catch (MalformedURLException ex) {
             ex.printStackTrace();
         }
+
         JTable table = new JTable(model) {
             @Override public Component prepareRenderer(TableCellRenderer tcr, int row, int column) {
                 Component c = super.prepareRenderer(tcr, row, column);
                 c.setForeground(getForeground());
-                c.setBackground((row % 2 == 0) ? EVEN_COLOR : getBackground());
+                c.setBackground(row % 2 == 0 ? EVEN_COLOR : getBackground());
                 return c;
             }
         };
@@ -122,7 +140,7 @@ class URLRenderer extends DefaultTableCellRenderer implements MouseListener, Mou
             trect, //text
             this.getIconTextGap());
 
-        if (!table.isEditing() && this.row == row && this.col == column && this.isRollover) {
+        if (isRolloverCell(table, row, column)) {
             setText("<html><u><font color='blue'>" + str);
 //         } else if (hasFocus) {
 //             setText("<html><font color='blue'>" + str);
@@ -130,6 +148,9 @@ class URLRenderer extends DefaultTableCellRenderer implements MouseListener, Mou
             setText(str);
         }
         return this;
+    }
+    protected boolean isRolloverCell(JTable table, int row, int column) {
+        return !table.isEditing() && this.row == row && this.col == column && this.isRollover;
     }
     //@see SwingUtilities2.pointOutsidePrefSize(...)
     private static boolean pointInsidePrefSize(JTable table, Point p) {
@@ -166,7 +187,10 @@ class URLRenderer extends DefaultTableCellRenderer implements MouseListener, Mou
         Rectangle repaintRect;
         if (isRollover) {
             Rectangle r = table.getCellRect(row, col, false);
-            repaintRect = prevRollover ? r.union(table.getCellRect(prevRow, prevCol, false)) : r;
+            // PMD: False positive: SimplifiedTernary
+            // repaintRect = prevRollover ? r.union(table.getCellRect(prevRow, prevCol, false)) : r;
+            Rectangle cr = table.getCellRect(prevRow, prevCol, false);
+            repaintRect = prevRollover ? r.union(cr) : r;
         } else { //if (prevRollover) {
             repaintRect = table.getCellRect(prevRow, prevCol, false);
         }
@@ -207,61 +231,4 @@ class URLRenderer extends DefaultTableCellRenderer implements MouseListener, Mou
     @Override public void mouseEntered(MouseEvent e)  { /* not needed */ }
     @Override public void mousePressed(MouseEvent e)  { /* not needed */ }
     @Override public void mouseReleased(MouseEvent e) { /* not needed */ }
-}
-
-class TestModel extends DefaultTableModel {
-    private static final ColumnContext[] COLUMN_ARRAY = {
-        new ColumnContext("No.",  Integer.class, false),
-        new ColumnContext("Name", String.class,  false),
-        new ColumnContext("URL",  URL.class,     false)
-    };
-    private int number;
-    public void addTest(Test t) {
-        Object[] obj = {number, t.getName(), t.getURL()};
-        super.addRow(obj);
-        number++;
-    }
-    @Override public boolean isCellEditable(int row, int col) {
-        return COLUMN_ARRAY[col].isEditable;
-    }
-    @Override public Class<?> getColumnClass(int modelIndex) {
-        return COLUMN_ARRAY[modelIndex].columnClass;
-    }
-    @Override public int getColumnCount() {
-        return COLUMN_ARRAY.length;
-    }
-    @Override public String getColumnName(int modelIndex) {
-        return COLUMN_ARRAY[modelIndex].columnName;
-    }
-    private static class ColumnContext {
-        public final String  columnName;
-        public final Class   columnClass;
-        public final boolean isEditable;
-        public ColumnContext(String columnName, Class columnClass, boolean isEditable) {
-            this.columnName = columnName;
-            this.columnClass = columnClass;
-            this.isEditable = isEditable;
-        }
-    }
-}
-
-class Test {
-    private String name;
-    private URL url;
-    public Test(String name, URL url) {
-        this.name = name;
-        this.url = url;
-    }
-    public void setName(String str) {
-        this.name = str;
-    }
-    public void setURL(URL url) {
-        this.url = url;
-    }
-    public String getName() {
-        return name;
-    }
-    public URL getURL() {
-        return url;
-    }
 }

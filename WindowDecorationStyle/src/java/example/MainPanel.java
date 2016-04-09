@@ -5,6 +5,7 @@ package example;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.*;
+import java.util.Objects;
 import javax.swing.*;
 import javax.swing.plaf.basic.*;
 
@@ -16,8 +17,11 @@ public final class MainPanel extends JPanel {
         p.add(new JScrollPane(new JTree()));
         p.add(new JButton(new AbstractAction("close") {
             @Override public void actionPerformed(ActionEvent e) {
-                Window w = SwingUtilities.windowForComponent((Component) e.getSource());
-                w.dispatchEvent(new WindowEvent(w, WindowEvent.WINDOW_CLOSING));
+                Container c = getTopLevelAncestor();
+                if (c instanceof Window) {
+                    Window w = (Window) c;
+                    w.dispatchEvent(new WindowEvent(w, WindowEvent.WINDOW_CLOSING));
+                }
             }
         }), BorderLayout.SOUTH);
 
@@ -121,7 +125,7 @@ public final class MainPanel extends JPanel {
         frame.setMinimumSize(new Dimension(300, 120));
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.getContentPane().add(new MainPanel());
-        frame.setBackground(new Color(0, 0, 0, 0)); //JDK 1.7
+        frame.setBackground(new Color(0x0, true)); //JDK 1.7
         frame.pack();
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
@@ -129,43 +133,33 @@ public final class MainPanel extends JPanel {
 }
 
 class DragWindowListener extends MouseAdapter {
-    private final transient Point startPt = new Point();
-    private Window window;
-    @Override public void mousePressed(MouseEvent me) {
-        if (window == null) {
-            Object o = me.getSource();
-            if (o instanceof Window) {
-                window = (Window) o;
-            } else if (o instanceof JComponent) {
-                window = SwingUtilities.windowForComponent(me.getComponent());
-            }
+    private final Point startPt = new Point();
+    @Override public void mousePressed(MouseEvent e) {
+        if (SwingUtilities.isLeftMouseButton(e)) {
+            startPt.setLocation(e.getPoint());
         }
-        startPt.setLocation(me.getPoint());
     }
-    @Override public void mouseDragged(MouseEvent me) {
-        if (window != null) {
-            Point pt = new Point();
-            pt = window.getLocation(pt);
-            int x = pt.x - startPt.x + me.getX();
-            int y = pt.y - startPt.y + me.getY();
-            window.setLocation(x, y);
+    @Override public void mouseDragged(MouseEvent e) {
+        Component c = SwingUtilities.getRoot(e.getComponent());
+        if (c instanceof Window && SwingUtilities.isLeftMouseButton(e)) {
+            Window window = (Window) c;
+            Point pt = window.getLocation();
+            window.setLocation(pt.x - startPt.x + e.getX(), pt.y - startPt.y + e.getY());
         }
     }
 }
 
 class DraggableInternalFrame extends JInternalFrame {
-    public DraggableInternalFrame(String title) {
+    protected DraggableInternalFrame(String title) {
         super(title);
         KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-        focusManager.addPropertyChangeListener(new PropertyChangeListener() {
-            @Override public void propertyChange(PropertyChangeEvent e) {
-                String prop = e.getPropertyName();
-                if ("activeWindow".equals(prop)) {
-                    try {
-                        setSelected(e.getNewValue() != null);
-                    } catch (PropertyVetoException ex) {
-                        ex.printStackTrace();
-                    }
+        focusManager.addPropertyChangeListener(e -> {
+            String prop = e.getPropertyName();
+            if ("activeWindow".equals(prop)) {
+                try {
+                    setSelected(Objects.nonNull(e.getNewValue()));
+                } catch (PropertyVetoException ex) {
+                    ex.printStackTrace();
                 }
             }
         });

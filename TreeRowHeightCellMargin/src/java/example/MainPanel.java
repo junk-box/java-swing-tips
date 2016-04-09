@@ -3,6 +3,7 @@ package example;
 // vim:set fileencoding=utf-8:
 //@homepage@
 import java.awt.*;
+import java.util.Objects;
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.plaf.basic.BasicGraphicsUtils;
@@ -65,13 +66,13 @@ class CompoundTreeCellRenderer extends DefaultTreeCellRenderer {
     private final JLabel text = new JLabel();
     private final Border innerBorder = BorderFactory.createEmptyBorder(1, 2, 1, 2);
     private final Border emptyBorder = BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1), innerBorder);
-    private final Border hasFocusBorder;
+    private final Border compoundFocusBorder;
 
-    public CompoundTreeCellRenderer() {
+    protected CompoundTreeCellRenderer() {
         super();
         Color bsColor = getBorderSelectionColor();
         Color focusBGColor = new Color(~getBackgroundSelectionColor().getRGB());
-        hasFocusBorder = BorderFactory.createCompoundBorder(new DotBorder(focusBGColor, bsColor), innerBorder);
+        compoundFocusBorder = BorderFactory.createCompoundBorder(new DotBorder(focusBGColor, bsColor), innerBorder);
 
         icon.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 2));
         text.setBorder(emptyBorder);
@@ -94,16 +95,16 @@ class CompoundTreeCellRenderer extends DefaultTreeCellRenderer {
         } else {
             bColor = getBackgroundNonSelectionColor();
             fColor = getTextNonSelectionColor();
-            if (bColor == null) {
+            if (Objects.isNull(bColor)) {
                 bColor = getBackground();
             }
-            if (fColor == null) {
+            if (Objects.isNull(fColor)) {
                 fColor = getForeground();
             }
         }
         text.setForeground(fColor);
         text.setBackground(bColor);
-        text.setBorder(hasFocus ? hasFocusBorder : emptyBorder);
+        text.setBorder(hasFocus ? compoundFocusBorder : emptyBorder);
         text.setText(l.getText());
         icon.setIcon(l.getIcon());
 
@@ -114,7 +115,7 @@ class CompoundTreeCellRenderer extends DefaultTreeCellRenderer {
 
 class DotBorder extends LineBorder {
     private final Color borderSelectionColor;
-    public DotBorder(Color color, Color borderSelectionColor) {
+    protected DotBorder(Color color, Color borderSelectionColor) {
         super(color, 1);
         this.borderSelectionColor = borderSelectionColor;
     }
@@ -123,24 +124,26 @@ class DotBorder extends LineBorder {
     }
     @Override public void paintBorder(Component c, Graphics g, int x, int y, int w, int h) {
         Graphics2D g2 = (Graphics2D) g.create();
-        //g2.translate(x, y);
+        g2.translate(x, y);
         g2.setPaint(borderSelectionColor);
-        g2.drawRect(x, y, w - 1, h - 1);
+        g2.drawRect(0, 0, w - 1, h - 1);
         g2.setPaint(getLineColor());
-        BasicGraphicsUtils.drawDashedRect(g2, x, y, w, h);
-        //g2.translate(-x, -y);
+        BasicGraphicsUtils.drawDashedRect(g2, 0, 0, w, h);
         g2.dispose();
     }
 }
 
 class ColorIcon implements Icon {
     private final Color color;
-    public ColorIcon(Color color) {
+    protected ColorIcon(Color color) {
         this.color = color;
     }
     @Override public void paintIcon(Component c, Graphics g, int x, int y) {
-        g.setColor(color);
-        g.fillRoundRect(x + 1, y + 1, 22, 22, 10, 10);
+        Graphics2D g2 = (Graphics2D) g.create();
+        g2.translate(x, y);
+        g2.setPaint(color);
+        g2.fillOval(1, 1, getIconWidth() - 2, getIconHeight() - 2);
+        g2.dispose();
     }
     @Override public int getIconWidth() {
         return 24;

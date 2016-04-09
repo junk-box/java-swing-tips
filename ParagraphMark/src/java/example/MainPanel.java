@@ -3,6 +3,7 @@ package example;
 // vim:set fileencoding=utf-8:
 //@homepage@
 import java.awt.*;
+import java.util.Objects;
 import javax.swing.*;
 import javax.swing.text.*;
 
@@ -47,11 +48,11 @@ class MyEditorKit extends StyledEditorKit {
 class MyViewFactory implements ViewFactory {
     @Override public View create(Element elem) {
         String kind = elem.getName();
-        if (kind != null) {
+        if (Objects.nonNull(kind)) {
             if (kind.equals(AbstractDocument.ContentElementName)) {
                 return new LabelView(elem);
             } else if (kind.equals(AbstractDocument.ParagraphElementName)) {
-                return new MyParagraphView(elem);
+                return new ParagraphWithEopmView(elem);
             } else if (kind.equals(AbstractDocument.SectionElementName)) {
                 return new BoxView(elem, View.Y_AXIS);
             } else if (kind.equals(StyleConstants.ComponentElementName)) {
@@ -64,10 +65,10 @@ class MyViewFactory implements ViewFactory {
     }
 }
 
-class MyParagraphView extends ParagraphView {
+class ParagraphWithEopmView extends ParagraphView {
     //private static final ParagraphMarkIcon paragraphMarkIcon = new ParagraphMarkIcon();
     private static final Color MARK_COLOR = new Color(120, 130, 110);
-    public MyParagraphView(Element elem) {
+    protected ParagraphWithEopmView(Element elem) {
         super(elem);
     }
     @Override public void paint(Graphics g, Shape allocation) {
@@ -77,13 +78,13 @@ class MyParagraphView extends ParagraphView {
     private void paintCustomParagraph(Graphics g, Shape a) {
         try {
             Shape paragraph = modelToView(getEndOffset(), a, Position.Bias.Backward);
-            Rectangle r = (paragraph == null) ? a.getBounds() : paragraph.getBounds();
+            Rectangle r = Objects.nonNull(paragraph) ? paragraph.getBounds() : a.getBounds();
             int x = r.x;
             int y = r.y;
             int h = r.height;
             //paragraphMarkIcon.paintIcon(null, g, x, y);
             Graphics2D g2 = (Graphics2D) g.create();
-            g2.setColor(MARK_COLOR);
+            g2.setPaint(MARK_COLOR);
             g2.drawLine(x + 1, y + h / 2, x + 1, y + h - 4);
             g2.drawLine(x + 2, y + h / 2, x + 2, y + h - 5);
             g2.drawLine(x + 3, y + h - 6, x + 3, y + h - 6);
@@ -98,7 +99,7 @@ class MyParagraphView extends ParagraphView {
 // class ParagraphMarkIcon implements Icon {
 //     private static final Color MARK_COLOR = new Color(120, 130, 110);
 //     private final Polygon paragraphMark = new Polygon();
-//     public ParagraphMarkIcon() {
+//     protected ParagraphMarkIcon() {
 //         paragraphMark.addPoint(1, 7);
 //         paragraphMark.addPoint(3, 7);
 //         paragraphMark.addPoint(3, 11);
@@ -107,7 +108,7 @@ class MyParagraphView extends ParagraphView {
 //     }
 //     @Override public void paintIcon(Component c, Graphics g, int x, int y) {
 //         Graphics2D g2 = (Graphics2D) g.create();
-//         g2.setColor(MARK_COLOR);
+//         g2.setPaint(MARK_COLOR);
 //         g2.translate(x, y);
 //         g2.draw(paragraphMark);
 //         g2.dispose();

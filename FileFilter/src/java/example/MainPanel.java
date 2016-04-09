@@ -23,8 +23,8 @@ public final class MainPanel extends JPanel {
         JPanel p = new JPanel(new BorderLayout());
         p.setBorder(BorderFactory.createTitledBorder("JFileChooser#showOpenDialog(...)"));
         p.add(new JButton(new AbstractAction("showOpenDialog") {
-            @Override public void actionPerformed(ActionEvent ae) {
-                int retvalue = fileChooser.showOpenDialog(MainPanel.this);
+            @Override public void actionPerformed(ActionEvent e) {
+                int retvalue = fileChooser.showOpenDialog(getRootPane());
                 System.out.println(retvalue);
                 //if (retvalue == JFileChooser.APPROVE_OPTION) {
                 //    File file = fileChooser.getSelectedFile();
@@ -65,13 +65,7 @@ public final class MainPanel extends JPanel {
 
 class PngFileFilter extends FileFilter {
     @Override public boolean accept(File file) {
-        if (file.isDirectory()) {
-            return true;
-        }
-        if (file.getName().toLowerCase(Locale.ENGLISH).endsWith(".png")) {
-            return true;
-        }
-        return false;
+        return file.isDirectory() || file.getName().toLowerCase(Locale.ENGLISH).endsWith(".png");
     }
     @Override public String getDescription() {
         return "PNG(*.png)";
@@ -80,13 +74,7 @@ class PngFileFilter extends FileFilter {
 
 class JpgFileFilter extends FileFilter {
     @Override public boolean accept(File file) {
-        if (file.isDirectory()) {
-            return true;
-        }
-        if (file.getName().toLowerCase(Locale.ENGLISH).endsWith(".jpg")) {
-            return true;
-        }
-        return false;
+        return file.isDirectory() || file.getName().toLowerCase(Locale.ENGLISH).endsWith(".jpg");
     }
     @Override public String getDescription() {
         return "JPEG(*.jpg)";

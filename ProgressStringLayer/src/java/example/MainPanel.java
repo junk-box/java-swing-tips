@@ -5,6 +5,7 @@ package example;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.*;
+import java.util.Objects;
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.plaf.LayerUI;
@@ -42,7 +43,7 @@ public final class MainPanel extends JPanel implements HierarchyListener {
         box.add(Box.createHorizontalGlue());
         box.add(new JButton(new AbstractAction("Test") {
             @Override public void actionPerformed(ActionEvent e) {
-                if (worker != null && !worker.isDone()) {
+                if (Objects.nonNull(worker) && !worker.isDone()) {
                     worker.cancel(true);
                 }
                 worker = new Task();
@@ -60,7 +61,7 @@ public final class MainPanel extends JPanel implements HierarchyListener {
         setPreferredSize(new Dimension(320, 240));
     }
     @Override public void hierarchyChanged(HierarchyEvent e) {
-        if ((e.getChangeFlags() & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0 && !e.getComponent().isDisplayable() && worker != null) {
+        if ((e.getChangeFlags() & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0 && !e.getComponent().isDisplayable() && Objects.nonNull(worker)) {
             System.out.println("DISPOSE_ON_CLOSE");
             worker.cancel(true);
             worker = null;
@@ -130,15 +131,15 @@ class Task extends SwingWorker<String, Void> {
 
 class ProgressListener implements PropertyChangeListener {
     private final JProgressBar progressBar;
-    ProgressListener(JProgressBar progressBar) {
+    protected ProgressListener(JProgressBar progressBar) {
         this.progressBar = progressBar;
         this.progressBar.setValue(0);
     }
-    @Override public void propertyChange(PropertyChangeEvent evt) {
-        String strPropertyName = evt.getPropertyName();
+    @Override public void propertyChange(PropertyChangeEvent e) {
+        String strPropertyName = e.getPropertyName();
         if ("progress".equals(strPropertyName)) {
             progressBar.setIndeterminate(false);
-            int progress = (Integer) evt.getNewValue();
+            int progress = (Integer) e.getNewValue();
             progressBar.setValue(progress);
         }
     }
@@ -146,28 +147,26 @@ class ProgressListener implements PropertyChangeListener {
 
 class TextLabelProgressBar extends JProgressBar {
     private final JLabel label = new JLabel("000/100", SwingConstants.CENTER);
-    private ChangeListener changeListener;
+    private transient ChangeListener changeListener;
 
-    public TextLabelProgressBar(BoundedRangeModel model) {
+    protected TextLabelProgressBar(BoundedRangeModel model) {
         super(model);
     }
     @Override public void updateUI() {
         removeAll();
-        if (changeListener != null) {
-            removeChangeListener(changeListener);
-        }
+        removeChangeListener(changeListener);
         super.updateUI();
+        setLayout(new BorderLayout());
+        changeListener = new ChangeListener() {
+            @Override public void stateChanged(ChangeEvent e) {
+                int iv = (int) (100 * getPercentComplete());
+                label.setText(String.format("%03d/100", iv));
+                //label.setText(getString());
+            }
+        };
+        addChangeListener(changeListener);
         EventQueue.invokeLater(new Runnable() {
             @Override public void run() {
-                setLayout(new BorderLayout());
-                changeListener = new ChangeListener() {
-                    @Override public void stateChanged(ChangeEvent e) {
-                        int iv = (int) (100 * getPercentComplete());
-                        label.setText(String.format("%03d/100", iv));
-                        //label.setText(getString());
-                    }
-                };
-                addChangeListener(changeListener);
                 add(label);
                 label.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 4));
             }
@@ -184,7 +183,7 @@ class TextLabelProgressBar extends JProgressBar {
 class ProgressBarLayerUI extends LayerUI<JProgressBar> {
     private final JPanel rubberStamp = new JPanel();
     private final JLabel label;
-    public ProgressBarLayerUI(JLabel label) {
+    protected ProgressBarLayerUI(JLabel label) {
         super();
         this.label = label;
     }

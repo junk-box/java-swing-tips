@@ -46,9 +46,9 @@ public final class MainPanel extends JPanel {
 //         col = table.getColumnModel().getColumn(1);
 //         col.setMinWidth(0);
 //         col.setMaxWidth(0);
-//         //<blockquote cite="https://forums.oracle.com/thread/1484284"
+//         //<blockquote cite="https://community.oracle.com/thread/1484284"
 //         //           title="JTable skiping the cells disableds">
-//         InputMap im = table.getInputMap(JTable.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+//         InputMap im = table.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 //         KeyStroke tab = KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0);
 //         final Action oldTabAction = table.getActionMap().get(im.get(tab));
 //         Action tabAction = new AbstractAction() {
@@ -82,7 +82,7 @@ public final class MainPanel extends JPanel {
 //         //</blockquote>
 
         add(new JScrollPane(table));
-        setPreferredSize(new Dimension(320, 200));
+        setPreferredSize(new Dimension(320, 240));
     }
 
     public static void main(String... args) {

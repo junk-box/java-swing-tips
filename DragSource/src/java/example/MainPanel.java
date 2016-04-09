@@ -21,10 +21,10 @@ public final class MainPanel extends JPanel {
 
     public MainPanel() {
         super(new BorderLayout());
-        label.setVerticalTextPosition(JLabel.BOTTOM);
-        label.setVerticalAlignment(JLabel.CENTER);
-        label.setHorizontalTextPosition(JLabel.CENTER);
-        label.setHorizontalAlignment(JLabel.CENTER);
+        label.setVerticalTextPosition(SwingConstants.BOTTOM);
+        label.setVerticalAlignment(SwingConstants.CENTER);
+        label.setHorizontalTextPosition(SwingConstants.CENTER);
+        label.setHorizontalAlignment(SwingConstants.CENTER);
         label.setBorder(BorderFactory.createTitledBorder("Drag Source JLabel"));
         clearFile();
 
@@ -32,7 +32,7 @@ public final class MainPanel extends JPanel {
         DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(label, DnDConstants.ACTION_MOVE, new DragGestureListener() {
             @Override public void dragGestureRecognized(DragGestureEvent dge) {
                 File tmpfile = getFile();
-                if (tmpfile == null) {
+                if (Objects.isNull(tmpfile)) {
                     return;
                 }
                 DragSourceAdapter dsa = new DragSourceAdapter() {
@@ -48,18 +48,18 @@ public final class MainPanel extends JPanel {
 /*/     //JDK 1.6.0
         label.setTransferHandler(new TransferHandler() {
             @Override public int getSourceActions(JComponent c) {
-                return COPY_OR_MOVE;
+                return TransferHandler.COPY_OR_MOVE;
             }
             @Override protected Transferable createTransferable(JComponent c) {
                 File tmpfile = getFile();
-                if (tmpfile == null) {
-                    return null;
-                } else {
+                if (Objects.nonNull(tmpfile)) {
                     return new TempFileTransferable(tmpfile);
+                } else {
+                    return null;
                 }
             }
             @Override protected void exportDone(JComponent c, Transferable data, int action) {
-                cleanup(c, action == MOVE);
+                cleanup(c, action == TransferHandler.MOVE);
             }
             private void cleanup(JComponent c, boolean isMoved) {
                 if (isMoved) {
@@ -80,7 +80,7 @@ public final class MainPanel extends JPanel {
         box.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         box.add(Box.createHorizontalGlue());
         box.add(new JButton(new AbstractAction("Create Temp File") {
-            @Override public void actionPerformed(ActionEvent ae) {
+            @Override public void actionPerformed(ActionEvent e) {
                 File outfile;
                 try {
                     outfile = File.createTempFile("test", ".tmp");
@@ -95,7 +95,7 @@ public final class MainPanel extends JPanel {
         }));
         box.add(Box.createHorizontalStrut(2));
         box.add(new JButton(new AbstractAction("Clear") {
-            @Override public void actionPerformed(ActionEvent ae) {
+            @Override public void actionPerformed(ActionEvent e) {
                 clearFile();
                 repaint();
             }
@@ -143,7 +143,7 @@ public final class MainPanel extends JPanel {
 
 class TempFileTransferable implements Transferable {
     private final File file;
-    public TempFileTransferable(File file) {
+    protected TempFileTransferable(File file) {
         this.file = file;
     }
     @Override public Object getTransferData(DataFlavor flavor) {

@@ -12,10 +12,9 @@ public final class MainPanel extends JPanel {
     public MainPanel() {
         super(new BorderLayout());
         box.setBorder(BorderFactory.createLineBorder(Color.RED, 10));
-        JScrollPane scroll = new JScrollPane(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                             JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        JScrollPane scroll = new JScrollPane(box);
+        scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         scroll.getVerticalScrollBar().setUnitIncrement(25);
-        scroll.getViewport().add(box);
         add(makeToolBar(), BorderLayout.NORTH);
         add(scroll);
         addComp(new JLabel("aaaaaaaaaaaaaaaaaaaaaa"));
@@ -31,29 +30,25 @@ public final class MainPanel extends JPanel {
         box.add(comp);
         box.add(glue);
         box.revalidate();
-        EventQueue.invokeLater(new Runnable() {
-            @Override public void run() {
-                comp.scrollRectToVisible(comp.getBounds());
-            }
-        });
+        EventQueue.invokeLater(() -> comp.scrollRectToVisible(comp.getBounds()));
     }
 
     private JToolBar makeToolBar() {
         JToolBar bar = new JToolBar();
         bar.add(new AbstractAction("add JLabel") {
-            @Override public void actionPerformed(ActionEvent ae) {
+            @Override public void actionPerformed(ActionEvent e) {
                 addComp(MakeComponentUtil.makeLabel());
             }
         });
         bar.addSeparator();
         bar.add(new AbstractAction("add JButton") {
-            @Override public void actionPerformed(ActionEvent ae) {
+            @Override public void actionPerformed(ActionEvent e) {
                 addComp(MakeComponentUtil.makeButton());
             }
         });
         bar.addSeparator();
         bar.add(new AbstractAction("add JCheckBox") {
-            @Override public void actionPerformed(ActionEvent ae) {
+            @Override public void actionPerformed(ActionEvent e) {
                 addComp(MakeComponentUtil.makeCheckBox());
             }
         });
@@ -85,9 +80,12 @@ public final class MainPanel extends JPanel {
 final class MakeComponentUtil {
     private MakeComponentUtil() { /* Singleton */ }
     public static JComponent makeLabel() {
-        JLabel label = new JLabel("Height: 50");
+        JLabel label = new JLabel("Height: 50") {
+            @Override public Dimension getPreferredSize() {
+                return new Dimension(0, 50);
+            }
+        };
         label.setOpaque(true);
-        label.setPreferredSize(new Dimension(0, 50));
         label.setBackground(Color.YELLOW.brighter());
         return label;
     }

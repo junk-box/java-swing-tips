@@ -162,7 +162,7 @@ class DnDTabbedPane extends JTabbedPane {
     public static final class DropLocation extends TransferHandler.DropLocation {
         private final int index;
         private boolean dropable = true;
-        public DropLocation(Point p, int index) {
+        protected DropLocation(Point p, int index) {
             super(p);
             this.index = index;
         }
@@ -184,9 +184,9 @@ class DnDTabbedPane extends JTabbedPane {
     }
     private void clickArrowButton(String actionKey) {
         ActionMap map = getActionMap();
-        if (map != null) {
+        if (Objects.nonNull(map)) {
             Action action = map.get(actionKey);
-            if (action != null && action.isEnabled()) {
+            if (Objects.nonNull(action) && action.isEnabled()) {
                 action.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, null, 0, 0));
             }
         }
@@ -207,7 +207,7 @@ class DnDTabbedPane extends JTabbedPane {
             clickArrowButton("scrollTabsForwardAction");
         }
     }
-    public DnDTabbedPane() {
+    protected DnDTabbedPane() {
         super();
         Handler h = new Handler();
         addMouseListener(h);
@@ -241,7 +241,7 @@ class DnDTabbedPane extends JTabbedPane {
     }
     public Object setDropLocation(TransferHandler.DropLocation location, Object state, boolean forDrop) {
         DropLocation old = dropLocation;
-        if (location == null || !forDrop) {
+        if (Objects.isNull(location) || !forDrop) {
             dropLocation = new DropLocation(new Point(), -1);
         } else if (location instanceof DropLocation) {
             dropLocation = (DropLocation) location;
@@ -257,7 +257,7 @@ class DnDTabbedPane extends JTabbedPane {
 
         Component cmp    = getComponentAt(dragIndex);
         Container parent = target;
-        while (parent != null) {
+        while (Objects.nonNull(parent)) {
             if (cmp.equals(parent)) { //target == child: JTabbedPane in JTabbedPane
                 return;
             }
@@ -313,7 +313,7 @@ class DnDTabbedPane extends JTabbedPane {
     public Rectangle getTabAreaBounds() {
         Rectangle tabbedRect = getBounds();
         Component c = getSelectedComponent();
-        if (c == null) {
+        if (Objects.isNull(c)) {
             return tabbedRect;
         }
         int xx = tabbedRect.x;
@@ -359,12 +359,12 @@ class DnDTabbedPane extends JTabbedPane {
             int idx = src.indexAtLocation(tabPt.x, tabPt.y);
             //disabled tab, null component problem.
             //pointed out by daryl. NullPointerException: i.e. addTab("Tab", null)
-            boolean flag = idx < 0 || !src.isEnabledAt(idx) || src.getComponentAt(idx) == null;
+            boolean flag = idx < 0 || !src.isEnabledAt(idx) || Objects.isNull(src.getComponentAt(idx));
             startPt = flag ? null : tabPt;
         }
         @Override public void mouseDragged(MouseEvent e) {
             Point tabPt = e.getPoint(); //e.getDragOrigin();
-            if (startPt != null && Math.sqrt(Math.pow(tabPt.x - startPt.x, 2) + Math.pow(tabPt.y - startPt.y, 2)) > gestureMotionThreshold) {
+            if (Objects.nonNull(startPt) && Math.sqrt(Math.pow(tabPt.x - startPt.x, 2) + Math.pow(tabPt.y - startPt.y, 2)) > gestureMotionThreshold) {
                 DnDTabbedPane src = (DnDTabbedPane) e.getComponent();
                 TransferHandler th = src.getTransferHandler();
                 dragTabIndex = src.indexAtLocation(tabPt.x, tabPt.y);
@@ -424,14 +424,14 @@ class TabTransferHandler extends TransferHandler {
         this.mode = mode;
         setDragImage(null);
     }
-    public TabTransferHandler() {
+    protected TabTransferHandler() {
         super();
         System.out.println("TabTransferHandler");
         localObjectFlavor = new ActivationDataFlavor(DnDTabbedPane.class, DataFlavor.javaJVMLocalObjectMimeType, "DnDTabbedPane");
         dialog.add(label);
         //dialog.setAlwaysOnTop(true); // Web Start
         dialog.setOpacity(.5f);
-        //com.sun.awt.AWTUtilities.setWindowOpacity(dialog, .5f); // JDK 1.6.0
+        //AWTUtilities.setWindowOpacity(dialog, .5f); // JDK 1.6.0
         DragSource.getDefaultDragSource().addDragSourceMotionListener(new DragSourceMotionListener() {
             @Override public void dragMouseMoved(DragSourceDragEvent dsde) {
                 Point pt = dsde.getLocation();
@@ -447,6 +447,13 @@ class TabTransferHandler extends TransferHandler {
         }
         return new DataHandler(c, localObjectFlavor.getMimeType());
     }
+    private static Component getSourceDraggingComponent(DnDTabbedPane tabbedPane) {
+        if (Objects.nonNull(tabbedPane)) {
+            return tabbedPane.getComponentAt(tabbedPane.dragTabIndex);
+        } else {
+            return null;
+        }
+    }
     private boolean isDropable(DnDTabbedPane target, Point pt, int idx) {
         boolean isDropable = false;
         Rectangle tr = target.getTabAreaBounds();
@@ -455,19 +462,19 @@ class TabTransferHandler extends TransferHandler {
             isDropable = tr.contains(pt) && idx >= 0 && idx != target.dragTabIndex && idx != target.dragTabIndex + 1;
         } else {
             //System.out.format("target!=source%n  target: %s%n  source: %s", target.getName(), source.getName());
-            if (source != null && target != source.getComponentAt(source.dragTabIndex)) {
+            if (target != getSourceDraggingComponent(source)) {
                 isDropable = tr.contains(pt) && idx >= 0;
             }
         }
         return isDropable;
     }
-    @Override public boolean canImport(TransferSupport support) {
+    @Override public boolean canImport(TransferHandler.TransferSupport support) {
         //System.out.println("canImport");
         if (!support.isDrop() || !support.isDataFlavorSupported(localObjectFlavor)) {
             System.out.println("canImport:" + support.isDrop() + " " + support.isDataFlavorSupported(localObjectFlavor));
             return false;
         }
-        support.setDropAction(MOVE);
+        support.setDropAction(TransferHandler.MOVE);
         DropLocation tdl = support.getDropLocation();
         Point pt = tdl.getDropPoint();
         DnDTabbedPane target = (DnDTabbedPane) support.getComponent();
@@ -530,7 +537,7 @@ class TabTransferHandler extends TransferHandler {
         if (c instanceof DnDTabbedPane) {
             DnDTabbedPane src = (DnDTabbedPane) c;
             if (src.dragTabIndex < 0) {
-                return NONE;
+                return TransferHandler.NONE;
             }
             if (mode == DragImageMode.Heavyweight) {
                 label.setIcon(new ImageIcon(makeDragTabImage(src)));
@@ -539,11 +546,11 @@ class TabTransferHandler extends TransferHandler {
             } else {
                 setDragImage(makeDragTabImage(src));
             }
-            return MOVE;
+            return TransferHandler.MOVE;
         }
-        return NONE;
+        return TransferHandler.NONE;
     }
-    @Override public boolean importData(TransferSupport support) {
+    @Override public boolean importData(TransferHandler.TransferSupport support) {
         System.out.println("importData");
         if (!canImport(support)) {
             return false;
@@ -585,10 +592,10 @@ class DropLocationLayerUI extends LayerUI<DnDTabbedPane> {
             JLayer layer = (JLayer) c;
             DnDTabbedPane tabbedPane = (DnDTabbedPane) layer.getView();
             DnDTabbedPane.DropLocation loc = tabbedPane.getDropLocation();
-            if (loc != null && loc.isDropable() && loc.getIndex() >= 0) {
+            if (Objects.nonNull(loc) && loc.isDropable() && loc.getIndex() >= 0) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, .5f));
-                g2.setColor(Color.RED);
+                g2.setPaint(Color.RED);
                 initLineRect(tabbedPane, loc);
                 g2.fill(lineRect);
                 g2.dispose();
@@ -618,13 +625,13 @@ class DropLocationLayerUI extends LayerUI<DnDTabbedPane> {
 
 // a closeable tab test
 // How to Use Tabbed Panes (The Java Tutorials > Creating a GUI With JFC/Swing > Using Swing Components)
-// http://download.oracle.com/javase/tutorial/uiswing/components/tabbedpane.html
+// http://docs.oracle.com/javase/tutorial/uiswing/components/tabbedpane.html
 class ButtonTabComponent extends JPanel {
     private final JTabbedPane pane;
 
-    public ButtonTabComponent(final JTabbedPane pane) {
+    protected ButtonTabComponent(final JTabbedPane pane) {
         super(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        if (pane == null) {
+        if (Objects.isNull(pane)) {
             throw new IllegalArgumentException("TabbedPane cannot be null");
         }
         this.pane = pane;
@@ -675,7 +682,7 @@ class TabButton extends JButton {
     private static final int SIZE  = 17;
     private static final int DELTA = 6;
 
-    public TabButton() {
+    protected TabButton() {
         super();
         setUI(new BasicButtonUI());
         setToolTipText("close this tab");
@@ -695,12 +702,12 @@ class TabButton extends JButton {
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setStroke(new BasicStroke(2));
-        g2.setColor(Color.BLACK);
+        g2.setPaint(Color.BLACK);
         if (getModel().isRollover()) {
-            g2.setColor(Color.ORANGE);
+            g2.setPaint(Color.ORANGE);
         }
         if (getModel().isPressed()) {
-            g2.setColor(Color.BLUE);
+            g2.setPaint(Color.BLUE);
         }
         g2.drawLine(DELTA, DELTA, getWidth() - DELTA - 1, getHeight() - DELTA - 1);
         g2.drawLine(getWidth() - DELTA - 1, DELTA, DELTA, getHeight() - DELTA - 1);

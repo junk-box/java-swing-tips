@@ -28,16 +28,23 @@ public final class MainPanel extends JPanel {
         setPreferredSize(new Dimension(320, 240));
     }
     class RunAction extends AbstractAction {
-        public RunAction() {
+        protected RunAction() {
             super("run");
         }
-        @Override public void actionPerformed(ActionEvent evt) {
+        @Override public void actionPerformed(ActionEvent e) {
             //System.out.println("actionPerformed() is EDT?: " + EventQueue.isDispatchThread());
             runButton.setEnabled(false);
             monitor.setProgress(0);
             worker = new Task() {
                 @Override protected void process(List<String> chunks) {
                     //System.out.println("process() is EDT?: " + EventQueue.isDispatchThread());
+                    if (isCancelled()) {
+                        return;
+                    }
+                    if (!isDisplayable()) {
+                        cancel(true);
+                        return;
+                    }
                     for (String message: chunks) {
                         monitor.setNote(message);
                     }
@@ -108,16 +115,18 @@ class Task extends SwingWorker<String, String> {
 
 class ProgressListener implements PropertyChangeListener {
     private final ProgressMonitor monitor;
-    public ProgressListener(ProgressMonitor monitor) {
+    protected ProgressListener(ProgressMonitor monitor) {
         this.monitor = monitor;
         this.monitor.setProgress(0);
     }
     @Override public void propertyChange(PropertyChangeEvent e) {
+        Object o = e.getSource();
         String strPropertyName = e.getPropertyName();
-        if ("progress".equals(strPropertyName)) {
+        if ("progress".equals(strPropertyName) && o instanceof SwingWorker) {
+            SwingWorker task = (SwingWorker) o;
             monitor.setProgress((Integer) e.getNewValue());
-            if (monitor.isCanceled()) {
-                ((SwingWorker) e.getSource()).cancel(true);
+            if (monitor.isCanceled() || task.isDone()) {
+                task.cancel(true);
             }
         }
     }

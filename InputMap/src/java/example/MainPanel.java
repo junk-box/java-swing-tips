@@ -7,37 +7,37 @@ import java.awt.event.*;
 import javax.swing.*;
 
 public final class MainPanel extends JPanel {
-    public MainPanel(final JFrame frame) {
+    public MainPanel() {
         super(new GridLayout(2, 1));
         JPanel p1 = new JPanel();
         p1.setBorder(BorderFactory.createTitledBorder("JOptionPane"));
         p1.add(new JButton(new AbstractAction("JOptionPane.showMessageDialog") {
-            @Override public void actionPerformed(ActionEvent evt) {
-                JOptionPane.showMessageDialog(frame, "showMessageDialog");
+            @Override public void actionPerformed(ActionEvent e) {
+                JOptionPane.showMessageDialog(getRootPane(), "showMessageDialog");
             }
         }));
         JPanel p2 = new JPanel();
         p2.setBorder(BorderFactory.createTitledBorder("JDialog"));
         p2.add(new JButton(new AbstractAction("Default") {
-            @Override public void actionPerformed(ActionEvent evt) {
-                final JDialog dialog = new JDialog(frame, "title", true);
-                AbstractAction act = new AbstractAction("OK") {
-                    @Override public void actionPerformed(ActionEvent evt) {
+            @Override public void actionPerformed(ActionEvent e) {
+                final JDialog dialog = new JDialog(JOptionPane.getFrameForComponent(getRootPane()), "title", true);
+                Action act = new AbstractAction("OK") {
+                    @Override public void actionPerformed(ActionEvent e) {
                         dialog.dispose();
                     }
                 };
                 dialog.getContentPane().add(makePanel(act));
                 dialog.pack();
                 dialog.setResizable(false);
-                dialog.setLocationRelativeTo(frame);
+                dialog.setLocationRelativeTo(getRootPane());
                 dialog.setVisible(true);
             }
         }));
         p2.add(new JButton(new AbstractAction("close JDialog with ESC key") {
-            @Override public void actionPerformed(ActionEvent evt) {
-                final JDialog dialog = new JDialog(frame, "title", true);
-                AbstractAction act = new AbstractAction("OK") {
-                    @Override public void actionPerformed(ActionEvent evt) {
+            @Override public void actionPerformed(ActionEvent e) {
+                final JDialog dialog = new JDialog(JOptionPane.getFrameForComponent(getRootPane()), "title", true);
+                Action act = new AbstractAction("OK") {
+                    @Override public void actionPerformed(ActionEvent e) {
                         dialog.dispose();
                     }
                 };
@@ -47,48 +47,41 @@ public final class MainPanel extends JPanel {
                 dialog.getContentPane().add(makePanel(act));
                 dialog.pack();
                 dialog.setResizable(false);
-                dialog.setLocationRelativeTo(frame);
+                dialog.setLocationRelativeTo(getRootPane());
                 dialog.setVisible(true);
             }
         }));
-        add(p1); add(p2);
+        add(p1);
+        add(p2);
         setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
-        setPreferredSize(new Dimension(320, 200));
+        setPreferredSize(new Dimension(320, 240));
     }
 
     private JPanel makePanel(Action act) {
-        JPanel panel = new JPanel(new GridBagLayout()) {
+        JPanel p = new JPanel(new GridBagLayout()) {
             @Override public Dimension getPreferredSize() {
-                return new Dimension(256, 64);
+                Dimension d = super.getPreferredSize();
+                d.width = Math.max(240, d.width);
+                return d;
             }
         };
         GridBagConstraints c = new GridBagConstraints();
-        c.insets = new Insets(2, 2, 2, 2);
-        c.gridwidth  = 1;
-        c.gridheight = 1;
-        c.gridx = 0;
-        c.gridy = 0;
-        c.fill = GridBagConstraints.BOTH;
-        panel.add(new JLabel("i"), c);
+        c.insets = new Insets(5, 10, 5, 10);
+        c.anchor = GridBagConstraints.LINE_START;
+        p.add(new JLabel(new DummyIcon()), c);
 
-        c.gridwidth  = 2;
-        c.gridheight = 2;
-        c.gridx = 1;
-        c.gridy = 0;
-        c.anchor = GridBagConstraints.WEST;
-        panel.add(new JLabel("Message"), c);
+        c.insets = new Insets(5, 0, 5, 0);
+        //p.add(new JLabel("<html>Message<br>aaaaaa<br>aaaaaaaaaaa<br>aaaaaaaaaaaaaaaa"), c);
+        p.add(new JLabel("Message"), c);
 
-        c.gridwidth  = 3;
-        c.gridheight = 1;
-        c.gridx = 0;
-        c.gridy = 2;
+        c.gridwidth = 2;
+        c.gridy = 1;
         c.weightx = 1d;
-        c.weighty = 1d;
         c.anchor = GridBagConstraints.CENTER;
         c.fill = GridBagConstraints.NONE;
-        panel.add(new JButton(act), c);
+        p.add(new JButton(act), c);
 
-        return panel;
+        return p;
     }
 
     public static void main(String... args) {
@@ -107,9 +100,25 @@ public final class MainPanel extends JPanel {
         }
         JFrame frame = new JFrame("@title@");
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        frame.getContentPane().add(new MainPanel(frame));
+        frame.getContentPane().add(new MainPanel());
         frame.pack();
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
+    }
+}
+
+class DummyIcon implements Icon {
+    @Override public void paintIcon(Component c, Graphics g, int x, int y) {
+        Graphics2D g2 = (Graphics2D) g.create();
+        g2.translate(x, y);
+        g2.setPaint(Color.RED);
+        g2.fillOval(0, 0, getIconWidth(), getIconHeight());
+        g2.dispose();
+    }
+    @Override public int getIconWidth() {
+        return 32;
+    }
+    @Override public int getIconHeight() {
+        return 32;
     }
 }

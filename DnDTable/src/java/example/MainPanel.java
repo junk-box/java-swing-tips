@@ -30,7 +30,7 @@ public final class MainPanel extends JPanel {
                 c.setBackground(getSelectionBackground());
             } else {
                 c.setForeground(getForeground());
-                c.setBackground((row % 2 == 0) ? EVEN_COLOR : table.getBackground());
+                c.setBackground(row % 2 == 0 ? EVEN_COLOR : table.getBackground());
             }
             return c;
         }
@@ -50,25 +50,22 @@ public final class MainPanel extends JPanel {
     }
 
     class TestCreateAction extends AbstractAction {
-        public TestCreateAction(String label, Icon icon) {
-            super(label, icon);
+        protected TestCreateAction(String label) {
+            super(label);
         }
         @Override public void actionPerformed(ActionEvent e) {
-            model.addRow(new Object[] {"New row", Integer.valueOf(0), Boolean.FALSE});
+            model.addRow(new Object[] {"New row", 0, Boolean.FALSE});
             Rectangle r = table.getCellRect(model.getRowCount() - 1, 0, true);
             table.scrollRectToVisible(r);
         }
     }
 
     class DeleteAction extends AbstractAction {
-        public DeleteAction(String label, Icon icon) {
-            super(label, icon);
+        protected DeleteAction(String label) {
+            super(label);
         }
         @Override public void actionPerformed(ActionEvent e) {
             int[] selection = table.getSelectedRows();
-            if (selection.length == 0) {
-                return;
-            }
             for (int i = selection.length - 1; i >= 0; i--) {
                 model.removeRow(table.convertRowIndexToModel(selection[i]));
             }
@@ -76,17 +73,16 @@ public final class MainPanel extends JPanel {
     }
 
     private class TablePopupMenu extends JPopupMenu {
-        private final Action deleteAction = new DeleteAction("delete", null);
-        public TablePopupMenu() {
+        private final Action deleteAction = new DeleteAction("delete");
+        protected TablePopupMenu() {
             super();
-            add(new TestCreateAction("add", null));
-            //add(new ClearAction("clearSelection", null));
+            add(new TestCreateAction("add"));
+            //add(new ClearAction("clearSelection"));
             addSeparator();
             add(deleteAction);
         }
         @Override public void show(Component c, int x, int y) {
-            int[] l = table.getSelectedRows();
-            deleteAction.setEnabled(l.length > 0);
+            deleteAction.setEnabled(table.getSelectedRowCount() > 0);
             super.show(c, x, y);
         }
     }
@@ -122,14 +118,14 @@ class DnDTable extends JTable implements DragGestureListener, Transferable {
     private int draggedIndex = -1;
     private int targetIndex  = -1;
 
-    public DnDTable(TableModel model) {
+    protected DnDTable(TableModel model) {
         super(model);
         //DropTarget dropTarget =
         new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, new CDropTargetListener(), true);
         //DragSource dragSource = new DragSource();
         new DragSource().createDefaultDragGestureRecognizer((Component) this, DnDConstants.ACTION_COPY_OR_MOVE, (DragGestureListener) this);
     }
-    @Override public void paintComponent(Graphics g) {
+    @Override protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         if (targetIndex >= 0) {
             Graphics2D g2 = (Graphics2D) g.create();
@@ -139,7 +135,7 @@ class DnDTable extends JTable implements DragGestureListener, Transferable {
         }
     }
     private void initTargetLine(Point p) {
-        Rectangle2D testArea = new Rectangle2D.Float();
+        Rectangle2D testArea = new Rectangle2D.Double();
         int cellHeight = getRowHeight();
         int lineWidht  = getWidth();
         int lineHeight = 2;
@@ -200,7 +196,7 @@ class DnDTable extends JTable implements DragGestureListener, Transferable {
                 e.rejectDrag();
             }
         }
-        @Override public void dragOver(final DropTargetDragEvent e) {
+        @Override public void dragOver(DropTargetDragEvent e) {
             if (isDragAcceptable(e)) {
                 e.acceptDrag(e.getDropAction());
                 setCursor(DragSource.DefaultMoveDrop);
@@ -213,8 +209,11 @@ class DnDTable extends JTable implements DragGestureListener, Transferable {
             repaint();
         }
         @Override public void dropActionChanged(DropTargetDragEvent e) {
-            // if (isDragAcceptable(e)) { e.acceptDrag(e.getDropAction()); }
-            // else e.rejectDrag();
+            // if (isDragAcceptable(e)) {
+            //     e.acceptDrag(e.getDropAction());
+            // } else {
+            //     e.rejectDrag();
+            // }
         }
         @Override public void drop(DropTargetDropEvent e) {
 //             Transferable t = e.getTransferable();

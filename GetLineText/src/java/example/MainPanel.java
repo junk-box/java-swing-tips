@@ -13,7 +13,7 @@ public final class MainPanel extends JPanel {
     private final JTextArea textArea = new JTextArea();
     private final JScrollPane scroll = new JScrollPane(textArea);
 
-    public MainPanel(final JFrame frame) {
+    public MainPanel() {
         super(new BorderLayout());
         StringBuilder sb = new StringBuilder();
         String dummy   = "aaaaaaaaaaaaa\n";
@@ -28,60 +28,64 @@ public final class MainPanel extends JPanel {
         scroll.setRowHeaderView(new LineNumberView(textArea));
         textArea.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 0));
 
-        JButton button = new JButton(new AbstractAction("count commented lines: startsWith(\"#\")") {
+        final JButton button = new JButton(new AbstractAction("count commented lines: startsWith(\"#\")") {
             @Override public void actionPerformed(ActionEvent e) {
-                EventQueue.invokeLater(new Runnable() {
-                    @Override public void run() {
-                        int count = 0;
-                        StringTokenizer st = new StringTokenizer(textArea.getText(), "\n");
-                        while (st.hasMoreTokens()) {
-                            if (st.nextToken().startsWith("#")) {
-                                count++;
-                            }
-                        }
-
-//                         //String#split >>>>
-//                         for (String line: textArea.getText().split("\\n")) {
-//                             if (line.startsWith("#")) {
-//                                 count++;
-//                             }
-//                         }
-//                         //<<<< String#split
-
-//                         //LineNumberReader >>>>
-//                         try (LineNumberReader lnr = new LineNumberReader(new StringReader(textArea.getText()))) {
-//                             String line = null;
-//                             while ((line = lnr.readLine()) != null) {
-//                                 if (line.startsWith("#")) {
-//                                     count++;
-//                                 }
-//                             }
-//                         } catch (IOException ioe) {
-//                             ioe.printStackTrace();
-//                         }
-//                         //<<<< LineNumberReader
-
-//                         //ElementCount >>>>
-//                         Document doc = textArea.getDocument();
-//                         Element root = doc.getDefaultRootElement();
-//                         try {
-//                             for (int i = 0; i < root.getElementCount(); i++) {
-//                                 Element elem = root.getElement(i);
-//                                 String line = doc.getText(elem.getStartOffset(), elem.getEndOffset() - elem.getStartOffset());
-//                                 if (line.startsWith("#")) {
-//                                     count++;
-//                                 }
-//                             }
-//                         } catch (BadLocationException ble) {
-//                             ble.printStackTrace();
-//                         }
-//                         //<<<< ElementCount
-                        JOptionPane.showMessageDialog(scroll, "commented lines: " + count, "title", JOptionPane.INFORMATION_MESSAGE);
+                int count = 0;
+                StringTokenizer st = new StringTokenizer(textArea.getText(), "\n");
+                while (st.hasMoreTokens()) {
+                    //if (st.nextToken().startsWith("#")) {
+                    //if (st.nextToken().charAt(0) == '#') {
+                    if (st.nextToken().codePointAt(0) == '#') {
+                        count++;
                     }
-                });
+                }
+
+//                 //String#split >>>>
+//                 for (String line: textArea.getText().split("\\n")) {
+//                     if (!line.isEmpty() && line.codePointAt(0) == '#') {
+//                         count++;
+//                     }
+//                 }
+//                 //<<<< String#split
+//
+//                 //LineNumberReader >>>>
+//                 try (java.io.LineNumberReader lnr = new java.io.LineNumberReader(new java.io.StringReader(textArea.getText()))) {
+//                     String line = null;
+//                     while ((line = lnr.readLine()) != null) {
+//                         if (!line.isEmpty() && line.codePointAt(0) == '#') {
+//                             count++;
+//                         }
+//                     }
+//                 } catch (java.io.IOException ioe) {
+//                     ioe.printStackTrace();
+//                 }
+//                 //<<<< LineNumberReader
+//
+//                 //ElementCount >>>>
+//                 Document doc = textArea.getDocument();
+//                 Element root = doc.getDefaultRootElement();
+//                 try {
+//                     for (int i = 0; i < root.getElementCount(); i++) {
+//                         Element elem = root.getElement(i);
+//                         String line = doc.getText(elem.getStartOffset(), elem.getEndOffset() - elem.getStartOffset());
+//                         if (line.codePointAt(0) == '#') {
+//                             count++;
+//                         }
+//                     }
+//                 } catch (BadLocationException ble) {
+//                     ble.printStackTrace();
+//                 }
+//                 //<<<< ElementCount
+
+                JOptionPane.showMessageDialog(scroll, "commented lines: " + count, "title", JOptionPane.INFORMATION_MESSAGE);
             }
         });
-        frame.getRootPane().setDefaultButton(button);
+        //frame.getRootPane().setDefaultButton(button);
+        EventQueue.invokeLater(new Runnable() {
+            @Override public void run() {
+                getRootPane().setDefaultButton(button);
+            }
+        });
 
         add(button, BorderLayout.NORTH);
         add(scroll);
@@ -103,7 +107,7 @@ public final class MainPanel extends JPanel {
         }
         JFrame frame = new JFrame("@title@");
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        frame.getContentPane().add(new MainPanel(frame));
+        frame.getContentPane().add(new MainPanel());
         frame.pack();
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
@@ -120,7 +124,7 @@ class LineNumberView extends JComponent {
     private final int fontDescent;
     private final int fontLeading;
 
-    public LineNumberView(JTextArea textArea) {
+    protected LineNumberView(JTextArea textArea) {
         super();
         this.textArea = textArea;
         Font font   = textArea.getFont();
@@ -171,7 +175,7 @@ class LineNumberView extends JComponent {
     @Override public Dimension getPreferredSize() {
         return new Dimension(getComponentWidth(), textArea.getHeight());
     }
-    @Override public void paintComponent(Graphics g) {
+    @Override protected void paintComponent(Graphics g) {
         g.setColor(getBackground());
         Rectangle clip = g.getClipBounds();
         g.fillRect(clip.x, clip.y, clip.width, clip.height);

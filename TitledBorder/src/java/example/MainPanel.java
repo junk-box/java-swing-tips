@@ -14,39 +14,36 @@ public final class MainPanel extends JPanel {
     private final JPanel panel = new JPanel();
 
     public MainPanel() {
-        super(new BorderLayout());
-        verticalOrientationChoices.addItemListener(new ItemListener() {
-            @Override public void itemStateChanged(ItemEvent e) {
-                if (e.getStateChange() == ItemEvent.SELECTED) {
-                    initTitleBorder();
-                }
+        super(new BorderLayout(5, 5));
+        verticalOrientationChoices.addItemListener(e -> {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                initTitleBorder();
             }
         });
-        justificationChoices.addItemListener(new ItemListener() {
-            @Override public void itemStateChanged(ItemEvent e) {
-                if (e.getStateChange() == ItemEvent.SELECTED) {
-                    initTitleBorder();
-                }
+        justificationChoices.addItemListener(e -> {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                initTitleBorder();
             }
         });
         panel.setBorder(border);
 
         JPanel p2 = new JPanel(new GridBagLayout());
         GridBagConstraints c = new GridBagConstraints();
-        c.gridheight = 1;
-        c.gridx   = 0;
-        c.insets  = new Insets(5, 5, 5, 0);
-        c.anchor  = GridBagConstraints.WEST;
-        c.gridy   = 0; p2.add(new JLabel(" TitlePosition"), c);
-        c.gridy   = 1; p2.add(new JLabel(" TitleJustification"), c);
+        c.gridx  = 0;
+        c.insets = new Insets(5, 5, 5, 5);
+        c.anchor = GridBagConstraints.LINE_END;
+        p2.add(new JLabel("TitlePosition:"), c);
+        p2.add(new JLabel("TitleJustification:"), c);
+
         c.gridx   = 1;
         c.weightx = 1d;
         c.fill    = GridBagConstraints.HORIZONTAL;
-        c.gridy   = 0; p2.add(verticalOrientationChoices, c);
-        c.gridy   = 1; p2.add(justificationChoices, c);
+        p2.add(verticalOrientationChoices, c);
+        p2.add(justificationChoices, c);
 
-        add(p2, BorderLayout.NORTH); add(panel);
-        setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+        add(p2, BorderLayout.NORTH);
+        add(panel);
+        setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         setPreferredSize(new Dimension(320, 240));
     }
     private void initTitleBorder() {
@@ -81,16 +78,16 @@ public final class MainPanel extends JPanel {
 }
 
 enum VerticalOrientation {
-    DEFAULT_POSITION (TitledBorder.DEFAULT_POSITION, "Default Position"),
-    ABOVE_TOP        (TitledBorder.ABOVE_TOP,        "Above Top"),
-    TOP              (TitledBorder.TOP,              "Top"),
-    BELOW_TOP        (TitledBorder.BELOW_TOP,        "Below Top"),
-    ABOVE_BOTTOM     (TitledBorder.ABOVE_BOTTOM,     "Above Bottom"),
-    BOTTOM           (TitledBorder.BOTTOM,           "Bottom"),
-    BELOW_BOTTOM     (TitledBorder.BELOW_BOTTOM,     "Below Bottom");
+    DEFAULT_POSITION(TitledBorder.DEFAULT_POSITION, "Default Position"),
+    ABOVE_TOP(TitledBorder.ABOVE_TOP,               "Above Top"),
+    TOP(TitledBorder.TOP,                           "Top"),
+    BELOW_TOP(TitledBorder.BELOW_TOP,               "Below Top"),
+    ABOVE_BOTTOM(TitledBorder.ABOVE_BOTTOM,         "Above Bottom"),
+    BOTTOM(TitledBorder.BOTTOM,                     "Bottom"),
+    BELOW_BOTTOM(TitledBorder.BELOW_BOTTOM,         "Below Bottom");
     public final int mode;
     private final String description;
-    private VerticalOrientation(int mode, String description) {
+    VerticalOrientation(int mode, String description) {
         this.mode = mode;
         this.description = description;
     }
@@ -100,15 +97,15 @@ enum VerticalOrientation {
 }
 
 enum Justification {
-    DEFAULT_JUSTIFICATION (TitledBorder.DEFAULT_JUSTIFICATION, "Default Justification"),
-    LEFT                  (TitledBorder.LEFT,                  "Left"),
-    CENTER                (TitledBorder.CENTER,                "Center"),
-    RIGHT                 (TitledBorder.RIGHT,                 "Right"),
-    LEADING               (TitledBorder.LEADING,               "Leading"),
-    TRAILING              (TitledBorder.TRAILING,              "Trailing");
+    DEFAULT_JUSTIFICATION(TitledBorder.DEFAULT_JUSTIFICATION, "Default Justification"),
+    LEFT(TitledBorder.LEFT,                                   "Left"),
+    CENTER(TitledBorder.CENTER,                               "Center"),
+    RIGHT(TitledBorder.RIGHT,                                 "Right"),
+    LEADING(TitledBorder.LEADING,                             "Leading"),
+    TRAILING(TitledBorder.TRAILING,                           "Trailing");
     public final int mode;
     private final String description;
-    private Justification(int mode, String description) {
+    Justification(int mode, String description) {
         this.mode = mode;
         this.description = description;
     }

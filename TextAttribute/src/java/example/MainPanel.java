@@ -29,15 +29,13 @@ public final class MainPanel extends JPanel {
         //textField.setFont(font.deriveFont(attrs));
         //textField.setMargin(new Insets(4, 2, 4, 2));
 
-        comboBox.addItemListener(new ItemListener() {
-            @Override public void itemStateChanged(ItemEvent e) {
-                if (e.getStateChange() == ItemEvent.SELECTED) {
-                    Object style = ((UnderlineStyle) e.getItem()).style;
-                    initUnderline(textField0, style);
-                    initUnderline(textField1, style);
-                    initUnderline(textField2, style);
-                    initUnderline(textArea,   style);
-                }
+        comboBox.addItemListener(e -> {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                Object style = ((UnderlineStyle) e.getItem()).style;
+                initUnderline(textField0, style);
+                initUnderline(textField1, style);
+                initUnderline(textField2, style);
+                initUnderline(textArea,   style);
             }
         });
 
@@ -89,7 +87,7 @@ enum UnderlineStyle {
     UNDERLINE_LOW_TWO_PIXEL(TextAttribute.UNDERLINE_LOW_TWO_PIXEL),
     UNDERLINE_ON(TextAttribute.UNDERLINE_ON);
     public final int style;
-    private UnderlineStyle(int style) {
+    UnderlineStyle(int style) {
         this.style = style;
     }
 }

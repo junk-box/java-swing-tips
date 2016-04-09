@@ -27,13 +27,13 @@ public final class MainPanel extends JPanel {
         animator = new Timer(25, fade);
 
         JButton button1 = new JButton(new AbstractAction("Open") {
-            @Override public void actionPerformed(ActionEvent ae) {
+            @Override public void actionPerformed(ActionEvent e) {
                 mode = true;
                 animator.start();
             }
         });
         JButton button2 = new JButton(new AbstractAction("Close") {
-            @Override public void actionPerformed(ActionEvent ae) {
+            @Override public void actionPerformed(ActionEvent e) {
                 mode = false;
                 animator.start();
             }
@@ -47,24 +47,24 @@ public final class MainPanel extends JPanel {
 
     class FadeImage extends JComponent implements ActionListener {
         private int alpha = 10;
-        public FadeImage() {
+        protected FadeImage() {
             super();
             setBackground(Color.BLACK);
         }
-        @Override public void paintComponent(Graphics g) {
-            Graphics2D g2d = (Graphics2D) g.create();
-            g2d.setPaint(getBackground());
-            g2d.fillRect(0, 0, getWidth(), getHeight());
+        @Override protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setPaint(getBackground());
+            g2.fillRect(0, 0, getWidth(), getHeight());
             if (mode && alpha < 10) {
-                alpha = alpha + 1;
+                alpha += 1;
             } else if (!mode && alpha > 0) {
-                alpha = alpha - 1;
+                alpha -= 1;
             } else {
                 animator.stop();
             }
-            g2d.setComposite(makeAlphaComposite(alpha * .1f));
-            g2d.drawImage(icon, null, 0, 0);
-            g2d.dispose();
+            g2.setComposite(makeAlphaComposite(alpha * .1f));
+            g2.drawImage(icon, null, 0, 0);
+            g2.dispose();
         }
         @Override public void actionPerformed(ActionEvent e) {
             repaint();

@@ -6,6 +6,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.*;
 import java.beans.*;
+import java.util.Objects;
 import javax.swing.*;
 import javax.swing.plaf.basic.*;
 import javax.swing.plaf.nimbus.*;
@@ -39,7 +40,7 @@ public class MainPanel extends JPanel implements HierarchyListener {
         box.add(Box.createHorizontalGlue());
         box.add(new JButton(new AbstractAction("Test start") {
             @Override public void actionPerformed(ActionEvent e) {
-                if (worker != null && !worker.isDone()) {
+                if (Objects.nonNull(worker) && !worker.isDone()) {
                     worker.cancel(true);
                 }
                 progressBar0.setIndeterminate(true);
@@ -65,7 +66,7 @@ public class MainPanel extends JPanel implements HierarchyListener {
         setPreferredSize(new Dimension(320, 240));
     }
     @Override public void hierarchyChanged(HierarchyEvent e) {
-        if ((e.getChangeFlags() & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0 && !e.getComponent().isDisplayable() && worker != null) {
+        if ((e.getChangeFlags() & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0 && !e.getComponent().isDisplayable() && Objects.nonNull(worker)) {
             System.out.println("DISPOSE_ON_CLOSE");
             worker.cancel(true);
             worker = null;
@@ -78,7 +79,6 @@ public class MainPanel extends JPanel implements HierarchyListener {
         c.fill    = GridBagConstraints.HORIZONTAL;
         c.insets  = new Insets(5, 5, 5, 5);
         c.weightx = 1d;
-        c.gridy   = 0;
         p.add(cmp, c);
         return p;
     }
@@ -108,7 +108,7 @@ public class MainPanel extends JPanel implements HierarchyListener {
 class StripedProgressBarUI extends BasicProgressBarUI {
     private final boolean dir;
     private final boolean slope;
-    public StripedProgressBarUI(boolean dir, boolean slope) {
+    protected StripedProgressBarUI(boolean dir, boolean slope) {
         super();
         this.dir = dir;
         this.slope = slope;
@@ -117,9 +117,9 @@ class StripedProgressBarUI extends BasicProgressBarUI {
         return availableLength; //(int)Math.round(availableLength/6.0);
     }
     @Override public void paintIndeterminate(Graphics g, JComponent c) {
-        if (!(g instanceof Graphics2D)) {
-            return;
-        }
+        //if (!(g instanceof Graphics2D)) {
+        //    return;
+        //}
 
         Insets b = progressBar.getInsets(); // area for border
         int barRectWidth  = progressBar.getWidth() - b.right - b.left;
@@ -129,12 +129,9 @@ class StripedProgressBarUI extends BasicProgressBarUI {
             return;
         }
 
-        Graphics2D g2 = (Graphics2D) g;
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
         // Paint the striped box.
         boxRect = getBox(boxRect);
-        if (boxRect != null) {
+        if (Objects.nonNull(boxRect)) {
             int w = 10;
             int x = getAnimationIndex();
             GeneralPath p = new GeneralPath();
@@ -150,7 +147,10 @@ class StripedProgressBarUI extends BasicProgressBarUI {
                 p.lineTo(boxRect.x + w * .5f, boxRect.y);
             }
             p.closePath();
-            g2.setColor(progressBar.getForeground());
+
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setPaint(progressBar.getForeground());
             if (slope) {
                 for (int i = boxRect.width + x; i > -w; i -= w) {
                     g2.fill(AffineTransform.getTranslateInstance(i, 0).createTransformedShape(p));
@@ -160,6 +160,7 @@ class StripedProgressBarUI extends BasicProgressBarUI {
                     g2.fill(AffineTransform.getTranslateInstance(i, 0).createTransformedShape(p));
                 }
             }
+            g2.dispose();
         }
     }
 }
@@ -188,15 +189,15 @@ class Task extends SwingWorker<String, Void> {
 
 class ProgressListener implements PropertyChangeListener {
     private final JProgressBar progressBar;
-    public ProgressListener(JProgressBar progressBar) {
+    protected ProgressListener(JProgressBar progressBar) {
         this.progressBar = progressBar;
         this.progressBar.setValue(0);
     }
-    @Override public void propertyChange(PropertyChangeEvent evt) {
-        String strPropertyName = evt.getPropertyName();
+    @Override public void propertyChange(PropertyChangeEvent e) {
+        String strPropertyName = e.getPropertyName();
         if ("progress".equals(strPropertyName)) {
             progressBar.setIndeterminate(false);
-            int progress = (Integer) evt.getNewValue();
+            int progress = (Integer) e.getNewValue();
             progressBar.setValue(progress);
         }
     }

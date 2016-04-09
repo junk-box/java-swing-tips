@@ -4,18 +4,25 @@ package example;
 //@homepage@
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Objects;
 import javax.swing.*;
 
 public final class MainPanel extends JPanel {
     private final JButton button = new JButton("Stop 5sec");
-    public MainPanel(final JFrame frame) {
+    public MainPanel() {
         super(new BorderLayout());
-        frame.setGlassPane(new LockingGlassPane());
-        frame.getGlassPane().setVisible(false);
+        EventQueue.invokeLater(new Runnable() {
+            @Override public void run() {
+                JComponent gp = new LockingGlassPane();
+                gp.setVisible(false);
+                getRootPane().setGlassPane(gp);
+            }
+        });
+
         button.addActionListener(new ActionListener() {
             @Override public void actionPerformed(ActionEvent e) {
                 //System.out.println("actionPerformed: " + EventQueue.isDispatchThread());
-                frame.getGlassPane().setVisible(true);
+                getRootPane().getGlassPane().setVisible(true);
                 button.setEnabled(false);
                 (new Task() {
                     @Override public void done() {
@@ -24,7 +31,7 @@ public final class MainPanel extends JPanel {
                             cancel(true);
                             return;
                         }
-                        frame.getGlassPane().setVisible(false);
+                        getRootPane().getGlassPane().setVisible(false);
                         button.setEnabled(true);
                     }
                 }).execute();
@@ -39,13 +46,15 @@ public final class MainPanel extends JPanel {
         JTextField t = new JTextField("TextField&ToolTip");
         t.setToolTipText("ToolTip");
 
-        box.add(b); box.add(Box.createHorizontalStrut(5));
-        box.add(t); box.add(Box.createHorizontalStrut(5));
+        box.add(b);
+        box.add(Box.createHorizontalStrut(5));
+        box.add(t);
+        box.add(Box.createHorizontalStrut(5));
 
         add(box, BorderLayout.NORTH);
         add(button, BorderLayout.SOUTH);
         add(new JScrollPane(new JTree()));
-        setPreferredSize(new Dimension(320, 200));
+        setPreferredSize(new Dimension(320, 240));
     }
 
     public static void main(String... args) {
@@ -65,7 +74,7 @@ public final class MainPanel extends JPanel {
         JFrame frame = new JFrame("@title@");
         frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         //frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        frame.getContentPane().add(new MainPanel(frame));
+        frame.getContentPane().add(new MainPanel());
         frame.pack();
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
@@ -83,23 +92,23 @@ class Task extends SwingWorker<String, Void> {
     }
 }
 
-class LockingGlassPane extends JComponent {
-    public LockingGlassPane() {
-        super();
+class LockingGlassPane extends JPanel {
+    @Override public void updateUI() {
+        super.updateUI();
         setOpaque(false);
-        super.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
     }
     @Override public void setVisible(boolean isVisible) {
         boolean oldVisible = isVisible();
         super.setVisible(isVisible);
         JRootPane rootPane = getRootPane();
-        if (rootPane != null && isVisible() != oldVisible) {
+        if (Objects.nonNull(rootPane) && isVisible() != oldVisible) {
             rootPane.getLayeredPane().setVisible(!isVisible);
         }
     }
-    @Override public void paintComponent(Graphics g) {
+    @Override protected void paintComponent(Graphics g) {
         JRootPane rootPane = getRootPane();
-        if (rootPane != null) {
+        if (Objects.nonNull(rootPane)) {
             // http://weblogs.java.net/blog/alexfromsun/archive/2008/01/disabling_swing.html
             // it is important to call print() instead of paint() here
             // because print() doesn't affect the frame's double buffer
@@ -113,7 +122,9 @@ class LockingGlassPane extends JComponent {
 //         public LockingGlassPane_() {
 //             setOpaque(false);
 //             setFocusTraversalPolicy(new DefaultFocusTraversalPolicy() {
-//                 @Override public boolean accept(Component c) { return false; }
+//                 @Override public boolean accept(Component c) {
+//                     return false;
+//                 }
 //             });
 // //             Set<AWTKeyStroke> s = Collections.emptySet();
 // //             setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, s);

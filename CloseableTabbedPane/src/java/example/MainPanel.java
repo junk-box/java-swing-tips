@@ -73,21 +73,22 @@ public class MainPanel extends JPanel {
 
 class CloseTabIcon implements Icon {
     @Override public void paintIcon(Component c, Graphics g, int x, int y) {
-        g.translate(x, y);
-        g.setColor(Color.BLACK);
+        Graphics2D g2 = (Graphics2D) g.create();
+        g2.translate(x, y);
+        g2.setPaint(Color.BLACK);
         if (c instanceof AbstractButton) {
             ButtonModel m = ((AbstractButton) c).getModel();
             if (m.isRollover()) {
-                g.setColor(Color.ORANGE);
+                g2.setPaint(Color.ORANGE);
             }
         }
-        g.drawLine(4,  4, 11, 11);
-        g.drawLine(4,  5, 10, 11);
-        g.drawLine(5,  4, 11, 10);
-        g.drawLine(11, 4,  4, 11);
-        g.drawLine(11, 5,  5, 11);
-        g.drawLine(10, 4,  4, 10);
-        g.translate(-x, -y);
+        g2.drawLine(4,  4, 11, 11);
+        g2.drawLine(4,  5, 10, 11);
+        g2.drawLine(5,  4, 11, 10);
+        g2.drawLine(11, 4,  4, 11);
+        g2.drawLine(11, 5,  5, 11);
+        g2.drawLine(10, 4,  4, 10);
+        g2.dispose();
     }
     @Override public int getIconWidth() {
         return 16;
@@ -107,11 +108,7 @@ class CloseableTabbedPane extends JTabbedPane {
         JButton button = new JButton(CLOSE_ICON);
         button.setBorder(BorderFactory.createEmptyBorder());
         button.setContentAreaFilled(false);
-        button.addActionListener(new ActionListener() {
-            @Override public void actionPerformed(ActionEvent e) {
-                removeTabAt(indexOfComponent(content));
-            }
-        });
+        button.addActionListener(e -> removeTabAt(indexOfComponent(content)));
         tab.add(label, BorderLayout.WEST);
         tab.add(button, BorderLayout.EAST);
         tab.setBorder(BorderFactory.createEmptyBorder(2, 1, 1, 1));
@@ -129,7 +126,7 @@ class CloseableTabbedPaneLayerUI extends LayerUI<JTabbedPane> {
 //             return new Dimension(16, 16);
 //         }
 //     };
-    public CloseableTabbedPaneLayerUI() {
+    protected CloseableTabbedPaneLayerUI() {
         super();
         button.setBorder(BorderFactory.createEmptyBorder());
         button.setFocusPainted(false);
@@ -230,7 +227,7 @@ class CloseableTabbedPaneLayerUI extends LayerUI<JTabbedPane> {
 //         button.setContentAreaFilled(false);
 //         button.setRolloverEnabled(false);
 //     }
-//     @Override public void paintComponent(Graphics g) {
+//     @Override protected void paintComponent(Graphics g) {
 //         Point glassPt = SwingUtilities.convertPoint(tabbedPane, 0, 0, this);
 //         for (int i = 0; i < tabbedPane.getTabCount(); i++) {
 //             Rectangle tabRect = tabbedPane.getBoundsAt(i);

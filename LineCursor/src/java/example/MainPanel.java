@@ -4,6 +4,7 @@ package example;
 //@homepage@
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Objects;
 import javax.swing.*;
 import javax.swing.text.*;
 
@@ -20,7 +21,6 @@ public final class MainPanel extends JPanel {
         add(new JScrollPane(textArea));
         setPreferredSize(new Dimension(320, 240));
     }
-
     public static void main(String... args) {
         EventQueue.invokeLater(new Runnable() {
             @Override public void run() {
@@ -46,33 +46,30 @@ public final class MainPanel extends JPanel {
 
 class LineCursorTextArea extends JTextArea {
     private static final Color LINE_COLOR = Color.BLUE;
-    private DefaultCaret caret;
 
-    public LineCursorTextArea() {
+    protected LineCursorTextArea() {
         super();
     }
-    public LineCursorTextArea(Document doc) {
+    protected LineCursorTextArea(Document doc) {
         super(doc);
     }
-    public LineCursorTextArea(Document doc, String text, int rows, int columns) {
+    protected LineCursorTextArea(Document doc, String text, int rows, int columns) {
         super(doc, text, rows, columns);
     }
-    public LineCursorTextArea(int rows, int columns) {
+    protected LineCursorTextArea(int rows, int columns) {
         super(rows, columns);
     }
-    public LineCursorTextArea(String text) {
+    protected LineCursorTextArea(String text) {
         super(text);
     }
-    public LineCursorTextArea(String text, int rows, int columns) {
+    protected LineCursorTextArea(String text, int rows, int columns) {
         super(text, rows, columns);
     }
-
     @Override public void updateUI() {
-        //setCaret(null);
         super.updateUI();
-        caret = new DefaultCaret() {
+        DefaultCaret caret = new DefaultCaret() {
             @Override protected synchronized void damage(Rectangle r) {
-                if (r != null) {
+                if (Objects.nonNull(r)) {
                     JTextComponent c = getComponent();
                     x = 0;
                     y = r.y;
@@ -82,18 +79,23 @@ class LineCursorTextArea extends JTextArea {
                 }
             }
         };
-        caret.setBlinkRate(getCaret().getBlinkRate());
+        //caret.setBlinkRate(getCaret().getBlinkRate());
+        caret.setBlinkRate(UIManager.getInt("TextArea.caretBlinkRate"));
         setCaret(caret);
     }
     @Override protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        Graphics2D g2 = (Graphics2D) g.create();
-        Insets i = getInsets();
-        //int y = g2.getFontMetrics().getHeight() * getLineAtCaret(this) + i.top;
-        int y = caret.y + caret.height - 1;
-        g2.setPaint(LINE_COLOR);
-        g2.drawLine(i.left, y, getSize().width - i.left - i.right, y);
-        g2.dispose();
+        Caret c = getCaret();
+        if (c instanceof DefaultCaret) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            Insets i = getInsets();
+            //int y = g2.getFontMetrics().getHeight() * getLineAtCaret(this) + i.top;
+            DefaultCaret caret = (DefaultCaret) c;
+            int y = caret.y + caret.height - 1;
+            g2.setPaint(LINE_COLOR);
+            g2.drawLine(i.left, y, getSize().width - i.left - i.right, y);
+            g2.dispose();
+        }
     }
 //     public static int getLineAtCaret(JTextComponent component) {
 //         int caretPosition = component.getCaretPosition();

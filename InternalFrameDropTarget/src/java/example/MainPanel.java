@@ -55,7 +55,7 @@ public class MainPanel extends JPanel {
 
         //Disable row Cut, Copy, Paste
         ActionMap map = table.getActionMap();
-        AbstractAction dummy = new AbstractAction() {
+        Action dummy = new AbstractAction() {
             @Override public void actionPerformed(ActionEvent e) {
                 /* Dummy action */
             }
@@ -146,8 +146,8 @@ public class MainPanel extends JPanel {
 //                     source.getColumnModel().removeColumn(column);
 //                     target.getColumnModel().addColumn(column);
 //                 }
-//             } catch (Exception e) {
-//                 e.printStackTrace();
+//             } catch (Exception ex) {
+//                 ex.printStackTrace();
 //             }
 //             return false;
 //         }
@@ -181,7 +181,7 @@ public class MainPanel extends JPanel {
 //     @Override public void dragEnter(DropTargetDragEvent dtde) {
 //         Component c = dtde.getDropTargetContext().getComponent();
 //         Container cn = SwingUtilities.getAncestorOfClass(JInternalFrame.class, c);
-//         if (cn != null) {
+//         if (cn instanceof JInternalFrame) {
 //             JInternalFrame f = (JInternalFrame) cn;
 //             f.moveToFront();
 //             f.getParent().repaint();
@@ -198,7 +198,7 @@ class TableRowTransferHandler extends TransferHandler {
     private int addCount; //Number of items added.
     private JComponent source;
 
-    public TableRowTransferHandler() {
+    protected TableRowTransferHandler() {
         super();
         localObjectFlavor = new ActivationDataFlavor(Object[].class, DataFlavor.javaJVMLocalObjectMimeType, "Array of items");
     }
@@ -209,7 +209,7 @@ class TableRowTransferHandler extends TransferHandler {
         List<Object> list = new ArrayList<>();
         indices = table.getSelectedRows();
         for (int i: indices) {
-            list.add(model.getDataVector().elementAt(i));
+            list.add(model.getDataVector().get(i));
         }
         Object[] transferedObjects = list.toArray();
         return new DataHandler(transferedObjects, localObjectFlavor.getMimeType());
@@ -221,7 +221,7 @@ class TableRowTransferHandler extends TransferHandler {
         }
         return null;
     }
-    private boolean isDropableTableIntersection(TransferSupport info) {
+    private boolean isDropableTableIntersection(TransferHandler.TransferSupport info) {
         Component c = info.getComponent();
         if (!(c instanceof JTable)) {
             return false;
@@ -236,7 +236,7 @@ class TableRowTransferHandler extends TransferHandler {
 
             JInternalFrame sf = getInternalFrame(source);
             JInternalFrame tf = getInternalFrame(target);
-            if (sf == null || tf == null || dp.getIndexOf(tf) < dp.getIndexOf(sf)) {
+            if (Objects.isNull(sf) || Objects.isNull(tf) || dp.getIndexOf(tf) < dp.getIndexOf(sf)) {
                 return false;
             }
 
@@ -250,15 +250,15 @@ class TableRowTransferHandler extends TransferHandler {
         }
         return true;
     }
-    @Override public boolean canImport(TransferSupport info) {
+    @Override public boolean canImport(TransferHandler.TransferSupport info) {
         boolean isDropable = info.isDrop() && info.isDataFlavorSupported(localObjectFlavor) && isDropableTableIntersection(info);
         info.getComponent().setCursor(isDropable ? DragSource.DefaultMoveDrop : DragSource.DefaultMoveNoDrop);
         return isDropable;
     }
     @Override public int getSourceActions(JComponent c) {
-        return MOVE;
+        return TransferHandler.MOVE;
     }
-    @Override public boolean importData(TransferSupport info) {
+    @Override public boolean importData(TransferHandler.TransferSupport info) {
         if (!canImport(info)) {
             return false;
         }
@@ -294,10 +294,10 @@ class TableRowTransferHandler extends TransferHandler {
         return false;
     }
     @Override protected void exportDone(JComponent c, Transferable data, int action) {
-        cleanup(c, action == MOVE);
+        cleanup(c, action == TransferHandler.MOVE);
     }
     private void cleanup(JComponent c, boolean remove) {
-        if (remove && indices != null) {
+        if (remove && Objects.nonNull(indices)) {
             c.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
             DefaultTableModel model = (DefaultTableModel) ((JTable) c).getModel();
             if (addCount > 0) {

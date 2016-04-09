@@ -4,7 +4,7 @@ package example;
 //@homepage@
 import java.awt.*;
 import java.awt.event.*;
-import java.util.Arrays;
+import java.util.*;
 import javax.swing.*;
 import javax.swing.plaf.basic.*;
 import javax.swing.table.*;
@@ -17,7 +17,7 @@ public final class MainPanel extends JPanel {
     private final String[] columnNames = {"Year", "String", "Comment"};
     private final DefaultTableModel model = new DefaultTableModel(null, columnNames) {
         @Override public Class<?> getColumnClass(int column) {
-            return (column == 0) ? Integer.class : Object.class;
+            return column == 0 ? Integer.class : Object.class;
         }
     };
     private final transient TableRowSorter<? extends TableModel> sorter = new TableRowSorter<>(model);
@@ -32,7 +32,7 @@ public final class MainPanel extends JPanel {
         table.setRowSorter(sorter);
 
         for (int i = 1; i <= 2013; i++) {
-            model.addRow(Arrays.asList(i, "Test: " + i, (i % 2 == 0) ? "" : "comment...").toArray());
+            model.addRow(Arrays.asList(i, "Test: " + i, i % 2 == 0 ? "" : "comment...").toArray());
         }
         initLinkBox(100, 1);
         box.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
@@ -79,15 +79,30 @@ public final class MainPanel extends JPanel {
         }
 
         ButtonGroup bg = new ButtonGroup();
-        JRadioButton f = makePrevNextRadioButton(itemsPerPage, 1, "|<", currentPageIndex > 1); box.add(f); bg.add(f);
-        JRadioButton p = makePrevNextRadioButton(itemsPerPage, currentPageIndex - 1, "<", currentPageIndex > 1); box.add(p); bg.add(p);
+        JRadioButton f = makePrevNextRadioButton(itemsPerPage, 1, "|<", currentPageIndex > 1);
+        box.add(f);
+        bg.add(f);
+
+        JRadioButton p = makePrevNextRadioButton(itemsPerPage, currentPageIndex - 1, "<", currentPageIndex > 1);
+        box.add(p);
+        bg.add(p);
+
         box.add(Box.createHorizontalGlue());
         for (int i = startPageIndex; i <= endPageIndex; i++) {
-            JRadioButton c = makeRadioButton(itemsPerPage, currentPageIndex, i); box.add(c); bg.add(c);
+            JRadioButton c = makeRadioButton(itemsPerPage, currentPageIndex, i);
+            box.add(c);
+            bg.add(c);
         }
         box.add(Box.createHorizontalGlue());
-        JRadioButton n = makePrevNextRadioButton(itemsPerPage, currentPageIndex + 1, ">", currentPageIndex < maxPageIndex); box.add(n); bg.add(n);
-        JRadioButton l = makePrevNextRadioButton(itemsPerPage, maxPageIndex, ">|", currentPageIndex < maxPageIndex); box.add(l); bg.add(l);
+
+        JRadioButton n = makePrevNextRadioButton(itemsPerPage, currentPageIndex + 1, ">", currentPageIndex < maxPageIndex);
+        box.add(n);
+        bg.add(n);
+
+        JRadioButton l = makePrevNextRadioButton(itemsPerPage, maxPageIndex, ">|", currentPageIndex < maxPageIndex);
+        box.add(l);
+        bg.add(l);
+
         box.revalidate();
         box.repaint();
     }
@@ -232,10 +247,10 @@ class LinkViewRadioButtonUI extends BasicRadioButtonUI {
                        viewRect.x + viewRect.width, viewRect.y + viewRect.height);
         }
         View v = (View) c.getClientProperty(BasicHTML.propertyKey);
-        if (v == null) {
-            paintText(g, c, textRect, text);
-        } else {
+        if (Objects.nonNull(v)) {
             v.paint(g, textRect);
+        } else {
+            paintText(g, c, textRect, text);
         }
     }
 }

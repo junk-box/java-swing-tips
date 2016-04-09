@@ -7,7 +7,8 @@ import java.awt.datatransfer.*;
 import java.awt.dnd.*;
 import java.awt.event.*;
 import java.io.*;
-import java.util.Arrays;
+import java.net.URISyntaxException;
+import java.util.*;
 import java.util.List;
 import javax.swing.*;
 import javax.swing.table.*;
@@ -66,8 +67,8 @@ public final class MainPanel extends JPanel {
 
         try {
             addImageFile(new File(getClass().getResource("test.png").toURI()));
-        } catch (java.net.URISyntaxException e) {
-            e.printStackTrace();
+        } catch (URISyntaxException ex) {
+            ex.printStackTrace();
         }
         add(scroll);
         setPreferredSize(new Dimension(320, 240));
@@ -76,14 +77,14 @@ public final class MainPanel extends JPanel {
     private void addImageFile(File file) {
         String path = file.getAbsolutePath();
         Image img = Toolkit.getDefaultToolkit().createImage(path);
-        if (tracker == null) {
+        if (Objects.isNull(tracker)) {
             tracker = new MediaTracker((Container) this);
         }
         tracker.addImage(img, IMAGE_ID);
         try {
             tracker.waitForID(IMAGE_ID);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        } catch (InterruptedException ex) {
+            ex.printStackTrace();
         } finally {
             if (!tracker.isErrorID(IMAGE_ID)) {
                 model.addTest(new Test(file.getName(), path,
@@ -136,20 +137,20 @@ class FileModel extends DefaultTableModel {
     @Override public boolean isCellEditable(int row, int col) {
         return COLUMN_LIST.get(col).isEditable;
     }
-    @Override public Class<?> getColumnClass(int modelIndex) {
-        return COLUMN_LIST.get(modelIndex).columnClass;
+    @Override public Class<?> getColumnClass(int column) {
+        return COLUMN_LIST.get(column).columnClass;
     }
     @Override public int getColumnCount() {
         return COLUMN_LIST.size();
     }
-    @Override public String getColumnName(int modelIndex) {
-        return COLUMN_LIST.get(modelIndex).columnName;
+    @Override public String getColumnName(int column) {
+        return COLUMN_LIST.get(column).columnName;
     }
     private static class ColumnContext {
         public final String  columnName;
         public final Class   columnClass;
         public final boolean isEditable;
-        public ColumnContext(String columnName, Class columnClass, boolean isEditable) {
+        protected ColumnContext(String columnName, Class columnClass, boolean isEditable) {
             this.columnName = columnName;
             this.columnClass = columnClass;
             this.isEditable = isEditable;
@@ -158,9 +159,11 @@ class FileModel extends DefaultTableModel {
 }
 
 class Test {
-    private String name, comment;
-    private int width, height;
-    public Test(String name, String comment, int width, int height) {
+    private String name;
+    private String comment;
+    private int width;
+    private int height;
+    protected Test(String name, String comment, int width, int height) {
         this.name    = name;
         this.comment = comment;
         this.width   = width;
@@ -197,24 +200,20 @@ class TablePopupMenu extends JPopupMenu {
         @Override public void actionPerformed(ActionEvent e) {
             JTable table = (JTable) getInvoker();
             int[] selection = table.getSelectedRows();
-            if (selection.length == 0) {
-                return;
-            }
             DefaultTableModel model = (DefaultTableModel) table.getModel();
             for (int i = selection.length - 1; i >= 0; i--) {
                 model.removeRow(table.convertRowIndexToModel(selection[i]));
             }
         }
     };
-    public TablePopupMenu() {
+    protected TablePopupMenu() {
         super();
         add(deleteAction);
     }
     @Override public void show(Component c, int x, int y) {
         if (c instanceof JTable) {
             JTable table = (JTable) c;
-            int[] l = table.getSelectedRows();
-            deleteAction.setEnabled(l.length > 0);
+            deleteAction.setEnabled(table.getSelectedRowCount() > 0);
             super.show(c, x, y);
         }
     }

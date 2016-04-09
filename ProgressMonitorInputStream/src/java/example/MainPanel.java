@@ -61,7 +61,7 @@ public final class MainPanel extends JPanel {
         String path = String.format("https://docs.oracle.com/javase/8/docs/api/index-files/index-%d.html", index);
         //String path = String.format("https://docs.oracle.com/javase/7/docs/api/index-files/index-%d.html", index);
         //String path = String.format("https://docs.oracle.com/javase/jp/6/api/index-files/index-%d.html", index);
-        //String path = "http://terai.xrea.jp/";
+        //String path = "http://ateraimemo.com/";
         System.out.println(path);
 
         URLConnection urlConnection = null;
@@ -76,11 +76,12 @@ public final class MainPanel extends JPanel {
     }
 
     class RunAction extends AbstractAction {
-        public RunAction() {
+        protected RunAction() {
             super("Load");
         }
         @Override public void actionPerformed(ActionEvent e) {
-            runButton.setEnabled(false);
+            JButton b = (JButton) e.getSource();
+            b.setEnabled(false);
             textArea.setText("");
 
             URLConnection urlConnection = getURLConnection();
@@ -89,11 +90,10 @@ public final class MainPanel extends JPanel {
             }
             Charset cs = getCharset(urlConnection, "UTF-8");
             int length = urlConnection.getContentLength();
-            JFrame frame = (JFrame) SwingUtilities.getWindowAncestor((Component) e.getSource());
 
             try {
                 InputStream is = urlConnection.getInputStream();
-                ProgressMonitorInputStream pmis = new ProgressMonitorInputStream(frame, "Loading", is);
+                ProgressMonitorInputStream pmis = new ProgressMonitorInputStream(b.getTopLevelAncestor(), "Loading", is);
                 monitor = pmis.getProgressMonitor();
                 monitor.setNote(" "); //Need for JLabel#getPreferredSize
                 monitor.setMillisToDecideToPopup(0);
@@ -110,10 +110,17 @@ public final class MainPanel extends JPanel {
     }
 
     private class MonitorTask extends Task {
-        public MonitorTask(ProgressMonitorInputStream pmis, Charset cs, int length) {
+        protected MonitorTask(ProgressMonitorInputStream pmis, Charset cs, int length) {
             super(pmis, cs, length);
         }
         @Override protected void process(List<Chunk> chunks) {
+            if (isCancelled()) {
+                return;
+            }
+            if (!textArea.isDisplayable()) {
+                cancel(true);
+                return;
+            }
             for (Chunk c: chunks) {
                 textArea.append(c.line + "\n");
                 monitor.setNote(c.note);
@@ -163,7 +170,7 @@ public final class MainPanel extends JPanel {
 class Chunk {
     public final String line;
     public final String note;
-    public Chunk(String line, String note) {
+    protected Chunk(String line, String note) {
         this.line = line;
         this.note = note;
     }
@@ -173,7 +180,7 @@ class Task extends SwingWorker<String, Chunk> {
     protected final ProgressMonitorInputStream pmis;
     protected final Charset cs;
     protected final int length;
-    public Task(ProgressMonitorInputStream pmis, Charset cs, int length) {
+    protected Task(ProgressMonitorInputStream pmis, Charset cs, int length) {
         super();
         this.pmis = pmis;
         this.cs = cs;
@@ -181,8 +188,25 @@ class Task extends SwingWorker<String, Chunk> {
     }
     @Override public String doInBackground() {
         String ret = "Done";
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(pmis, cs));
-             Scanner scanner = new Scanner(reader)) {
+//         try (BufferedReader reader = new BufferedReader(new InputStreamReader(pmis, cs))) {
+//             int i = 0;
+//             int size = 0;
+//             String line;
+//             while ((line = reader.readLine()) != null) {
+//                 if (i % 50 == 0) { //Wait
+//                     Thread.sleep(10);
+//                 }
+//                 i++;
+//                 size += line.getBytes(cs).length + 1; //+1: \n
+//                 String note = String.format("%03d%% - %d/%d%n", 100 * size / length, size, length);
+//                 publish(new Chunk(line, note));
+//             }
+//         } catch (InterruptedException | IOException ex) {
+//             System.out.println("Exception");
+//             ret = "Exception";
+//             cancel(true);
+//         }
+        try (Scanner scanner = new Scanner(new BufferedReader(new InputStreamReader(pmis, cs)))) {
             int i = 0;
             int size = 0;
             while (scanner.hasNextLine()) {
@@ -193,20 +217,9 @@ class Task extends SwingWorker<String, Chunk> {
                 String line = scanner.nextLine();
                 size += line.getBytes(cs).length + 1; //+1: \n
                 String note = String.format("%03d%% - %d/%d%n", 100 * size / length, size, length);
-                //System.out.println(note);
                 publish(new Chunk(line, note));
             }
-//             while ((line = reader.readLine()) != null) {
-//                 if (i % 50 == 0) { //Wait
-//                     Thread.sleep(10);
-//                 }
-//                 i++;
-//                 size += line.getBytes(cs).length + 1; //+1: \n
-//                 String note = String.format("%03d%% - %d/%d%n", 100 * size / length, size, length);
-//                 //System.out.println(note);
-//                 publish(new Chunk(line, note));
-//             }
-        } catch (InterruptedException | IOException ex) {
+        } catch (InterruptedException ex) {
             System.out.println("Exception");
             ret = "Exception";
             cancel(true);

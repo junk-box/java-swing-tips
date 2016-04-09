@@ -8,52 +8,62 @@ import java.util.*;
 import javax.swing.*;
 
 public final class MainPanel extends JPanel {
+    private static final float[] DEFAULT_DASH_ARRAY = {1f};
     private final JTextField field = new JTextField("1f, 1f, 5f, 1f");
     private final JLabel label;
     private transient BasicStroke dashedStroke;
 
     private float[] getDashArray() {
-        StringTokenizer st = new StringTokenizer(field.getText(), ",");
-        float[] list = new float[st.countTokens()];
+        String[] slist = field.getText().split(",");
+        if (slist.length == 0) {
+            return DEFAULT_DASH_ARRAY;
+        }
+        float[] list = new float[slist.length];
         int i = 0;
         try {
-            while (st.hasMoreTokens()) {
-                list[i] = Float.valueOf(st.nextToken().trim());
-                i++;
+            for (String s: slist) {
+                String ss = s.trim();
+                if (!ss.isEmpty()) {
+                    list[i++] = Float.parseFloat(ss);
+                }
             }
-        } catch (NumberFormatException nfe) {
-            Toolkit.getDefaultToolkit().beep();
-            JOptionPane.showMessageDialog(label, "Invalid input.\n" + nfe.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (NumberFormatException ex) {
+            EventQueue.invokeLater(() -> {
+                Toolkit.getDefaultToolkit().beep();
+                JOptionPane.showMessageDialog(getRootPane(), "Invalid input.\n" + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            });
+            return DEFAULT_DASH_ARRAY;
         }
-        if (i == 0) {
-            list = new float[] {1f};
-        }
-        return list;
+        return i == 0 ? DEFAULT_DASH_ARRAY : list;
     }
     public MainPanel() {
         super(new BorderLayout());
         JButton button = new JButton(new AbstractAction("Change") {
-            @Override public void actionPerformed(ActionEvent ae) {
+            @Override public void actionPerformed(ActionEvent e) {
                 dashedStroke = null;
                 label.repaint();
             }
         });
         label = new JLabel() {
-            @Override public void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                super.paintComponent(g2);
-                if (dashedStroke == null) {
+            @Override protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                if (Objects.isNull(dashedStroke)) {
                     dashedStroke = new BasicStroke(5f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10f, getDashArray(), 0f);
                 }
+                Insets i = getInsets();
+                int w = getWidth();
+                int h = getHeight() / 2;
+                Graphics2D g2 = (Graphics2D) g.create();
                 g2.setStroke(dashedStroke);
-                g2.drawLine(5, label.getHeight() / 2, label.getWidth() - 10, label.getHeight() / 2);
+                g2.drawLine(i.left, h, w - i.right, h);
                 g2.dispose();
             }
         };
-        label.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        label.setBorder(BorderFactory.createEmptyBorder(0, 15, 0, 15));
 
-        JPanel p = new JPanel(new BorderLayout(2, 2));
-        p.add(field); p.add(button, BorderLayout.EAST);
+        JPanel p = new JPanel(new BorderLayout(5, 5));
+        p.add(field);
+        p.add(button, BorderLayout.EAST);
         p.setBorder(BorderFactory.createTitledBorder("Comma Separated Values"));
 
         add(p, BorderLayout.NORTH);

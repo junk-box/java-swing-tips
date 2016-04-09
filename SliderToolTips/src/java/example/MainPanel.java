@@ -78,25 +78,29 @@ public final class MainPanel extends JPanel {
 }
 
 class WindowsTooltipSliderUI extends WindowsSliderUI {
-    public WindowsTooltipSliderUI(JSlider slider) {
+    protected WindowsTooltipSliderUI(JSlider slider) {
         super(slider);
     }
     @Override protected TrackListener createTrackListener(JSlider slider) {
         return new TrackListener() {
             @Override public void mousePressed(MouseEvent e) {
-                JSlider slider = (JSlider) e.getComponent();
-                switch (slider.getOrientation()) {
-                  case JSlider.VERTICAL:
-                    slider.setValue(valueForYPosition(e.getY()));
-                    break;
-                  case JSlider.HORIZONTAL:
-                    slider.setValue(valueForXPosition(e.getX()));
-                    break;
-                  default:
-                    throw new IllegalArgumentException("orientation must be one of: VERTICAL, HORIZONTAL");
+                if (UIManager.getBoolean("Slider.onlyLeftMouseButtonDrag") && SwingUtilities.isLeftMouseButton(e)) {
+                    JSlider slider = (JSlider) e.getComponent();
+                    switch (slider.getOrientation()) {
+                      case SwingConstants.VERTICAL:
+                        slider.setValue(valueForYPosition(e.getY()));
+                        break;
+                      case SwingConstants.HORIZONTAL:
+                        slider.setValue(valueForXPosition(e.getX()));
+                        break;
+                      default:
+                        throw new IllegalArgumentException("orientation must be one of: VERTICAL, HORIZONTAL");
+                    }
+                    super.mousePressed(e); //isDragging = true;
+                    super.mouseDragged(e);
+                } else {
+                    super.mousePressed(e);
                 }
-                super.mousePressed(e); //isDragging = true;
-                super.mouseDragged(e);
             }
             @Override public boolean shouldScroll(int direction) {
                 return false;
@@ -109,19 +113,23 @@ class MetalTooltipSliderUI extends MetalSliderUI {
     @Override protected TrackListener createTrackListener(JSlider slider) {
         return new TrackListener() {
             @Override public void mousePressed(MouseEvent e) {
-                JSlider slider = (JSlider) e.getComponent();
-                switch (slider.getOrientation()) {
-                  case JSlider.VERTICAL:
-                    slider.setValue(valueForYPosition(e.getY()));
-                    break;
-                  case JSlider.HORIZONTAL:
-                    slider.setValue(valueForXPosition(e.getX()));
-                    break;
-                  default:
-                    throw new IllegalArgumentException("orientation must be one of: VERTICAL, HORIZONTAL");
+                if (UIManager.getBoolean("Slider.onlyLeftMouseButtonDrag") && SwingUtilities.isLeftMouseButton(e)) {
+                    JSlider slider = (JSlider) e.getComponent();
+                    switch (slider.getOrientation()) {
+                      case SwingConstants.VERTICAL:
+                        slider.setValue(valueForYPosition(e.getY()));
+                        break;
+                      case SwingConstants.HORIZONTAL:
+                        slider.setValue(valueForXPosition(e.getX()));
+                        break;
+                      default:
+                        throw new IllegalArgumentException("orientation must be one of: VERTICAL, HORIZONTAL");
+                    }
+                    super.mousePressed(e); //isDragging = true;
+                    super.mouseDragged(e);
+                } else {
+                    super.mousePressed(e);
                 }
-                super.mousePressed(e); //isDragging = true;
-                super.mouseDragged(e);
             }
             @Override public boolean shouldScroll(int direction) {
                 return false;
@@ -136,7 +144,7 @@ class SliderPopupListener extends MouseAdapter {
     private final Dimension size = new Dimension(30, 20);
     private int prevValue = -1;
 
-    public SliderPopupListener() {
+    protected SliderPopupListener() {
         super();
         label.setOpaque(false);
         label.setBackground(UIManager.getColor("ToolTip.background"));
@@ -144,38 +152,38 @@ class SliderPopupListener extends MouseAdapter {
         toolTip.add(label);
         toolTip.setSize(size);
     }
-    protected void updateToolTip(MouseEvent me) {
-        JSlider slider = (JSlider) me.getComponent();
+    protected void updateToolTip(MouseEvent e) {
+        JSlider slider = (JSlider) e.getComponent();
         int intValue = (int) slider.getValue();
         if (prevValue != intValue) {
             label.setText(String.format("%03d", slider.getValue()));
-            Point pt = me.getPoint();
+            Point pt = e.getPoint();
             pt.y = -size.height;
-            SwingUtilities.convertPointToScreen(pt, me.getComponent());
+            SwingUtilities.convertPointToScreen(pt, e.getComponent());
             pt.translate(-size.width / 2, 0);
             toolTip.setLocation(pt);
         }
         prevValue = intValue;
     }
-    @Override public void mouseDragged(MouseEvent me) {
-        updateToolTip(me);
+    @Override public void mouseDragged(MouseEvent e) {
+        updateToolTip(e);
     }
-    @Override public void mousePressed(MouseEvent me) {
-        toolTip.setVisible(true);
-        updateToolTip(me);
+    @Override public void mousePressed(MouseEvent e) {
+        if (UIManager.getBoolean("Slider.onlyLeftMouseButtonDrag") && SwingUtilities.isLeftMouseButton(e)) {
+            toolTip.setVisible(true);
+            updateToolTip(e);
+        }
     }
-    @Override public void mouseReleased(MouseEvent me) {
+    @Override public void mouseReleased(MouseEvent e) {
         toolTip.setVisible(false);
     }
 }
 
 class SliderMouseWheelListener implements MouseWheelListener {
     @Override public void mouseWheelMoved(MouseWheelEvent e) {
-        JSlider source = (JSlider) e.getComponent();
-        int intValue = (int) source.getValue() - e.getWheelRotation();
-        BoundedRangeModel model = source.getModel();
-        if (model.getMaximum() >= intValue && model.getMinimum() <= intValue) {
-            source.setValue(intValue);
-        }
+        JSlider s = (JSlider) e.getComponent();
+        int i = (int) s.getValue() - e.getWheelRotation();
+        BoundedRangeModel m = s.getModel();
+        s.setValue(Math.min(Math.max(i, m.getMinimum()), m.getMaximum()));
     }
 }

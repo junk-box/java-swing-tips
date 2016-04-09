@@ -21,9 +21,11 @@ public final class MainPanel extends JPanel implements ActionListener, Hierarchy
         box.add(relative);
         box.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         add(box);
-        setPreferredSize(panelDim);
         timer = new Timer(10, this);
         addHierarchyListener(this);
+    }
+    @Override public Dimension getPreferredSize() {
+        return panelDim;
     }
     @Override public void hierarchyChanged(HierarchyEvent e) {
         if ((e.getChangeFlags() & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0) {
@@ -34,7 +36,7 @@ public final class MainPanel extends JPanel implements ActionListener, Hierarchy
             }
         }
     }
-    @Override public void paintComponent(Graphics g) {
+    @Override protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         racket.draw(g);
     }
@@ -81,7 +83,7 @@ class Racket implements Serializable {
     private int centerPos;
     private final Dimension parentSize;
 
-    public Racket(Dimension parentSize) {
+    protected Racket(Dimension parentSize) {
         this.parentSize = parentSize;
         centerPos = parentSize.width / 2;
     }

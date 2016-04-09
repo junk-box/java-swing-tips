@@ -8,11 +8,14 @@ import javax.swing.*;
 
 public final class MainPanel extends JPanel {
     private final JCheckBox checkbox = new JCheckBox("setResizable:", true);
-    public MainPanel(final JFrame frame) {
+    public MainPanel() {
         super(new BorderLayout());
         checkbox.addActionListener(new ActionListener() {
             @Override public void actionPerformed(ActionEvent e) {
-                frame.setResizable(checkbox.isSelected());
+                Container c = getTopLevelAncestor();
+                if (c instanceof JFrame) {
+                    ((JFrame) c).setResizable(checkbox.isSelected());
+                }
             }
         });
         JPanel p = new JPanel();
@@ -20,7 +23,7 @@ public final class MainPanel extends JPanel {
         p.setBorder(BorderFactory.createTitledBorder("JFrame#setResizable(boolean)"));
         add(p, BorderLayout.NORTH);
         setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        setPreferredSize(new Dimension(320, 180));
+        setPreferredSize(new Dimension(320, 240));
     }
 
     public static void main(String... args) {
@@ -39,7 +42,7 @@ public final class MainPanel extends JPanel {
         }
         JFrame frame = new JFrame("@title@");
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        frame.getContentPane().add(new MainPanel(frame));
+        frame.getContentPane().add(new MainPanel());
         frame.pack();
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);

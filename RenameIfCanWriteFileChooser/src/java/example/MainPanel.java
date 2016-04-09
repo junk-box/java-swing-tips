@@ -18,7 +18,7 @@ public final class MainPanel extends JPanel {
         final JPanel p = new JPanel(new GridLayout(2, 1, 5, 5));
         p.setBorder(BorderFactory.createTitledBorder("JFileChooser"));
         p.add(new JButton(new AbstractAction("readOnly") {
-            @Override public void actionPerformed(ActionEvent ae) {
+            @Override public void actionPerformed(ActionEvent e) {
                 UIManager.put("FileChooser.readOnly", Boolean.TRUE);
                 JFileChooser fileChooser = new JFileChooser(".");
                 int retvalue = fileChooser.showOpenDialog(p);
@@ -28,7 +28,7 @@ public final class MainPanel extends JPanel {
             }
         }));
         p.add(new JButton(new AbstractAction("Rename only File#canWrite() == true") {
-            @Override public void actionPerformed(ActionEvent ae) {
+            @Override public void actionPerformed(ActionEvent e) {
                 UIManager.put("FileChooser.readOnly", Boolean.FALSE);
                 JFileChooser fileChooser = new JFileChooser(".") {
                     @Override protected void setUI(ComponentUI ui) {
@@ -104,7 +104,7 @@ class WindowsCanWriteFileChooserUI extends WindowsFileChooserUI {
         }
         model2 = new BasicDirectoryModel(getFileChooser()) {
             @Override public boolean renameFile(File oldFile, File newFile) {
-                return oldFile.canWrite() ? super.renameFile(oldFile, newFile) : false;
+                return oldFile.canWrite() && super.renameFile(oldFile, newFile);
             }
         };
     }
@@ -131,7 +131,7 @@ class MetalCanWriteFileChooserUI extends MetalFileChooserUI {
         }
         model2 = new BasicDirectoryModel(getFileChooser()) {
             @Override public boolean renameFile(File oldFile, File newFile) {
-                return oldFile.canWrite() ? super.renameFile(oldFile, newFile) : false;
+                return oldFile.canWrite() && super.renameFile(oldFile, newFile);
             }
         };
     }

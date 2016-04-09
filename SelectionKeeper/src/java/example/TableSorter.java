@@ -154,7 +154,7 @@ public class TableSorter extends AbstractTableModel {
 //         return tableModel;
 //     }
 
-    public void setTableModel(TableModel tableModel) {
+    public final void setTableModel(TableModel tableModel) {
         if (this.tableModel != null) {
             this.tableModel.removeTableModelListener(tableModelListener);
         }
@@ -172,7 +172,7 @@ public class TableSorter extends AbstractTableModel {
 //         return tableHeader;
 //     }
 
-    public void setTableHeader(JTableHeader tableHeader) {
+    public final void setTableHeader(JTableHeader tableHeader) {
         if (this.tableHeader != null) {
             this.tableHeader.removeMouseListener(mouseListener);
             TableCellRenderer defaultRenderer = this.tableHeader.getDefaultRenderer();
@@ -431,11 +431,9 @@ public class TableSorter extends AbstractTableModel {
 //         private List<?> saveSelectedRow(JTable table, int keyColIndex) {
 //             List<Object> list = new ArrayList<>();
 //             int[] ilist = table.getSelectedRows();
-//             if (ilist.length > 0) {
-//                 DefaultTableModel model = (DefaultTableModel) tableModel;
-//                 for (int i = ilist.length - 1; i >= 0; i--) {
-//                     list.add(model.getValueAt(modelIndex(ilist[i]), keyColIndex));
-//                 }
+//             DefaultTableModel model = (DefaultTableModel) tableModel;
+//             for (int i = ilist.length - 1; i >= 0; i--) {
+//                 list.add(model.getValueAt(modelIndex(ilist[i]), keyColIndex));
 //             }
 //             return list;
 //         }
@@ -454,14 +452,14 @@ public class TableSorter extends AbstractTableModel {
 
 class SortableHeaderRenderer implements TableCellRenderer {
     protected final TableCellRenderer tableCellRenderer;
-    public SortableHeaderRenderer(TableCellRenderer tableCellRenderer) {
+    protected SortableHeaderRenderer(TableCellRenderer tableCellRenderer) {
         this.tableCellRenderer = tableCellRenderer;
     }
     @Override public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
         Component c = tableCellRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
         if (c instanceof JLabel) {
             JLabel l = (JLabel) c;
-            l.setHorizontalTextPosition(JLabel.LEFT);
+            l.setHorizontalTextPosition(SwingConstants.LEFT);
             int modelColumn = table.convertColumnIndexToModel(column);
             TableModel model = table.getModel();
             if (model instanceof TableSorter) {
@@ -475,7 +473,7 @@ class SortableHeaderRenderer implements TableCellRenderer {
 
 class ComparableComparator<T extends Comparable<? super T>> implements Comparator<T>, Serializable {
     private static final long serialVersionUID = 1L;
-    public int compare(T c1, T c2) {
+    @Override public int compare(T c1, T c2) {
         return c1.compareTo(c2);
     }
 }
@@ -493,14 +491,14 @@ class Arrow implements Icon, Serializable {
     private final int size;
     private final int priority;
 
-    public Arrow(boolean descending, int size, int priority) {
+    protected Arrow(boolean descending, int size, int priority) {
         this.descending = descending;
         this.size = size;
         this.priority = priority;
     }
 
     @Override public void paintIcon(Component c, Graphics g, int x, int y) {
-        Color color1 = c == null ? Color.GRAY : c.getBackground();
+        Color color1 = Objects.nonNull(c) ? c.getBackground() : Color.GRAY;
         Color color2;
         // In a compound sort, make each succesive triangle 20%
         // smaller than the previous one.
@@ -555,7 +553,7 @@ class Directive implements Serializable {
     private static final long serialVersionUID = 1L;
     public final int column;
     public final int direction;
-    public Directive(int column, int direction) {
+    protected Directive(int column, int direction) {
         this.column = column;
         this.direction = direction;
     }
@@ -564,7 +562,7 @@ class Directive implements Serializable {
 class Row implements Serializable {
     private static final long serialVersionUID = 1L;
     public final int modelIndex;
-    public Row(int index) {
+    protected Row(int index) {
         this.modelIndex = index;
     }
 }

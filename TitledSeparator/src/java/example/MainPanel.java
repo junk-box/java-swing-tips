@@ -4,6 +4,7 @@ package example;
 //@homepage@
 import java.awt.*;
 import java.awt.geom.*;
+import java.util.Objects;
 import javax.swing.*;
 import javax.swing.border.*;
 
@@ -58,10 +59,10 @@ class TitledSeparator extends JLabel {
     private final Color target;
     private final int height;
     private final int titlePosition;
-    public TitledSeparator(String title, int height, int titlePosition) {
+    protected TitledSeparator(String title, int height, int titlePosition) {
         this(title, null, height, titlePosition);
     }
-    public TitledSeparator(String title, Color target, int height, int titlePosition) {
+    protected TitledSeparator(String title, Color target, int height, int titlePosition) {
         super();
         this.title = title;
         this.target = target;
@@ -91,22 +92,23 @@ class TitledSeparator extends JLabel {
         @Override public void paintIcon(Component c, Graphics g, int x, int y) {
             int w = c.getWidth();
             Color color = getBackground();
-            if (w != width || painter1 == null || painter2 == null) {
+            if (w != width || Objects.isNull(painter1) || Objects.isNull(painter2)) {
                 width = w;
-                Point2D start = new Point2D.Float(0f, 0f);
-                Point2D end   = new Point2D.Float((float) width, 0f);
+                Point2D start = new Point2D.Float();
+                Point2D end   = new Point2D.Float(width, 0);
                 float[] dist  = {0f, 1f};
-                color = color == null ? UIManager.getColor("Panel.background") : color;
-                Color tc = target == null ? color : target;
+                color = Objects.nonNull(color) ? color : UIManager.getColor("Panel.background");
+                Color tc = Objects.nonNull(target) ? target : color;
                 painter1 = new LinearGradientPaint(start, end, dist, new Color[] {tc.darker(),   color});
                 painter2 = new LinearGradientPaint(start, end, dist, new Color[] {tc.brighter(), color});
             }
             int h = getIconHeight() / 2;
             Graphics2D g2 = (Graphics2D) g.create();
+            g2.translate(x, y);
             g2.setPaint(painter1);
-            g2.fillRect(x, y, width, getIconHeight());
+            g2.fillRect(0, 0, width, getIconHeight());
             g2.setPaint(painter2);
-            g2.fillRect(x, y + h, width, getIconHeight() - h);
+            g2.fillRect(0, h, width, getIconHeight() - h);
             g2.dispose();
         }
         @Override public int getIconWidth() {

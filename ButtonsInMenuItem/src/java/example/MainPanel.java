@@ -54,18 +54,13 @@ public final class MainPanel extends JPanel {
 
         GridBagConstraints c = new GridBagConstraints();
         item.setLayout(new GridBagLayout());
-        c.gridheight = 1;
-        c.gridwidth  = 1;
-        c.gridy = 0;
-        c.gridx = 0;
-
+        c.anchor = GridBagConstraints.LINE_END;
+        //c.gridx = GridBagConstraints.RELATIVE;
         c.weightx = 1d;
+
         c.fill = GridBagConstraints.HORIZONTAL;
         item.add(Box.createHorizontalGlue(), c);
-        c.gridx = 1;
         c.fill = GridBagConstraints.NONE;
-        c.weightx = 0d;
-        c.anchor = GridBagConstraints.EAST;
         item.add(edit, c);
 
         return item;
@@ -87,10 +82,10 @@ public final class MainPanel extends JPanel {
         return new JLayer<JPanel>(p, new EditMenuLayerUI(list.get(size - 1)));
     }
     private static AbstractButton makeButton(String title, Action action) {
-        JButton b = new JButton(action);
+        AbstractButton b = new JButton(action);
         b.addActionListener(new ActionListener() {
             @Override public void actionPerformed(ActionEvent e) {
-                JButton b = (JButton) e.getSource();
+                AbstractButton b = (AbstractButton) e.getSource();
                 Container c = SwingUtilities.getAncestorOfClass(JPopupMenu.class, b);
                 if (c instanceof JPopupMenu) {
                     ((JPopupMenu) c).setVisible(false);
@@ -98,15 +93,14 @@ public final class MainPanel extends JPanel {
             }
         });
         b.setText(title);
-        b.setVerticalAlignment(SwingConstants.CENTER);
-        b.setVerticalTextPosition(SwingConstants.CENTER);
-        b.setHorizontalAlignment(SwingConstants.CENTER);
+        //b.setVerticalAlignment(SwingConstants.CENTER);
+        //b.setVerticalTextPosition(SwingConstants.CENTER);
+        //b.setHorizontalAlignment(SwingConstants.CENTER);
         b.setHorizontalTextPosition(SwingConstants.CENTER);
         b.setBorder(BorderFactory.createEmptyBorder());
         b.setContentAreaFilled(false);
         b.setFocusPainted(false);
         b.setOpaque(false);
-        b.setBorder(BorderFactory.createEmptyBorder());
         return b;
     }
 
@@ -134,21 +128,21 @@ public final class MainPanel extends JPanel {
     }
 }
 
-//http://terai.xrea.jp/Swing/ToggleButtonBar.html
+//http://ateraimemo.com/Swing/ToggleButtonBar.html
 class ToggleButtonBarCellIcon implements Icon {
     @Override public void paintIcon(Component c, Graphics g, int x, int y) {
         Container parent = c.getParent();
-        if (parent == null) {
+        if (Objects.isNull(parent)) {
             return;
         }
+        int r = 8;
+        int w = c.getWidth();
+        int h = c.getHeight() - 1;
 
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        int r = 4;
-        int w = c.getWidth();
-        int h = c.getHeight() - 1;
-        Path2D.Float p = new Path2D.Float();
 
+        Path2D p = new Path2D.Double();
         if (c == parent.getComponent(0)) {
             //:first-child
             p.moveTo(x, y + r);
@@ -174,7 +168,8 @@ class ToggleButtonBarCellIcon implements Icon {
         }
         p.closePath();
         Area area = new Area(p);
-        Color color = new Color(0, true);
+
+        Color color = new Color(0x0, true);
         Color borderColor = Color.GRAY.brighter();
         if (c instanceof AbstractButton) {
             ButtonModel m = ((AbstractButton) c).getModel();
@@ -201,13 +196,13 @@ class ToggleButtonBarCellIcon implements Icon {
 class EditMenuLayerUI extends LayerUI<JPanel> {
     private final AbstractButton lastButton;
     private Shape shape;
-    public EditMenuLayerUI(AbstractButton button) {
+    protected EditMenuLayerUI(AbstractButton button) {
         super();
         this.lastButton = button;
     }
     @Override public void paint(Graphics g, JComponent c) {
         super.paint(g, c);
-        if (shape != null) {
+        if (Objects.nonNull(shape)) {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setPaint(Color.GRAY);
             g2.draw(shape);

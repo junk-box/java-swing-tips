@@ -3,6 +3,7 @@ package example;
 // vim:set fileencoding=utf-8:
 //@homepage@
 import java.awt.*;
+import java.util.Objects;
 import javax.swing.*;
 import javax.swing.text.*;
 
@@ -26,7 +27,7 @@ public final class MainPanel extends JPanel {
             ble.printStackTrace();
         }
         add(new JScrollPane(textArea));
-        setPreferredSize(new Dimension(320, 200));
+        setPreferredSize(new Dimension(320, 240));
     }
     public static void main(String... args) {
         EventQueue.invokeLater(new Runnable() {
@@ -52,9 +53,7 @@ public final class MainPanel extends JPanel {
 }
 class NonEditableLineDocumentFilter extends DocumentFilter {
     @Override public void insertString(DocumentFilter.FilterBypass fb, int offset, String string, AttributeSet attr) throws BadLocationException {
-        if (string == null) {
-            return;
-        } else {
+        if (Objects.nonNull(string)) {
             replace(fb, offset, 0, string, attr);
         }
     }

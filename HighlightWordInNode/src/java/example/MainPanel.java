@@ -48,7 +48,7 @@ public final class MainPanel extends JPanel {
     }
     private static void searchTree(JTree tree, TreePath path, String q) {
         TreeNode node = (TreeNode) path.getLastPathComponent();
-        if (node == null) {
+        if (Objects.isNull(node)) {
             return;
         } else if (node.toString().startsWith(q)) {
             tree.expandPath(path.getParentPath());
@@ -100,24 +100,24 @@ class HighlightTreeCellRenderer extends JTextField implements TreeCellRenderer {
     private final transient Highlighter.HighlightPainter highlightPainter = new DefaultHighlighter.DefaultHighlightPainter(Color.YELLOW);
     public String q;
 
-    public HighlightTreeCellRenderer() {
-        super();
+    @Override public void updateUI() {
+        super.updateUI();
         setOpaque(true);
         setBorder(BorderFactory.createEmptyBorder());
         setForeground(Color.BLACK);
         setBackground(Color.WHITE);
         setEditable(false);
     }
-    @Override public Component getTreeCellRendererComponent(JTree tree, Object value, boolean isSelected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+    @Override public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
         String txt = Objects.toString(value, "");
         getHighlighter().removeAllHighlights();
         setText(txt);
-        setBackground(isSelected ? BACKGROUND_SELECTION_COLOR : Color.WHITE);
-        if (q != null && !q.isEmpty() && txt.startsWith(q)) {
+        setBackground(selected ? BACKGROUND_SELECTION_COLOR : Color.WHITE);
+        if (Objects.nonNull(q) && !q.isEmpty() && txt.startsWith(q)) {
             try {
                 getHighlighter().addHighlight(0, q.length(), highlightPainter);
-            } catch (BadLocationException e) {
-                e.printStackTrace();
+            } catch (BadLocationException ex) {
+                ex.printStackTrace();
             }
         }
         return this;

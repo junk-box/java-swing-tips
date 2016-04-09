@@ -14,7 +14,7 @@ public final class MainPanel extends JPanel {
         JPanel p1 = new JPanel();
         p1.setOpaque(false);
         JPanel p2 = new JPanel() {
-            @Override public void paintComponent(Graphics g) {
+            @Override protected void paintComponent(Graphics g) {
                 //super.paintComponent(g);
                 g.setColor(new Color(100, 50, 50, 100));
                 g.fillRect(0, 0, getWidth(), getHeight());
@@ -34,35 +34,31 @@ public final class MainPanel extends JPanel {
 //                 g.fillRoundRect(0, 0, w - 1, h - 1, 15, 15);
 //             }
 //         });
-        createFrame(p1, 0);
-        createFrame(p2, 1);
+        createFrame(initPanel(p1), 0);
+        createFrame(initPanel(p2), 1);
         add(desktop);
         setPreferredSize(new Dimension(320, 240));
     }
 //     private final UIDefaults d = new UIDefaults();
 
+    private static JPanel initPanel(JPanel p) {
+        p.add(new JLabel("label"));
+        p.add(new JButton("button"));
+        return p;
+    }
+
     protected JInternalFrame createFrame(JPanel panel, int idx) {
         JInternalFrame frame = new MyInternalFrame();
 //         frame.putClientProperty("Nimbus.Overrides", d);
 //         //frame.putClientProperty("Nimbus.Overrides.InheritDefaults", false);
-        if (panel != null) {
-            frame.setContentPane(panel);
-            panel.add(new JLabel("label"));
-            panel.add(new JButton("button"));
-            frame.getRootPane().setOpaque(false);
-        }
-        desktop.add(frame);
+        frame.setContentPane(panel);
+        frame.getRootPane().setOpaque(false);
         frame.setOpaque(false);
         frame.setVisible(true);
         frame.setLocation(10 + 60 * idx, 10 + 40 * idx);
+        desktop.add(frame);
         desktop.getDesktopManager().activateFrame(frame);
         return frame;
-    }
-    static class MyInternalFrame extends JInternalFrame {
-        public MyInternalFrame() {
-            super("title", true, true, true, true);
-            setSize(160, 100);
-        }
     }
     public static void main(String... args) {
         EventQueue.invokeLater(new Runnable() {
@@ -94,9 +90,17 @@ public final class MainPanel extends JPanel {
         frame.setVisible(true);
     }
 }
+
+class MyInternalFrame extends JInternalFrame {
+    protected MyInternalFrame() {
+        super("title", true, true, true, true);
+        setSize(160, 100);
+    }
+}
+
 class MySynthStyleFactory extends SynthStyleFactory {
     private final SynthStyleFactory wrappedFactory;
-    public MySynthStyleFactory(SynthStyleFactory factory) {
+    protected MySynthStyleFactory(SynthStyleFactory factory) {
         super();
         this.wrappedFactory = factory;
     }
@@ -104,14 +108,15 @@ class MySynthStyleFactory extends SynthStyleFactory {
         SynthStyle s = wrappedFactory.getStyle(c, id);
         //if (id == Region.INTERNAL_FRAME_TITLE_PANE || id == Region.INTERNAL_FRAME) {
         if (id == Region.INTERNAL_FRAME) {
-            s = new TranslucentSynthSytle(s);
+            s = new TranslucentSynthStyle(s);
         }
         return s;
     }
 }
-class TranslucentSynthSytle extends SynthStyle {
+
+class TranslucentSynthStyle extends SynthStyle {
     private final SynthStyle style;
-    public TranslucentSynthSytle(SynthStyle s) {
+    protected TranslucentSynthStyle(SynthStyle s) {
         super();
         style = s;
     }
@@ -141,8 +146,7 @@ class TranslucentSynthSytle extends SynthStyle {
     }
     @Override public SynthPainter getPainter(final SynthContext context) {
         return new SynthPainter() {
-            @Override public void paintInternalFrameBackground(SynthContext context, Graphics g,
-                                                               int x, int y, int w, int h) {
+            @Override public void paintInternalFrameBackground(SynthContext context, Graphics g, int x, int y, int w, int h) {
                 g.setColor(new Color(100, 200, 100, 100));
                 g.fillRoundRect(x, y, w - 1, h - 1, 15, 15);
             }

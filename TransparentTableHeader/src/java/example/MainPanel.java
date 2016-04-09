@@ -6,7 +6,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.*;
 import java.io.IOException;
-import java.net.URL;
 import java.util.Objects;
 import javax.imageio.*;
 import javax.swing.*;
@@ -14,7 +13,7 @@ import javax.swing.border.*;
 import javax.swing.table.*;
 
 public final class MainPanel extends JPanel {
-    private static final TexturePaint TEXTURE = makeImageTexture(MainPanel.class.getResource("unkaku_w.png"));
+    private static final TexturePaint TEXTURE = makeImageTexture();
     private final String[] columnNames = {"String", "Integer", "Boolean"};
     private final Object[][] data = {
         {"aaa", 12, true}, {"bbb", 5, false},
@@ -36,6 +35,11 @@ public final class MainPanel extends JPanel {
             }
             return c;
         }
+        @Override public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
+            Component c = super.prepareRenderer(renderer, row, column);
+            c.setForeground(Color.BLACK);
+            return c;
+        }
     };
 
     public MainPanel() {
@@ -54,7 +58,7 @@ public final class MainPanel extends JPanel {
         table.setSelectionBackground(new Color(0, 0, 100, 50));
 
         JCheckBox checkBox = new JCheckBox() {
-            @Override public void paintComponent(Graphics g) {
+            @Override protected void paintComponent(Graphics g) {
                 g.setColor(new Color(0, 0, 100, 50));
                 g.fillRect(0, 0, getWidth(), getHeight());
                 super.paintComponent(g);
@@ -75,8 +79,8 @@ public final class MainPanel extends JPanel {
         table.setDefaultRenderer(Boolean.class, new TranslucentBooleanRenderer());
 
         JScrollPane scroll = new JScrollPane(table) {
-            @Override public void paintComponent(Graphics g) {
-                if (TEXTURE != null) {
+            @Override protected void paintComponent(Graphics g) {
+                if (Objects.nonNull(TEXTURE)) {
                     Graphics2D g2 = (Graphics2D) g.create();
                     g2.setPaint(TEXTURE);
                     g2.fillRect(0, 0, getWidth(), getHeight());
@@ -86,7 +90,7 @@ public final class MainPanel extends JPanel {
             }
         };
 
-        final Color alphaZero = new Color(0, true);
+        final Color alphaZero = new Color(0x0, true);
         table.setOpaque(false);
         table.setBackground(alphaZero);
         //table.setGridColor(alphaZero);
@@ -114,15 +118,14 @@ public final class MainPanel extends JPanel {
         setPreferredSize(new Dimension(320, 240));
     }
 
-    private static TexturePaint makeImageTexture(URL url) {
-        BufferedImage bi = null;
+    private static TexturePaint makeImageTexture() {
         try {
-            bi = ImageIO.read(url);
-        } catch (IOException ioe) {
-            ioe.printStackTrace();
-            throw new IllegalArgumentException(ioe);
+            BufferedImage bi = ImageIO.read(MainPanel.class.getResource("unkaku_w.png"));
+            return new TexturePaint(bi, new Rectangle(bi.getWidth(), bi.getHeight()));
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            return null;
         }
-        return new TexturePaint(bi, new Rectangle(bi.getWidth(), bi.getHeight()));
     }
 
     public static void main(String... args) {
@@ -149,12 +152,13 @@ public final class MainPanel extends JPanel {
 }
 
 class TransparentHeader extends JLabel implements TableCellRenderer {
-    private final Border b = BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.BLACK),
-                                                                BorderFactory.createEmptyBorder(2, 2, 1, 2));
-    private final Color alphaZero = new Color(0, true);
+    private final Border b = BorderFactory.createCompoundBorder(
+        BorderFactory.createMatteBorder(0, 0, 1, 0, Color.BLACK),
+        BorderFactory.createEmptyBorder(2, 2, 1, 2));
+    private final Color alphaZero = new Color(0x0, true);
     @Override public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
         this.setText(Objects.toString(value, ""));
-        this.setHorizontalAlignment(JLabel.CENTER);
+        this.setHorizontalAlignment(SwingConstants.CENTER);
         this.setOpaque(false);
         this.setBackground(alphaZero);
         this.setForeground(Color.BLACK);
@@ -165,13 +169,13 @@ class TransparentHeader extends JLabel implements TableCellRenderer {
 
 class TranslucentBooleanRenderer extends JCheckBox implements TableCellRenderer {
     private static final Color SELECTION_BACKGROUND = new Color(0, 0, 100, 50);
-    private static final Border NO_FOCUS_BORDER = new EmptyBorder(1, 1, 1, 1);
-    public TranslucentBooleanRenderer() {
-        super();
-        setHorizontalAlignment(JLabel.CENTER);
+    @Override public void updateUI() {
+        super.updateUI();
         setBorderPainted(true);
+        setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
     }
     @Override public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+        setHorizontalAlignment(SwingConstants.CENTER);
         if (isSelected) {
             //setOpaque(true);
             setOpaque(false);
@@ -183,12 +187,7 @@ class TranslucentBooleanRenderer extends JCheckBox implements TableCellRenderer 
             setForeground(table.getForeground());
             setBackground(table.getBackground());
         }
-        setSelected(value != null && ((Boolean) value).booleanValue());
-        if (hasFocus) {
-            setBorder(UIManager.getBorder("Table.focusCellHighlightBorder"));
-        } else {
-            setBorder(NO_FOCUS_BORDER);
-        }
+        setSelected(Objects.equals(value, Boolean.TRUE));
         return this;
     }
     @Override protected void paintComponent(Graphics g) {
@@ -201,12 +200,14 @@ class TranslucentBooleanRenderer extends JCheckBox implements TableCellRenderer 
     //Overridden for performance reasons. ---->
     @Override public boolean isOpaque() {
         Color back = getBackground();
-        Component p = getParent();
-        if (p != null) {
-            p = p.getParent();
-        } // p should now be the JTable.
-        boolean colorMatch = back != null && p != null && back.equals(p.getBackground()) && p.isOpaque();
-        return !colorMatch && super.isOpaque();
+        Object o = SwingUtilities.getAncestorOfClass(JTable.class, this);
+        if (o instanceof JTable) {
+            JTable table = (JTable) o;
+            boolean colorMatch = Objects.nonNull(back) && back.equals(table.getBackground()) && table.isOpaque();
+            return !colorMatch && super.isOpaque();
+        } else {
+            return super.isOpaque();
+        }
     }
     @Override protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
         //System.out.println(propertyName);

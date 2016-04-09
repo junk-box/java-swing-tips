@@ -38,21 +38,18 @@ public final class MainPanel extends JPanel {
 }
 
 class MarqueePanel extends JComponent implements ActionListener {
-    public final Timer animator;
+    private final Timer animator = new Timer(10, this);
     private final GlyphVector gv;
     private final LineMetrics lm;
     private final float xheight;
     private float xx;
     private float baseline;
 
-    public MarqueePanel() {
+    protected MarqueePanel() {
         super();
-        animator = new Timer(10, this);
-        addHierarchyListener(new HierarchyListener() {
-            @Override public void hierarchyChanged(HierarchyEvent e) {
-                if ((e.getChangeFlags() & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0 && animator != null && !e.getComponent().isDisplayable()) {
-                    animator.stop();
-                }
+        addHierarchyListener(e -> {
+            if ((e.getChangeFlags() & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0 && !e.getComponent().isDisplayable()) {
+                animator.stop();
             }
         });
 
@@ -67,30 +64,30 @@ class MarqueePanel extends JComponent implements ActionListener {
         xheight = (float) xgm.getBounds2D().getHeight();
         animator.start();
     }
-    @Override public void paintComponent(Graphics g) {
+    @Override protected void paintComponent(Graphics g) {
         Graphics2D g2 = (Graphics2D) g.create();
         //g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         //g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         int w = getWidth();
 
         g2.setPaint(Color.RED);
-        g2.draw(new Line2D.Float(0, baseline, w, baseline));
+        g2.draw(new Line2D.Double(0, baseline, w, baseline));
 
         g2.setPaint(Color.GREEN);
         float ascent = baseline - lm.getAscent();
-        g2.draw(new Line2D.Float(0, ascent, w, ascent));
+        g2.draw(new Line2D.Double(0, ascent, w, ascent));
 
         g2.setPaint(Color.BLUE);
         float descent = baseline + lm.getDescent();
-        g2.draw(new Line2D.Float(0, descent, w, descent));
+        g2.draw(new Line2D.Double(0, descent, w, descent));
 
         g2.setPaint(Color.ORANGE);
         float leading = baseline + lm.getDescent() + lm.getLeading();
-        g2.draw(new Line2D.Float(0, leading, w, leading));
+        g2.draw(new Line2D.Double(0, leading, w, leading));
 
         g2.setPaint(Color.CYAN);
         float xh = baseline - xheight;
-        g2.draw(new Line2D.Float(0, xh, w, xh));
+        g2.draw(new Line2D.Double(0, xh, w, xh));
 
         g2.setPaint(Color.BLACK);
         g2.drawGlyphVector(gv, w - xx, baseline);

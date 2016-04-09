@@ -6,11 +6,15 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.*;
 import java.io.IOException;
+import java.util.Objects;
 import javax.imageio.*;
 import javax.swing.*;
 
 public final class MainPanel extends JPanel {
+    private final transient TexturePaint imageTexture   = makeImageTexture();
+    private final transient TexturePaint checkerTexture = makeCheckerTexture();
     private transient TexturePaint texture;
+
     public MainPanel() {
         super();
         setBackground(new Color(.5f, .8f, .5f, .5f));
@@ -24,44 +28,40 @@ public final class MainPanel extends JPanel {
 //             // XXX: JDK 1.7.0 Translucency JFrame + JComboBox bug???
 //             // http://www.oracle.com/technetwork/java/javase/2col/7u6-bugfixes-1733378.html
 //             // Bug ID: 7156657 Version 7 doesn't support translucent popup menus against a translucent window
-//             // http://bugs.sun.com/view_bug.do?bug_id=7156657
+//             // http://bugs.java.com/view_bug.do?bug_id=7156657
 //             combo.addPopupMenuListener(new TranslucencyFrameComboBoxPopupMenuListener());
 //         }
-        combo.addItemListener(new ItemListener() {
-            private final TexturePaint imageTexture   = makeImageTexture();
-            private final TexturePaint checkerTexture = makeCheckerTexture();
-            @Override public void itemStateChanged(ItemEvent e) {
-                if (e.getStateChange() == ItemEvent.SELECTED) {
-                    //JComboBox cbox = (JComboBox) e.getSource();
-                    //Object o = cbox.getSelectedItem();
-                    Object o = e.getItem();
-                    if ("ImageTexturePaint".equals(o)) {
-                        texture = imageTexture;
-                        setOpaque(false);
-                    } else if ("CheckerTexturePaint".equals(o)) {
-                        texture = checkerTexture;
-                        setOpaque(false);
-                    } else {
-                        texture = null;
-                        setOpaque(true);
-                    }
-                    getRootPane().getContentPane().repaint();
-//                     Window w = SwingUtilities.getWindowAncestor(MainPanel.this);
-//                     if (w instanceof JFrame) { //XXX: JDK 1.7.0 ???
-//                         //((JFrame) w).getRootPane().repaint();
-//                         ((JFrame) w).getContentPane().repaint();
-//                     } else {
-//                         revalidate();
-//                         repaint();
-//                     }
+        combo.addItemListener(e -> {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                //JComboBox cbox = (JComboBox) e.getSource();
+                //Object o = cbox.getSelectedItem();
+                Object o = e.getItem();
+                if ("ImageTexturePaint".equals(o)) {
+                    texture = imageTexture;
+                    setOpaque(false);
+                } else if ("CheckerTexturePaint".equals(o)) {
+                    texture = checkerTexture;
+                    setOpaque(false);
+                } else {
+                    texture = null;
+                    setOpaque(true);
                 }
+                getRootPane().getContentPane().repaint();
+//                 Window w = SwingUtilities.getWindowAncestor(getRootPane());
+//                 if (w instanceof JFrame) { //XXX: JDK 1.7.0 ???
+//                     //((JFrame) w).getRootPane().repaint();
+//                     ((JFrame) w).getContentPane().repaint();
+//                 } else {
+//                     revalidate();
+//                     repaint();
+//                 }
             }
         });
         add(combo);
         setPreferredSize(new Dimension(320, 240));
     }
-    @Override public void paintComponent(Graphics g) {
-        if (texture != null) {
+    @Override protected void paintComponent(Graphics g) {
+        if (Objects.nonNull(texture)) {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setPaint(texture);
             g2.fillRect(0, 0, getWidth(), getHeight());
@@ -94,7 +94,7 @@ public final class MainPanel extends JPanel {
             }
         }
         g2.dispose();
-        return new TexturePaint(bi, new Rectangle(0, 0, sz, sz));
+        return new TexturePaint(bi, new Rectangle(sz, sz));
     }
     public static void main(String... args) {
         EventQueue.invokeLater(new Runnable() {
@@ -106,17 +106,18 @@ public final class MainPanel extends JPanel {
     public static void createAndShowGUI() {
 //         try {
 //             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-//         } catch (Exception e) {
-//             e.printStackTrace();
+//         } catch (ClassNotFoundException | InstantiationException
+//                | IllegalAccessException | UnsupportedLookAndFeelException ex) {
+//             ex.printStackTrace();
 //         }
         JFrame.setDefaultLookAndFeelDecorated(true);
         JFrame frame = new JFrame("@title@");
 //         frame.setUndecorated(true);
 
         //if (System.getProperty("java.version").startsWith("1.6.0")) {
-        //    com.sun.awt.AWTUtilities.setWindowOpaque(frame, false);
+        //    AWTUtilities.setWindowOpaque(frame, false);
         //} else {
-            frame.setBackground(new Color(0, 0, 0, 0)); //1.7.0
+            frame.setBackground(new Color(0x0, true)); //1.7.0
         //}
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.getContentPane().add(new MainPanel());
@@ -127,7 +128,7 @@ public final class MainPanel extends JPanel {
 }
 // // http://www.oracle.com/technetwork/java/javase/2col/7u6-bugfixes-1733378.html
 // // Bug ID: 7156657 Version 7 doesn't support translucent popup menus against a translucent window
-// // http://bugs.sun.com/view_bug.do?bug_id=7156657
+// // http://bugs.java.com/view_bug.do?bug_id=7156657
 // class TranslucencyFrameComboBoxPopupMenuListener implements PopupMenuListener {
 //     @Override public void popupMenuWillBecomeVisible(final PopupMenuEvent e) {
 //         EventQueue.invokeLater(new Runnable() {

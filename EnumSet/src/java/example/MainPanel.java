@@ -55,8 +55,7 @@ public final class MainPanel extends JPanel {
                 StringBuilder nbuf = new StringBuilder(3);
                 StringBuilder buf = new StringBuilder(9);
                 for (int i = 0; i < model.getRowCount(); i++) {
-                    @SuppressWarnings("unchecked")
-                    EnumSet<Permissions> v = (EnumSet<Permissions>) model.getValueAt(i, 1);
+                    EnumSet<?> v = (EnumSet<?>) model.getValueAt(i, 1);
                     int flg = 0;
                     if (v.contains(Permissions.READ)) {
                         flg |= map.get(Permissions.READ);
@@ -111,13 +110,12 @@ public final class MainPanel extends JPanel {
 enum Permissions { EXECUTE, WRITE, READ; }
 
 class CheckBoxesPanel extends JPanel {
-    private static final String OSNAME = System.getProperty("os.name");
     protected final String[] title = {"r", "w", "x"};
     public JCheckBox[] buttons;
-    public CheckBoxesPanel() {
+    protected CheckBoxesPanel() {
         super();
         setOpaque(false);
-        setBackground(new Color(0, 0, 0, 0));
+        setBackground(new Color(0x0, true));
         setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
         initButtons();
     }
@@ -128,19 +126,16 @@ class CheckBoxesPanel extends JPanel {
             b.setOpaque(false);
             b.setFocusable(false);
             b.setRolloverEnabled(false);
-            b.setBackground(new Color(0, 0, 0, 0));
+            b.setBackground(new Color(0x0, true));
             buttons[i] = b;
             add(b);
             add(Box.createHorizontalStrut(5));
         }
     }
     protected void updateButtons(Object v) {
-        if ("Windows 7".equals(OSNAME)) { //Windows aero?
-            removeAll();
-            initButtons();
-        }
-        @SuppressWarnings("unchecked")
-        EnumSet<Permissions> f = (v == null) ? EnumSet.noneOf(Permissions.class) : (EnumSet<Permissions>) v;
+        removeAll();
+        initButtons();
+        EnumSet<?> f = v instanceof EnumSet ? (EnumSet<?>) v : EnumSet.noneOf(Permissions.class);
         buttons[0].setSelected(f.contains(Permissions.READ));
         buttons[1].setSelected(f.contains(Permissions.WRITE));
         buttons[2].setSelected(f.contains(Permissions.EXECUTE));
@@ -148,8 +143,8 @@ class CheckBoxesPanel extends JPanel {
 }
 
 class CheckBoxesRenderer extends CheckBoxesPanel implements TableCellRenderer {
-    public CheckBoxesRenderer() {
-        super();
+    @Override public void updateUI() {
+        super.updateUI();
         setName("Table.cellRenderer");
     }
     @Override public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -162,7 +157,7 @@ class CheckBoxesRenderer extends CheckBoxesPanel implements TableCellRenderer {
 class CheckBoxesEditor extends CheckBoxesPanel implements TableCellEditor {
     protected transient ChangeEvent changeEvent;
 
-    public CheckBoxesEditor() {
+    protected CheckBoxesEditor() {
         super();
         ActionMap am = getActionMap();
         for (int i = 0; i < buttons.length; i++) {
@@ -236,7 +231,7 @@ class CheckBoxesEditor extends CheckBoxesPanel implements TableCellEditor {
         for (int i = listeners.length - 2; i >= 0; i -= 2) {
             if (listeners[i] == CellEditorListener.class) {
                 // Lazily create the event:
-                if (changeEvent == null) {
+                if (Objects.isNull(changeEvent)) {
                     changeEvent = new ChangeEvent(this);
                 }
                 ((CellEditorListener) listeners[i + 1]).editingStopped(changeEvent);
@@ -251,7 +246,7 @@ class CheckBoxesEditor extends CheckBoxesPanel implements TableCellEditor {
         for (int i = listeners.length - 2; i >= 0; i -= 2) {
             if (listeners[i] == CellEditorListener.class) {
                 // Lazily create the event:
-                if (changeEvent == null) {
+                if (Objects.isNull(changeEvent)) {
                     changeEvent = new ChangeEvent(this);
                 }
                 ((CellEditorListener) listeners[i + 1]).editingCanceled(changeEvent);

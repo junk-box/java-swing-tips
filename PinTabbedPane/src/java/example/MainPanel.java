@@ -4,7 +4,7 @@ package example;
 //@homepage@
 import java.awt.*;
 import java.awt.event.*;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
 import javax.swing.*;
 
@@ -22,8 +22,8 @@ public final class MainPanel extends JPanel {
     public MainPanel() {
         super(new BorderLayout());
 
-//         if (tabbedPane.getUI() instanceof com.sun.java.swing.plaf.windows.WindowsTabbedPaneUI) {
-//             tabbedPane.setUI(new com.sun.java.swing.plaf.windows.WindowsTabbedPaneUI() {
+//         if (tabbedPane.getUI() instanceof WindowsTabbedPaneUI) {
+//             tabbedPane.setUI(new WindowsTabbedPaneUI() {
 //                 @Override protected int calculateTabWidth(int tabPlacement, int tabIndex, FontMetrics metrics) {
 //                     int defaultWidth = super.calculateTabWidth(tabPlacement, tabIndex, metrics);
 //                     int selectedIndex  = tabPane.getSelectedIndex();
@@ -111,8 +111,8 @@ class TabTitleRenamePopupMenu extends JPopupMenu {
             if (dir) {
                 for (i = 0; i < idx; i++) {
                     String s = t.getTitleAt(i);
-                    if (s == null || s.isEmpty()) {
-                        continue;
+                    if (isEmpty(s)) {
+                       continue;
                     } else {
                         break;
                     }
@@ -120,7 +120,7 @@ class TabTitleRenamePopupMenu extends JPopupMenu {
             } else {
                 for (i = t.getTabCount() - 1; i > idx; i--) {
                     String s = t.getTitleAt(i);
-                    if (s == null || s.isEmpty()) {
+                    if (isEmpty(s)) {
                         break;
                     } else {
                         continue;
@@ -131,7 +131,7 @@ class TabTitleRenamePopupMenu extends JPopupMenu {
         }
     });
 //     private final Action newTabAction = new AbstractAction("new tab") {
-//         @Override public void actionPerformed(ActionEvent evt) {
+//         @Override public void actionPerformed(ActionEvent e) {
 //             JTabbedPane t = (JTabbedPane) getInvoker();
 //             int count = t.getTabCount();
 //             String title = "Tab " + count;
@@ -140,18 +140,18 @@ class TabTitleRenamePopupMenu extends JPopupMenu {
 //         }
 //     };
     private final Action closeAllAction = new AbstractAction("close all") {
-        @Override public void actionPerformed(ActionEvent evt) {
+        @Override public void actionPerformed(ActionEvent e) {
             JTabbedPane t = (JTabbedPane) getInvoker();
             //t.removeAll();
             for (int i = t.getTabCount() - 1; i >= 0; i--) {
                 String s = t.getTitleAt(i);
-                if (s != null && s.length() > 0) {
+                if (!isEmpty(s)) {
                     t.removeTabAt(i);
                 }
             }
         }
     };
-    public TabTitleRenamePopupMenu() {
+    protected TabTitleRenamePopupMenu() {
         super();
         add(pinTabMenuItem);
         addSeparator();
@@ -161,11 +161,14 @@ class TabTitleRenamePopupMenu extends JPopupMenu {
         int i = t.indexAtLocation(x, y);
         if (i >= 0 && i == t.getSelectedIndex()) {
             String s = t.getTitleAt(i);
-            if (s == null || s.length() == 0) {
+            if (isEmpty(s)) {
                 return true;
             }
         }
         return false;
+    }
+    private static boolean isEmpty(String s) {
+        return Objects.isNull(s) || s.isEmpty();
     }
     @Override public void show(Component c, int x, int y) {
         if (c instanceof JTabbedPane) {

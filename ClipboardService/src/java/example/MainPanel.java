@@ -5,6 +5,7 @@ package example;
 import java.awt.*;
 import java.awt.datatransfer.*;
 import java.awt.event.*;
+import java.util.Objects;
 import javax.jnlp.*;
 import javax.swing.*;
 import javax.swing.text.*;
@@ -21,25 +22,27 @@ public final class MainPanel extends JPanel {
         }
         JTextArea textArea = new JTextArea() {
             @Override public void copy() {
-                if (cs != null) {
+                if (Objects.nonNull(cs)) {
                     cs.setContents(new StringSelection(getSelectedText()));
+                } else {
+                    super.copy();
                 }
-                super.copy();
             }
             @Override public void cut() {
-                if (cs != null) {
+                if (Objects.nonNull(cs)) {
                     cs.setContents(new StringSelection(getSelectedText()));
+                } else {
+                    super.cut();
                 }
-                super.cut();
             }
             @Override public void paste() {
-                if (cs == null) {
-                    super.paste();
-                } else {
+                if (Objects.nonNull(cs)) {
                     Transferable tr = cs.getContents();
                     if (tr.isDataFlavorSupported(DataFlavor.stringFlavor)) {
                         getTransferHandler().importData(this, tr);
                     }
+                } else {
+                    super.paste();
                 }
             }
         };
@@ -91,7 +94,7 @@ class TextComponentPopupMenu extends JPopupMenu {
             tc.replaceSelection(null);
         }
     };
-    public TextComponentPopupMenu(JTextComponent textComponent) {
+    protected TextComponentPopupMenu(JTextComponent textComponent) {
         super();
         add(cutAction);
         add(copyAction);
@@ -109,8 +112,8 @@ class TextComponentPopupMenu extends JPopupMenu {
     }
     @Override public void show(Component c, int x, int y) {
         if (c instanceof JTextComponent) {
-            JTextComponent textComponent = (JTextComponent) c;
-            boolean flg = textComponent.getSelectedText() != null;
+            JTextComponent tc = (JTextComponent) c;
+            boolean flg = tc.getSelectionStart() != tc.getSelectionEnd();
             cutAction.setEnabled(flg);
             copyAction.setEnabled(flg);
             deleteAction.setEnabled(flg);
@@ -121,7 +124,7 @@ class TextComponentPopupMenu extends JPopupMenu {
 
 class UndoAction extends AbstractAction {
     private final UndoManager undoManager;
-    public UndoAction(UndoManager manager) {
+    protected UndoAction(UndoManager manager) {
         super("undo");
         this.undoManager = manager;
     }
@@ -137,7 +140,7 @@ class UndoAction extends AbstractAction {
 
 class RedoAction extends AbstractAction {
     private final UndoManager undoManager;
-    public RedoAction(UndoManager manager) {
+    protected RedoAction(UndoManager manager) {
         super("redo");
         this.undoManager = manager;
     }

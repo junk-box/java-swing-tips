@@ -67,7 +67,7 @@ public final class MainPanel extends JPanel {
 class FolderSelectionListener implements TreeSelectionListener {
 //     private JFrame frame = null;
     private final FileSystemView fileSystemView;
-    public FolderSelectionListener(FileSystemView fileSystemView) {
+    protected FolderSelectionListener(FileSystemView fileSystemView) {
         this.fileSystemView = fileSystemView;
     }
     @Override public void valueChanged(TreeSelectionEvent e) {
@@ -92,6 +92,9 @@ class FolderSelectionListener implements TreeSelectionListener {
         final DefaultTreeModel model = (DefaultTreeModel) tree.getModel();
         SwingWorker<String, File> worker = new Task(fileSystemView, parent) {
             @Override protected void process(List<File> chunks) {
+                if (isCancelled()) {
+                    return;
+                }
                 if (!tree.isDisplayable()) {
                     cancel(true);
                     return;
@@ -111,7 +114,7 @@ class FolderSelectionListener implements TreeSelectionListener {
 class Task extends SwingWorker<String, File> {
     private final FileSystemView fileSystemView;
     private final File parent;
-    public Task(FileSystemView fileSystemView, File parent) {
+    protected Task(FileSystemView fileSystemView, File parent) {
         super();
         this.fileSystemView = fileSystemView;
         this.parent = parent;
@@ -135,14 +138,14 @@ class Task extends SwingWorker<String, File> {
 class FileTreeCellRenderer extends DefaultTreeCellRenderer {
     private final TreeCellRenderer renderer;
     private final FileSystemView fileSystemView;
-    public FileTreeCellRenderer(TreeCellRenderer renderer, FileSystemView fileSystemView) {
+    protected FileTreeCellRenderer(TreeCellRenderer renderer, FileSystemView fileSystemView) {
         super();
         this.renderer = renderer;
         this.fileSystemView = fileSystemView;
     }
-    @Override public Component getTreeCellRendererComponent(JTree tree, Object value, boolean isSelected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-        JLabel c = (JLabel) renderer.getTreeCellRendererComponent(tree, value, isSelected, expanded, leaf, row, hasFocus);
-        if (isSelected) {
+    @Override public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+        JLabel c = (JLabel) renderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
+        if (selected) {
             c.setOpaque(false);
             c.setForeground(getTextSelectionColor());
             //c.setBackground(Color.BLUE); //getBackgroundSelectionColor());
@@ -166,10 +169,12 @@ class FileTreeCellRenderer extends DefaultTreeCellRenderer {
 }
 
 // class LockingGlassPane extends JComponent {
-//     public LockingGlassPane() {
+//     protected LockingGlassPane() {
 //         setOpaque(false);
 //         setFocusTraversalPolicy(new DefaultFocusTraversalPolicy() {
-//             @Override public boolean accept(Component c) { return false; }
+//             @Override public boolean accept(Component c) {
+//                 return false;
+//             }
 //         });
 //         addKeyListener(new KeyAdapter() {});
 //         addMouseListener(new MouseAdapter() {});

@@ -39,7 +39,7 @@ public final class MainPanel extends JPanel {
             }
         };
 
-        // @see http://terai.xrea.jp/Swing/NoWrapTextPane.html
+        // @see http://ateraimemo.com/Swing/NoWrapTextPane.html
         textPane.setEditorKit(new NoWrapEditorKit());
 
         AbstractDocument doc = new SimpleSyntaxDocument();
@@ -59,7 +59,7 @@ public final class MainPanel extends JPanel {
             }
         });
 
-        // @see http://terai.xrea.jp/Swing/FocusTraversalKeys.html
+        // @see http://ateraimemo.com/Swing/FocusTraversalKeys.html
         Set<AWTKeyStroke> forwardKeys = new HashSet<>(textPane.getFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS));
         forwardKeys.add(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0));
         forwardKeys.add(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_DOWN_MASK));
@@ -104,27 +104,29 @@ public final class MainPanel extends JPanel {
     }
 }
 
-//@see https://community.oracle.com/thread/2105230
-//@see SyntaxDocument.java, MultiSyntaxDocument.java
+//This code is taken from: SyntaxDocument.java, MultiSyntaxDocument.java
+// Fast styled JTextPane editor | Oracle Community
+// @author camickr
+// @author David Underhill
+// https://community.oracle.com/thread/2105230
+// modified by aterai aterai@outlook.com
 class SimpleSyntaxDocument extends DefaultStyledDocument {
     private static final char LB = '\n';
     //HashMap<String, AttributeSet> keywords = new HashMap<>();
-    private final Style normal; //MutableAttributeSet normal = new SimpleAttributeSet();
     private static final String OPERANDS = ".,";
-    public SimpleSyntaxDocument() {
+    private final Style def = getStyle(StyleContext.DEFAULT_STYLE);
+    protected SimpleSyntaxDocument() {
         super();
-        Style def = StyleContext.getDefaultStyleContext().getStyle(StyleContext.DEFAULT_STYLE);
-        normal = addStyle("normal", def);
-        StyleConstants.setForeground(normal, Color.BLACK);
-        StyleConstants.setForeground(addStyle("red",   normal), Color.RED);
-        StyleConstants.setForeground(addStyle("green", normal), Color.GREEN);
-        StyleConstants.setForeground(addStyle("blue",  normal), Color.BLUE);
+        //Style def = StyleContext.getDefaultStyleContext().getStyle(StyleContext.DEFAULT_STYLE);
+        StyleConstants.setForeground(addStyle("red",   def), Color.RED);
+        StyleConstants.setForeground(addStyle("green", def), Color.GREEN);
+        StyleConstants.setForeground(addStyle("blue",  def), Color.BLUE);
     }
     @Override public void insertString(int offset, String text, AttributeSet a) throws BadLocationException {
         // @see PlainDocument#insertString(...)
         int length = 0;
         String str = text;
-        if (str != null && str.indexOf(LB) >= 0) {
+        if (Objects.nonNull(str) && str.indexOf(LB) >= 0) {
             StringBuilder filtered = new StringBuilder(str);
             int n = filtered.length();
             for (int i = 0; i < n; i++) {
@@ -158,7 +160,7 @@ class SimpleSyntaxDocument extends DefaultStyledDocument {
         int lineLength    = endOffset - startOffset;
         int contentLength = content.length();
         endOffset = endOffset >= contentLength ? contentLength - 1 : endOffset;
-        setCharacterAttributes(startOffset, lineLength, normal, true);
+        setCharacterAttributes(startOffset, lineLength, def, true);
         checkForTokens(content, startOffset, endOffset);
     }
     private void checkForTokens(String content, int startOffset, int endOffset) {
@@ -186,7 +188,7 @@ class SimpleSyntaxDocument extends DefaultStyledDocument {
         Style s = getStyle(token);
         //if (keywords.containsKey(token)) {
         //    setCharacterAttributes(startOffset, endOfToken - startOffset, keywords.get(token), false);
-        if (s != null) {
+        if (Objects.nonNull(s)) {
             setCharacterAttributes(startOffset, endOfToken - startOffset, s, false);
         }
         return endOfToken + 1;
@@ -197,7 +199,7 @@ class SimpleSyntaxDocument extends DefaultStyledDocument {
 }
 
 class NoWrapParagraphView extends ParagraphView {
-    public NoWrapParagraphView(Element elem) {
+    protected NoWrapParagraphView(Element elem) {
         super(elem);
     }
     @Override protected SizeRequirements calculateMinorAxisRequirements(int axis, SizeRequirements r) {
@@ -213,7 +215,7 @@ class NoWrapParagraphView extends ParagraphView {
 class NoWrapViewFactory implements ViewFactory {
     @Override public View create(Element elem) {
         String kind = elem.getName();
-        if (kind != null) {
+        if (Objects.nonNull(kind)) {
             if (kind.equals(AbstractDocument.ContentElementName)) {
                 return new LabelView(elem);
             } else if (kind.equals(AbstractDocument.ParagraphElementName)) {

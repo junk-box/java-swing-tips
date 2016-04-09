@@ -4,22 +4,25 @@ package example;
 //@homepage@
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.swing.*;
 
 public final class MainPanel extends JPanel {
     private final JDesktopPane desktop = new JDesktopPane();
-    private final JFrame frame;
-    public MainPanel(JFrame frame) {
+    public MainPanel() {
         super(new BorderLayout());
-        this.frame = frame;
-        frame.setJMenuBar(createMenuBar());
+        EventQueue.invokeLater(new Runnable() {
+            @Override public void run() {
+                getRootPane().setJMenuBar(createMenuBar());
+            }
+        });
         //title, resizable, closable, maximizable, iconifiable
-        JInternalFrame iframe = new JInternalFrame("AlwaysOnTop", true, false, true, true);
-        iframe.setSize(180, 180);
-        desktop.add(iframe, Integer.valueOf(JLayeredPane.MODAL_LAYER + 1));
-        iframe.setVisible(true);
-        //desktop.getDesktopManager().activateFrame(iframe);
+        JInternalFrame jif = new JInternalFrame("AlwaysOnTop", true, false, true, true);
+        jif.setSize(180, 180);
+        desktop.add(jif, Integer.valueOf(JLayeredPane.MODAL_LAYER + 1));
+        jif.setVisible(true);
+        //desktop.getDesktopManager().activateFrame(jif);
         add(desktop);
         setPreferredSize(new Dimension(320, 240));
     }
@@ -36,10 +39,10 @@ public final class MainPanel extends JPanel {
         menuItem.setActionCommand("new");
         menuItem.addActionListener(new ActionListener() {
             @Override public void actionPerformed(ActionEvent e) {
-                JInternalFrame iframe = new MyInternalFrame();
-                desktop.add(iframe);
-                iframe.setVisible(true);
-                //desktop.getDesktopManager().activateFrame(iframe);
+                JInternalFrame jif = new MyInternalFrame();
+                desktop.add(jif);
+                jif.setVisible(true);
+                //desktop.getDesktopManager().activateFrame(jif);
             }
         });
         menu.add(menuItem);
@@ -50,7 +53,8 @@ public final class MainPanel extends JPanel {
         menuItem.setActionCommand("quit");
         menuItem.addActionListener(new ActionListener() {
             @Override public void actionPerformed(ActionEvent e) {
-                frame.dispose();
+                //SwingUtilities.getWindowAncestor(desktop).dispose();
+                Optional.ofNullable(SwingUtilities.getWindowAncestor(desktop)).ifPresent(w -> w.dispose());
             }
         });
         menu.add(menuItem);
@@ -73,7 +77,7 @@ public final class MainPanel extends JPanel {
         }
         JFrame frame = new JFrame("@title@");
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        frame.getContentPane().add(new MainPanel(frame));
+        frame.getContentPane().add(new MainPanel());
         frame.pack();
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
@@ -84,7 +88,7 @@ class MyInternalFrame extends JInternalFrame {
     private static final int XOFFSET = 30;
     private static final int YOFFSET = 30;
     private static AtomicInteger openFrameCount = new AtomicInteger();
-    public MyInternalFrame() {
+    protected MyInternalFrame() {
         //title, resizable, closable, maximizable, iconifiable
         super(String.format("Document #%s", openFrameCount.getAndIncrement()), true, true, true, true);
         setSize(180, 100);

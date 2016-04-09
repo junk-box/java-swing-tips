@@ -7,6 +7,7 @@ import java.awt.geom.*;
 import java.awt.image.*;
 import java.io.*;
 import java.net.*;
+import java.util.Objects;
 import javax.imageio.*;
 import javax.swing.*;
 import javax.swing.border.*;
@@ -80,7 +81,7 @@ public final class MainPanel extends JPanel {
         if (contentPane instanceof JComponent) {
             ((JComponent) contentPane).setOpaque(false);
         }
-        frame.setJMenuBar(ImageUtil.createMenubar());
+        frame.setJMenuBar(ImageUtil.createMenuBar());
         frame.getContentPane().add(new MainPanel());
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.pack();
@@ -98,7 +99,7 @@ public final class MainPanel extends JPanel {
 
 final class ImageUtil {
     private ImageUtil() { /* Singleton */ }
-    public static JMenuBar createMenubar() {
+    public static JMenuBar createMenuBar() {
         UIManager.put("Menu.background", new Color(200, 0, 0, 0));
         UIManager.put("Menu.selectionBackground", new Color(100, 100, 255, 100));
         UIManager.put("Menu.selectionForeground", new Color(200, 200, 200));
@@ -165,17 +166,17 @@ final class ImageUtil {
             }
         }
         g2.dispose();
-        return new TexturePaint(img, new Rectangle(0, 0, sz, sz));
+        return new TexturePaint(img, new Rectangle(sz, sz));
     }
 }
 
 class TranslucentTexturePanel extends JPanel {
     private final transient TexturePaint texture;
-    public TranslucentTexturePanel(TexturePaint texture) {
+    protected TranslucentTexturePanel(TexturePaint texture) {
         super();
         this.texture = texture;
     }
-    @Override public void paintComponent(Graphics g) {
+    @Override protected void paintComponent(Graphics g) {
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setPaint(texture);
         g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, .6f));
@@ -184,12 +185,12 @@ class TranslucentTexturePanel extends JPanel {
     }
 }
 
-// https://forums.oracle.com/thread/1395763 How can I use TextArea with Background Picture ?
-// http://terai.xrea.jp/Swing/CentredBackgroundBorder.html
+// https://community.oracle.com/thread/1395763 How can I use TextArea with Background Picture ?
+// http://ateraimemo.com/Swing/CentredBackgroundBorder.html
 class CentredBackgroundBorder implements Border {
     private final Insets insets = new Insets(0, 0, 0, 0);
     private final BufferedImage image;
-    public CentredBackgroundBorder(BufferedImage image) {
+    protected CentredBackgroundBorder(BufferedImage image) {
         this.image = image;
     }
     @Override public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
@@ -207,7 +208,7 @@ class CentredBackgroundBorder implements Border {
     }
 }
 
-//http://terai.xrea.jp/Swing/TranslucentPopupMenu.html
+//http://ateraimemo.com/Swing/TranslucentPopupMenu.html
 class TranslucentPopupMenu extends JPopupMenu {
     private static final Color POPUP_BACK = new Color(250, 250, 250, 100);
     private static final Color POPUP_LEFT = new Color(230, 230, 230, 100);
@@ -225,11 +226,11 @@ class TranslucentPopupMenu extends JPopupMenu {
         menuItem.setOpaque(false);
         return super.add(menuItem);
     }
-//     private static final Color ALPHA_ZERO = new Color(0, true);
+//     private static final Color ALPHA_ZERO = new Color(0x0, true);
 //     @Override public void show(Component c, int x, int y) {
 //         EventQueue.invokeLater(new Runnable() {
 //             @Override public void run() {
-//                 Window p = SwingUtilities.getWindowAncestor(TranslucentPopupMenu.this);
+//                 Window p = SwingUtilities.getWindowAncestor(getRootPane());
 //                 if (p instanceof JWindow) {
 //                     System.out.println("Heavy weight");
 //                     JWindow w = (JWindow) p;
@@ -254,13 +255,13 @@ class TranslucentPopupMenu extends JPopupMenu {
 class TransparentMenu extends JMenu {
     private JPopupMenu popupMenu;
 
-    public TransparentMenu(String title) {
+    protected TransparentMenu(String title) {
         super(title);
     }
     // Bug ID: JDK-4688783 JPopupMenu hardcoded i JMenu
-    // http://bugs.sun.com/view_bug.do?bug_id=4688783
+    // http://bugs.java.com/view_bug.do?bug_id=4688783
     private void ensurePopupMenuCreated() {
-        if (popupMenu == null) {
+        if (Objects.isNull(popupMenu)) {
             this.popupMenu = new TranslucentPopupMenu();
             popupMenu.setInvoker(this);
             popupListener = createWinListener(popupMenu);
@@ -328,15 +329,15 @@ class TranslucentPopupFactory extends PopupFactory {
 
 class TranslucentPopup extends Popup {
     private final JWindow popupWindow;
-    public TranslucentPopup(Component owner, Component contents, int ownerX, int ownerY) {
+    protected TranslucentPopup(Component owner, Component contents, int ownerX, int ownerY) {
         super(owner, contents, ownerX, ownerY);
         // create a new heavyweight window
         this.popupWindow = new JWindow();
         // mark the popup with partial opacity
-        //com.sun.awt.AWTUtilities.setWindowOpacity(popupWindow, (contents instanceof JToolTip) ? .8f : .95f);
+        //AWTUtilities.setWindowOpacity(popupWindow, (contents instanceof JToolTip) ? .8f : .95f);
         //popupWindow.setOpacity(.5f);
-        //com.sun.awt.AWTUtilities.setWindowOpaque(popupWindow, false); //Java 1.6.0_10
-        popupWindow.setBackground(new Color(0, true)); //Java 1.7.0
+        //AWTUtilities.setWindowOpaque(popupWindow, false); //Java 1.6.0_10
+        popupWindow.setBackground(new Color(0x0, true)); //Java 1.7.0
         // determine the popup location
         popupWindow.setLocation(ownerX, ownerY);
         // add the contents to the popup
@@ -353,7 +354,7 @@ class TranslucentPopup extends Popup {
         // mark the window as non-opaque, so that the
         // shadow border pixels take on the per-pixel
         // translucency
-        //com.sun.awt.AWTUtilities.setWindowOpaque(this.popupWindow, false);
+        //AWTUtilities.setWindowOpaque(this.popupWindow, false);
     }
     @Override public void hide() {
         this.popupWindow.setVisible(false);
